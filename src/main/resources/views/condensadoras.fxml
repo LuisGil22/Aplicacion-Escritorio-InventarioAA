@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.inventario.controllers.CondensadorasController"
+            stylesheets="@../css/parametros.css"
+            styleClass="vbox">
+
+    <HBox styleClass="box">
+        <Label text="Filtrar por estado:"/>
+        <ComboBox fx:id="comboFiltroEstado" prefWidth="150"/>
+        <Button text="Filtrar" onAction="#onFiltrar" styleClass="action-button"/>
+    </HBox>
+
+    <TableView fx:id="tablaCondensadoras" styleClass="table-view-cond">
+        <columns>
+            <TableColumn fx:id="colCondensadoras" prefWidth="150">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="CONDENSADORA"/>
+                        <Button fx:id="btnFiltroCondensadora" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroCondensadora"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn text="Nª SECUENCIA" fx:id="colNumSecuencia" prefWidth="150"/>
+            <TableColumn fx:id="colEstado" prefWidth="120">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="ESTADO"/>
+                        <Button text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroEstado"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn text="MARCA" fx:id="colMarca" prefWidth="100"/>
+            <TableColumn text="MODELO" fx:id="colModelo" prefWidth="100"/>
+            <TableColumn text="Nº SERIE" fx:id="colNumSerie" prefWidth="100"/>
+            <TableColumn text="LOC_CONDENSADORAS" fx:id="colLocCondensadoras" prefWidth="150"/>
+            <TableColumn text="GAS" fx:id="colGas" prefWidth="100"/>
+            <TableColumn text="FECHA INSTALACION" fx:id="colFechaInstal" prefWidth="150"/>
+            <TableColumn text="FECHA REVISION" fx:id="colFechaRev" prefWidth="150"/>
+            <TableColumn text="AVERIA" fx:id="colAveria" prefWidth="100"/>
+            <TableColumn text="OBSERVACIONES" fx:id="colObservaciones" prefWidth="150"/>
+        </columns>
+    </TableView>
+</VBox>

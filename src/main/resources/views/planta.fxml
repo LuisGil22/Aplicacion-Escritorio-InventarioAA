@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.inventario.controllers.PlantaController"
+            stylesheets="@../css/parametros.css"
+            styleClass="vbox">
+
+    <HBox styleClass="box">
+        <Button text="Añadir" onAction="#onAddPlanta" styleClass="action-button"/>
+        <Button text="Modificar" onAction="#onEditPlanta" styleClass="action-button"/>
+        <Button text="Eliminar" onAction="#onDeletePlanta" styleClass="action-button"/>
+    </HBox>
+
+    <TableView fx:id="tablaPlantas" styleClass="table-view">
+        <columns>
+            <TableColumn text="PLANTA" fx:id="colPlanta" prefWidth="100"/>
+            <TableColumn text="DESCRIPCION" fx:id="colDescripcion" prefWidth="400"/>
+        </columns>
+    </TableView>
+
+</VBox>

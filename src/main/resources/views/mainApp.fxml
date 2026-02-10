@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:id="rootPane"
+            fx:controller="com.inventario.controllers.MainAppController"
+            stylesheets="@../css/mainApp.css">
+
+    <!-- Header -->
+    <top>
+        <fx:include fx:id="header" source="header.fxml" />
+    </top>
+
+    <!-- Sidebar -->
+    <left>
+        <fx:include fx:id="sidebarInclude" source="sidebar.fxml"/>
+    </left>
+
+
+    <center>
+        <!-- Contenido principal -->
+        <StackPane fx:id="stackPaneContent" style="-fx-background-color: #f5f5f5;" styleClass="stack-pane" minHeight="50" >
+
+            <VBox alignment="TOP_CENTER" StackPane.alignment="CENTER">
+            <Label text="Haz clic en un menú para cargar su contenido" styleClass="label-text"/>
+            </VBox>
+            <!-- Botón para mostrar o ocultar el menu lateral -->
+            <Button fx:id="SidebarButtonMostrar"
+                    text="«"
+                    styleClass="toggle-button"
+                    onAction="#ClickSidebar"
+                    StackPane.alignment="TOP_LEFT"/>
+
+            <!-- Label con instrucciones para volver a la pagina de inicio -->
+            <Label fx:id="VolverInicio"
+                   text="↩ Volver al inicio"
+                   styleClass="link-label"
+                   StackPane.alignment="TOP_RIGHT"
+                   visible="false"/>
+        </StackPane>
+    </center>
+</BorderPane>

@@ -1,0 +1,63 @@
+/* header.css */
+
+.header-container {
+    -fx-pref-height: 50px;
+    -fx-min-height: 50px;
+    -fx-background-color: #2c3e50;
+    -fx-padding: 0 10px;
+    -fx-alignment: center;
+}
+
+.header-logo {
+    -fx-fit-width: 40px;
+    -fx-fit-height: 40px;
+    -fx-smooth: true;
+}
+
+.header-title {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI";
+}
+
+/* Botón de menú móvil (☰) */
+.header-button-menu {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+    -fx-padding: 5px;
+    -fx-cursor: hand;
+}
+
+.header-button-menu:hover {
+    -fx-background-color: rgba(255,255,255,0.1);
+}
+
+/* Botón "Salir" */
+.header-button-salir {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 5px 10px;
+    -fx-border-radius: 3px;
+    -fx-background-radius: 3px;
+}
+
+.header-button-salir:hover {
+    -fx-background-color: #c0392b;
+}
+
+/* Asegurar que el header no se colapse */
+.header-container {
+    -fx-min-height: 50px;
+    -fx-pref-height: 50px;
+}
+
+/* Forzar que los botones estén visibles */
+.header-button-salir,
+.header-button-menu {
+    -fx-opacity: 1.0;
+    -fx-effect: null;
+}

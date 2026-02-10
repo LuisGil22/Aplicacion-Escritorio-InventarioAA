@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.inventario.controllers.SidebarController"
+            stylesheets="@../css/sidebar.css"
+            styleClass="sidebar-container"
+            prefWidth="240" minWidth="0" maxWidth="240">
+
+        <Label text="Menu Principal" styleClass="menu-title"/>
+
+        <Button text="CONDENSADORAS" onAction="#ClickMenu" styleClass="main-button"/>
+        <Button text="CASSETTES" onAction="#ClickMenu" styleClass="main-button"/>
+        <Button text="AVERÍAS" onAction="#ClickMenu" styleClass="main-button"/>
+
+        <Button fx:id="tituloParametros" text="▼ PARÁMETROS" onAction="#btnParametros" styleClass="parametros-header"/>
+        <VBox fx:id="vboxParametros" visible="false" spacing="4" styleClass="parametros-submenu-container">
+            <Button text="ESTADO" onAction="#ClickMenu" styleClass="main-button"/>
+            <Button text="GASES" onAction="#ClickMenu" styleClass="main-button"/>
+            <Button text="LOC-CONDENSADORAS" onAction="#ClickMenu" styleClass="main-button"/>
+            <Button text="MARCAS" onAction="#ClickMenu" styleClass="main-button"/>
+            <Button text="MODEL-CASSETTES" onAction="#ClickMenu" styleClass="main-button"/>
+            <Button text="MODEL-CONDENSADORAS" onAction="#ClickMenu" styleClass="main-button"/>
+            <Button text="PLANTAS" onAction="#ClickMenu" styleClass="main-button"/>
+        </VBox>
+
+
+        <!-- Espaciador flexible -->
+        <Region VBox.vgrow="ALWAYS"/>
+
+
+</VBox>

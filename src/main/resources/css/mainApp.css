@@ -1,0 +1,50 @@
+/* Estilos generales de la aplicación */
+.root {
+    -fx-font-size: 14px;
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+.border-pane {
+    -fx-background-color: #f5f5f5;
+}
+
+.toggle-button {
+
+    -fx-text-fill: #3498db;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 4px;
+    -fx-border-radius: 0 4px 4px 0;
+    -fx-background-radius: 0 4px 4px 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 4, 0, 1, 1);
+}
+
+.toggle-button:hover {
+    -fx-text-fill:white;
+    -fx-background-color: #3498db;
+}
+
+.link-label {
+    -fx-text-fill: #3498db; /* Azul como enlace */
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-underline: false;
+    -fx-padding: 5px 10px;
+}
+
+.link-label:hover {
+    -fx-text-fill: #2980b9;
+    -fx-underline: true;
+}
+
+
+
+.label-text {
+-fx-padding:40px ;
+-fx-text-fill: black;
+-fx-font-size: 22px;
+-fx-font-weight: bold;
+}
+
+
+

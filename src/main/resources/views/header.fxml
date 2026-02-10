@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.Region?>
+<HBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.inventario.controllers.HeaderController"
+      stylesheets="@../css/header.css"
+      styleClass="header-container"
+      alignment="CENTER"
+      prefHeight="50"
+      minHeight="50">
+
+
+    <!-- 👇 BOTÓN DE MENÚ MÓVIL (nuevo) -->
+    <Button fx:id="btnMenuMovil"
+            text="☰"
+            styleClass="header-button-menu"
+            onAction="#toggleSidebarMovil"
+            visible="false"/>
+
+    <!-- Pequeño espacio entre ☰ y el logo -->
+    <Region fx:id="spacer" prefWidth="10" visible="false"/>
+
+    <!-- Logo (izquierda) -->
+    <ImageView fx:id="logoView"  styleClass="header-logo"></ImageView>
+
+    <Region HBox.hgrow="ALWAYS"/>
+
+    <!-- Título centrado -->
+    <Label fx:id="tituloApp" text="Inventario para Mantenimiento del Aire Acondicionado"
+           styleClass="header-title"/>
+
+    <Region HBox.hgrow="ALWAYS"/>
+
+    <!-- Botón de salir (derecha) -->
+    <Button fx:id="exitButton"
+            text="Salir"
+            styleClass="header-button-salir"
+            onAction="#onExitButtonClick" />
+
+</HBox>

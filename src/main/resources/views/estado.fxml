@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.inventario.controllers.EstadoController"
+            stylesheets="@../css/parametros.css"
+            styleClass="vbox">
+
+        <HBox styleClass="box">
+            <Button text="Añadir" onAction="#onAdd" styleClass="action-button"/>
+            <Button text="Modificar" onAction="#onEdit" styleClass="action-button"/>
+            <Button text="Eliminar" onAction="#onDelete" styleClass="action-button"/>
+        </HBox>
+
+        <TableView fx:id="tablaEstados" styleClass="table-view">
+            <columns>
+                <TableColumn text="ESTADO" fx:id="colEstado" prefWidth="100"/>
+            </columns>
+        </TableView>
+</VBox>

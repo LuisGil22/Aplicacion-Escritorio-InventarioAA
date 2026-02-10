@@ -1,0 +1,69 @@
+/* src/main/resources/css/estado.css */
+
+.root {
+    -fx-background-color: white;
+}
+
+/* Contenedor principal */
+.vbox {
+    -fx-background-color: white;
+    -fx-spacing: 15;
+    -fx-alignment: TOP-CENTER;
+    -fx-padding: 20px;
+}
+
+/* Botones de acción */
+.box {
+    -fx-spacing: 10;
+    -fx-alignment: CENTER;
+}
+
+.action-button {
+    -fx-background-color: white;
+    -fx-text-fill: black;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 16px;
+
+}
+
+.action-button:hover {
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+}
+
+/* Tabla */
+.table-view {
+    -fx-pref-width: INFINITY;
+    -fx-max-width: INFINITY;
+    -fx-pref-height: 400px;
+    -fx-background-color: white;
+    -fx-border-color: #bdc3c7;
+    -fx-border-radius: 4px;
+}
+
+.table-view-cond {
+    -fx-pref-width: INFINITY;
+    -fx-max-width: INFINITY;
+    -fx-pref-height: 800px;
+    -fx-background-color: white;
+    -fx-border-color: #bdc3c7;
+    -fx-border-radius: 4px;
+}
+
+.table-view .column-header {
+    -fx-border-color: #bdc3c7;
+    -fx-border-width: 1 1 2 0;
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.table-view .column-header:last-visible {
+    -fx-border-width: 1 0 2 0;
+}
+
+.table-view .column-header .column-header-label {
+    -fx-text-fill: black;
+    -fx-font-weight: bold;
+}
+

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.inventario.controllers.GasesController"
+            stylesheets="@../css/parametros.css"
+            styleClass="vbox">
+
+    <HBox styleClass="box">
+        <Button text="Añadir" onAction="#onAddGases" styleClass="action-button"/>
+        <Button text="Modificar" onAction="#onEditGases" styleClass="action-button"/>
+        <Button text="Eliminar" onAction="#onDeleteGases" styleClass="action-button"/>
+    </HBox>
+
+    <TableView fx:id="tablaGases" styleClass="table-view">
+        <columns>
+            <TableColumn text="GAS" fx:id="colGas" prefWidth="100"/>
+            <TableColumn text="DESCRIPCION" fx:id="colDescripcion" prefWidth="400"/>
+        </columns>
+    </TableView>
+
+</VBox>
