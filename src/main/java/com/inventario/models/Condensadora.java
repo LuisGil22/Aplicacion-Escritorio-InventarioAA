@@ -4,7 +4,7 @@ import java.util.Date;
 
 public class Condensadora {
 
-    private String condensadoras;
+    private String condensadora;
     private int numSecuencia;
     private String estado;
     private String marca;
@@ -17,8 +17,8 @@ public class Condensadora {
     private String averia;
     private String observaciones;
 
-    public Condensadora(String condensadoras, int numSecuencia,String estado, String marca, String modelo, long numSerieCond, String loc_condensadora, String gas, String fechaInstalacion, String fechaRevision, String averia, String observaciones) {
-        this.condensadoras = condensadoras;
+    public Condensadora(String condensadora, int numSecuencia,String estado, String marca, String modelo, long numSerieCond, String loc_condensadora, String gas, String fechaInstalacion, String fechaRevision, String averia, String observaciones) {
+        this.condensadora = condensadora;
         this.numSecuencia = numSecuencia;
         this.estado = estado;
         this.marca = marca;
@@ -32,12 +32,12 @@ public class Condensadora {
         this.observaciones = observaciones;
     }
 
-    public String getCondensadoras() {
-        return condensadoras;
+    public String getCondensadora() {
+        return condensadora;
     }
 
-    public void setCondensadoras(String condensadoras) {
-        this.condensadoras = condensadoras;
+    public void setCondensadora(String condensadora) {
+        this.condensadora = condensadora;
     }
 
     public int getNumSecuencia() {

@@ -20,7 +20,7 @@
 
     <TableView fx:id="tablaModel_Cond" styleClass="table-view">
         <columns>
-            <TableColumn text="MODELO" fx:id="colModelo" prefWidth="100"/>
+            <TableColumn text="MODELO" fx:id="colModelo" prefWidth="150"/>
             <TableColumn text="DESCRIPCION" fx:id="colDescripcion" prefWidth="400"/>
         </columns>
     </TableView>

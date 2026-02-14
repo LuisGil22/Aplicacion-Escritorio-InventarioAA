@@ -39,10 +39,10 @@ public class MarcaController {
         var excelFile = ExcelManager.leerHoja("PARAM_MARCAS");
         for(int i=1; i<excelFile.size() ; i++){
             var fila = excelFile.get(i);
-            if(fila.size()>= 2){
+            if(!fila.isEmpty()){
                 String marca = fila.get(0).trim();
-                String desc = fila.get(1).trim();
-                if(!marca.isEmpty() && !desc.isEmpty()){
+                if(!marca.isEmpty()){
+                    String desc = (fila.size() > 1) ? fila.get(1).trim() : "";
                     marcas.add(new Marca(marca,desc));
                 }
             }
@@ -84,6 +84,16 @@ public class MarcaController {
             mainAppController.showAlert("Selecciona una marca para eliminar.");
             return;
         }
+        String marcaAEliminar = seleccionada.getMarca();
+        if(ExcelManager.existParametroEnCondensadoras(marcaAEliminar,ExcelManager.Columnas.MARCA)){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Esta acción no está permitida");
+            alert.setHeaderText("No se puede eliminar esta marca");
+            alert.setContentText("La marca '" +marcaAEliminar+ "' no se puede eliminar porque está siendo usada en la hoja 'Condensadoras'.");
+            alert.showAndWait();
+            return;
+        }
+
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar que la quieres eliminar");
         confirmacion.setHeaderText("¿Estas seguro que deseas eliminarla?");

@@ -15,6 +15,21 @@ public class ExcelManager {
 
     private static File excelFile;
 
+    public class Columnas {
+        public static final String CONDENSADORA = "CONDENSADORA";
+        public static final String NUM_SECUENCIA = "NUM_SECUENCIA";
+        public static final String ESTADO = "ESTADO";
+        public static final String MARCA = "Marca";
+        public static final String MODELO = "Model";
+        public static final String NUM_SERIE = "NUM_SERIE_COND";
+        public static final String LOCALIZACION_CONDENSADORA = "LOCALIZACIÓN_CONDENSADORA";
+        public static final String GAS = "GAS";
+        public static final String FECHA_INSTALACION = "FECHA_INSTALACION";
+        public static final String FECHA_REVISION = "FECHA_REVISION";
+        public static final String AVERIA = "AVERIA";
+        public static final String OBSERVACIONES = "OBSERVACIONES";
+    }
+
     // Inicializa y devuelve la copia del Excel
     public static File getExcelFile() {
         if (excelFile == null) {
@@ -225,12 +240,33 @@ public class ExcelManager {
         return true;
     }
 
-    public static boolean existEstadoEnCondensadoras(String valorEstado){
-        List<List<String>> estadoCond = leerHoja("Condensadoras");
-        for(int i = 1; i<estadoCond.size();i++){
-            List<String>fila = estadoCond.get(i);
-            if(fila.size()>2 && valorEstado.equals(fila.get(2))){
-                return true;
+    public static boolean existParametroEnCondensadoras(String valor, String columna){
+        if (valor == null || valor.trim().isEmpty()) return false;
+        List<List<String>> cond = leerHoja("Condensadoras");
+        if (cond.isEmpty()){
+            return false;
+        }
+        // Obtener encabezados (primera fila)
+        List<String> encabezados = cond.get(0);
+        // Encontrar el índice de la columna solicitada
+        int indexColumn = -1;
+        for(int i = 0; i<encabezados.size();i++){
+            if(encabezados.get(i).trim().equalsIgnoreCase(columna)){
+                indexColumn = i;
+                break;
+            }
+        }
+        if(indexColumn == -1) {
+            System.err.println("La columna " + columna + " no se encuentra en condensadoras");
+            return false;
+        }
+        for(int i = 1; i<cond.size();i++){
+            List<String>fila = cond.get(i);
+            if(fila.size()>indexColumn){
+                String valorFila = fila.get(indexColumn).trim();
+                if(valor.equals(valorFila)){
+                    return true;
+                }
             }
         }
         return false;

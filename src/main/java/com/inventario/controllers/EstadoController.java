@@ -91,7 +91,7 @@ public class EstadoController {
         }
 
         String estadoAEliminar = selected.getEstado();
-        if(ExcelManager.existEstadoEnCondensadoras(estadoAEliminar)){
+        if(ExcelManager.existParametroEnCondensadoras(estadoAEliminar,ExcelManager.Columnas.ESTADO)){
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Esta acción no está permitida");
             alert.setHeaderText("No se puede eliminar este estado");

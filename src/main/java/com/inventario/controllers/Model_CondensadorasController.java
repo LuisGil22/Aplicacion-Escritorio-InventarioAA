@@ -39,10 +39,10 @@ public class Model_CondensadorasController {
         var excelFile = ExcelManager.leerHoja("PARAM_MODELOS_COND");
         for(int i=1; i<excelFile.size() ; i++){
             var fila = excelFile.get(i);
-            if(fila.size()>= 2){
+            if(!fila.isEmpty()){
                 String modelo = fila.get(0).trim();
-                String desc = fila.get(1).trim();
-                if(!modelo.isEmpty() && !desc.isEmpty()){
+                if(!modelo.isEmpty()){
+                    String desc = (fila.size() > 1) ? fila.get(1).trim() : "";
                     modelCondensadoras.add(new Model_Condensadora(modelo,desc));
                 }
             }
@@ -84,6 +84,17 @@ public class Model_CondensadorasController {
             mainAppController.showAlert("Selecciona un modelo de condensadora para eliminar.");
             return;
         }
+
+        String modeloAEliminar = seleccionada.getModelo();
+        if(ExcelManager.existParametroEnCondensadoras(modeloAEliminar,ExcelManager.Columnas.MODELO)){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Esta acción no está permitida");
+            alert.setHeaderText("No se puede eliminar este modelo");
+            alert.setContentText("El modelo '" +modeloAEliminar+ "' no se puede eliminar porque está siendo usada en la hoja 'Condensadoras'.");
+            alert.showAndWait();
+            return;
+        }
+
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar que lo quieres eliminar");
         confirmacion.setHeaderText("¿Estas seguro que deseas eliminarlo?");

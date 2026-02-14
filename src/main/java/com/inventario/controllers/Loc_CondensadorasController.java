@@ -87,6 +87,16 @@ public class Loc_CondensadorasController {
             return;
         }
 
+        String locAEliminar = selected.getLocalizacionCondensadoras();
+        if(ExcelManager.existParametroEnCondensadoras(locAEliminar, ExcelManager.Columnas.LOCALIZACION_CONDENSADORA)){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Esta acción no está permitida");
+            alert.setHeaderText("No se puede eliminar esta localización");
+            alert.setContentText("La localización '" +locAEliminar+ "' no se puede eliminar porque está siendo usada en la hoja 'Condensadoras'.");
+            alert.showAndWait();
+            return;
+        }
+
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Confirmar eliminación");
         alert.setHeaderText("¿Eliminar este Localizador de Condensadoras?");

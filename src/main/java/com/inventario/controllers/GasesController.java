@@ -39,10 +39,10 @@ public class GasesController {
         var excelFile = ExcelManager.leerHoja("PARAM_GASES");
          for(int i=1; i<excelFile.size() ; i++){
              var fila = excelFile.get(i);
-             if(fila.size()>= 2){
+             if(!fila.isEmpty()){
                  String gas = fila.get(0).trim();
-                 String desc = fila.get(1).trim();
-                 if(!gas.isEmpty() && !desc.isEmpty()){
+                 if(!gas.isEmpty()){
+                     String desc = (fila.size() > 1) ? fila.get(1).trim() : "";
                      gases.add(new Gas(gas,desc));
                  }
              }
@@ -84,6 +84,17 @@ public class GasesController {
             mainAppController.showAlert("Selecciona un gas para eliminar.");
             return;
         }
+
+        String gasAEliminar = seleccionado.getGas();
+        if(ExcelManager.existParametroEnCondensadoras(gasAEliminar,ExcelManager.Columnas.GAS)){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Esta acción no está permitida");
+            alert.setHeaderText("No se puede eliminar este gas");
+            alert.setContentText("El gas '" +gasAEliminar+ "' no se puede eliminar porque está siendo usada en la hoja 'Condensadoras'.");
+            alert.showAndWait();
+            return;
+        }
+
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar que lo quieres eliminar");
         confirmacion.setHeaderText("¿Estas seguro que deseas eliminarlo?");
