@@ -1,7 +1,9 @@
 package com.inventario.controllers;
 
+import com.inventario.models.Estado;
 import com.inventario.models.Gas;
 import com.inventario.utils.ExcelManager;
+import com.inventario.utils.FilterUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -21,8 +23,11 @@ public class GasesController {
     private TableColumn<Gas, String> colGas;
     @FXML
     private TableColumn<Gas, String> colDescripcion;
+    @FXML
+    private Button btnFiltroGas;
 
     private MainAppController mainAppController;
+    private ObservableList<Gas>gases;
 
     public void setMainAppController(MainAppController controller){
         this.mainAppController = controller;
@@ -32,10 +37,11 @@ public class GasesController {
         colGas.setCellValueFactory(new PropertyValueFactory<>("gas"));
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
         cargarDatos();
+        noOrdenar();
     }
 
     private void cargarDatos(){
-        ObservableList<Gas>gases = FXCollections.observableArrayList();
+        gases = FXCollections.observableArrayList();
         var excelFile = ExcelManager.leerHoja("PARAM_GASES");
          for(int i=1; i<excelFile.size() ; i++){
              var fila = excelFile.get(i);
@@ -138,5 +144,14 @@ public class GasesController {
             return null;
         });
         return dialog;
+    }
+
+    @FXML
+    private void configurarFiltroGas(){
+        FilterUtils.abrirFiltroGenerico("Filtrar por Gas", Gas::getGas,btnFiltroGas,tablaGases,gases);
+    }
+
+    private void noOrdenar(){
+        colGas.setSortable(false);
     }
 }

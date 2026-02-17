@@ -1,8 +1,10 @@
 package com.inventario.controllers;
 
 import com.inventario.models.Estado;
+import com.inventario.models.Gas;
 import com.inventario.models.Loc_Condensadoras;
 import com.inventario.utils.ExcelManager;
+import com.inventario.utils.FilterUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -16,8 +18,11 @@ public class Loc_CondensadorasController {
 
     @FXML
     private TableColumn<Loc_Condensadoras,String> colLoc_Condensadoras;
+    @FXML
+    private Button btnFiltroLocCondensadoras;
 
     private MainAppController mainController;
+    private ObservableList<Loc_Condensadoras> loc_condensadoras;
 
     public void setMainController(MainAppController controller) {
         this.mainController = controller;
@@ -27,10 +32,11 @@ public class Loc_CondensadorasController {
     public void initialize() {
         colLoc_Condensadoras.setCellValueFactory(new PropertyValueFactory<>("localizacionCondensadoras"));
         cargarDatos();
+        noOrdenar();
     }
 
     public void cargarDatos(){
-        ObservableList<Loc_Condensadoras> loc_condensadoras = FXCollections.observableArrayList();
+        loc_condensadoras = FXCollections.observableArrayList();
         var excelFile = ExcelManager.leerHoja("PARAM_LOC_COND");
         for (int i = 1; i < excelFile.size(); i++){
             var fila = excelFile.get(i);
@@ -108,6 +114,15 @@ public class Loc_CondensadorasController {
                 ExcelManager.eliminarFila("PARAM_LOC_COND", selected.getLocalizacionCondensadoras());
             }
         });
+    }
+
+    @FXML
+    private void configurarFiltroLocCondensadoras(){
+        FilterUtils.abrirFiltroGenerico("Filtrar por Localización Condensadoras", Loc_Condensadoras::getLocalizacionCondensadoras,btnFiltroLocCondensadoras,tablaLoc_Condensadoras,loc_condensadoras);
+    }
+
+    private void noOrdenar(){
+        colLoc_Condensadoras.setSortable(false);
     }
 
 }

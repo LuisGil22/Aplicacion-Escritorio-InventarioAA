@@ -237,6 +237,19 @@ public class MainAppController {
                     e.printStackTrace();
                 }
                 break;
+            case "CASSETTES":
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/cassette.fxml"));
+                    Node view = loader.load();
+                    CassetteController cassetteController = loader.getController();
+                    cassetteController.setMainAppController(this);
+
+                    stackPaneContent.getChildren().setAll(view, SidebarButtonMostrar, VolverInicio);
+                    VolverInicio.setVisible(true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
             default:
                 mostrarMensajeBienvenida();
         }

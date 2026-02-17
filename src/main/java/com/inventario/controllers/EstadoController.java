@@ -1,7 +1,9 @@
 package com.inventario.controllers;
 
+import com.inventario.models.Condensadora;
 import com.inventario.models.Estado;
 import com.inventario.utils.ExcelManager;
+import com.inventario.utils.FilterUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -18,9 +20,11 @@ public class EstadoController {
     @FXML
     private TableColumn<Estado, String> colEstado;
 
+    @FXML private Button btnFiltroEstado;
 
     // Referencia al controlador principal
     private MainAppController mainController;
+    private ObservableList<Estado>estados;
 
     public void setMainController(MainAppController controller) {
         this.mainController = controller;
@@ -30,10 +34,11 @@ public class EstadoController {
     public void initialize() {
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
         cargarDatos();
+        noOrdenar();
     }
 
     private void cargarDatos() {
-        ObservableList<Estado> estados = FXCollections.observableArrayList();
+        estados = FXCollections.observableArrayList();
         var excelFile = ExcelManager.leerHoja("PARAM_ESTADO");
         for (int i = 1; i < excelFile.size(); i++){
             var fila = excelFile.get(i);
@@ -111,6 +116,15 @@ public class EstadoController {
                 ExcelManager.eliminarFila("PARAM_ESTADO", selected.getEstado());
             }
         });
+    }
+
+    @FXML
+    private void configurarFiltroEstado(){
+        FilterUtils.abrirFiltroGenerico("Filtrar por Estado", Estado::getEstado,btnFiltroEstado,tablaEstados,estados);
+    }
+
+    private void noOrdenar(){
+        colEstado.setSortable(false);
     }
 
 }

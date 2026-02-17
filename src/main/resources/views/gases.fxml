@@ -17,7 +17,14 @@
 
     <TableView fx:id="tablaGases" styleClass="table-view">
         <columns>
-            <TableColumn text="GAS" fx:id="colGas" prefWidth="100"/>
+            <TableColumn fx:id="colGas" prefWidth="100">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="GAS"/>
+                        <Button fx:id="btnFiltroGas" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroGas"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
             <TableColumn text="DESCRIPCION" fx:id="colDescripcion" prefWidth="400"/>
         </columns>
     </TableView>

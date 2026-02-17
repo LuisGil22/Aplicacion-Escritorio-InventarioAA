@@ -20,7 +20,14 @@
 
     <TableView fx:id="tablaMarca" styleClass="table-view">
         <columns>
-            <TableColumn text="MARCA" fx:id="colMarca" prefWidth="100"/>
+            <TableColumn fx:id="colMarca" prefWidth="100">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="MARCA"/>
+                        <Button fx:id="btnFiltroMarca" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroMarca"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
             <TableColumn text="DESCRIPCION" fx:id="colDescripcion" prefWidth="400"/>
         </columns>
     </TableView>

@@ -1,7 +1,9 @@
 package com.inventario.controllers;
 
+import com.inventario.models.Gas;
 import com.inventario.models.Planta;
 import com.inventario.utils.ExcelManager;
+import com.inventario.utils.FilterUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -21,7 +23,11 @@ public class PlantaController {
     @FXML
     private TableColumn<Planta,String> colDescripcion;
 
+    @FXML
+    private Button btnFiltroPlanta;
+
     private MainAppController mainAppController;
+    private ObservableList<Planta> plantas;
 
     public void setMainAppController(MainAppController mainAppController) {
         this.mainAppController = mainAppController;
@@ -31,10 +37,11 @@ public class PlantaController {
         colPlanta.setCellValueFactory(new PropertyValueFactory<>("planta"));
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
         cargarDatos();
+        noOrdenar();
     }
 
     private void cargarDatos(){
-        ObservableList<Planta> plantas = FXCollections.observableArrayList();
+        plantas = FXCollections.observableArrayList();
         var excelFile = ExcelManager.leerHoja("PARAM_PLANTAS");
         for(int i=1; i<excelFile.size() ; i++){
             var fila = excelFile.get(i);
@@ -126,5 +133,14 @@ public class PlantaController {
             return null;
         });
         return dialog;
+    }
+
+    @FXML
+    private void configurarFiltroPlanta(){
+        FilterUtils.abrirFiltroGenerico("Filtrar por Planta", Planta::getPlanta,btnFiltroPlanta,tablaPlantas,plantas);
+    }
+
+    private void noOrdenar(){
+        colPlanta.setSortable(false);
     }
 }

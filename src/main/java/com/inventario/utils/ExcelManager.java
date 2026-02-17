@@ -106,31 +106,31 @@ public class ExcelManager {
         try (FileInputStream fis = new FileInputStream(file)) {
             Workbook workbook = new XSSFWorkbook(fis);
             Sheet sheet = workbook.getSheet(nombreHoja);
-            if (sheet != null) {
-                System.out.println("Hoja '" + nombreHoja + "' tiene " + sheet.getLastRowNum() + " filas.");
-                for (Row row : sheet) {
-                    System.out.print("Fila " + row.getRowNum() + ": ");
-                    List<String> fila = new ArrayList<>();
-                    for (Cell cell : row) {
-                        String valor = "";
+            if (sheet == null) {
+                return datos;
+            }
+            System.out.println("Hoja '" + nombreHoja + "' tiene " + sheet.getLastRowNum() + " filas.");
+            for (Row row : sheet) {
+                System.out.print("Fila " + row.getRowNum() + ": ");
+                List<String> fila = new ArrayList<>();
+                int maxCol = row.getLastCellNum();
+                for (int j =0; j<16 ; j++) {
+                    Cell cell = row.getCell(j);
+                    String valor = "";
+                    if(cell != null) {
                         switch (cell.getCellType()) {
                             case STRING:
                                 valor = cell.getStringCellValue();
                                 break;
                             case NUMERIC:
-                                double numericValue = cell.getNumericCellValue();
-                                if (DateUtil.isValidExcelDate(numericValue)) {
-                                LocalDate date = Instant.ofEpochMilli(DateUtil.getJavaDate(numericValue).getTime())
-                                        .atZone(ZoneId.systemDefault())
-                                        .toLocalDate();
-                                    valor = date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                                if (DateUtil.isCellDateFormatted(cell)) {
+                                    // Si es fecha, formatear como dd/MM/yyyy
+                                    valor = cell.getLocalDateTimeCellValue()
+                                            .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
                                 } else {
-                                    // Es un número normal (no fecha)
-                                    if (numericValue == Math.floor(numericValue)) {
-                                        valor = String.valueOf((long) numericValue); // entero
-                                    } else {
-                                        valor = String.valueOf(numericValue); // decimal
-                                    }
+                                    // Si es número, convertir a entero o decimal sin notación científica
+                                    double d = cell.getNumericCellValue();
+                                    valor = String.valueOf((long) d);
                                 }
                                 break;
                             case BOOLEAN:
@@ -139,12 +139,11 @@ public class ExcelManager {
                             default:
                                 valor = "";
                         }
-                        fila.add(valor);
-                        System.out.print("[" + valor + "] ");
                     }
-                    System.out.println();
-                    datos.add(fila);
+                    fila.add(valor.trim());
+                    System.out.print("[" + valor + "] ");
                 }
+                datos.add(fila);
             }
             workbook.close();
         } catch (IOException e) {

@@ -2,20 +2,20 @@ package com.inventario.models;
 
 public class Model_Cassette {
 
-    private String modelo;
+    private String modeloCas;
     private String descripcion;
 
-    public Model_Cassette(String modelo, String descripcion){
-        this.modelo = modelo;
+    public Model_Cassette(String modeloCas, String descripcion){
+        this.modeloCas = modeloCas;
         this.descripcion = descripcion;
     }
 
-    public String getModelo() {
-        return modelo;
+    public String getModeloCas() {
+        return modeloCas;
     }
 
-    public void setModelo(String modelo) {
-        this.modelo = modelo;
+    public void setModeloCas(String modeloCas) {
+        this.modeloCas = modeloCas;
     }
 
     public String getDescripcion() {

@@ -20,7 +20,14 @@
 
     <TableView fx:id="tablaPlantas" styleClass="table-view">
         <columns>
-            <TableColumn text="PLANTA" fx:id="colPlanta" prefWidth="100"/>
+            <TableColumn fx:id="colPlanta" prefWidth="100">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="PLANTA"/>
+                        <Button fx:id="btnFiltroPlanta" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroPlanta"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
             <TableColumn text="DESCRIPCION" fx:id="colDescripcion" prefWidth="400"/>
         </columns>
     </TableView>

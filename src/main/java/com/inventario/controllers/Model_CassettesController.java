@@ -1,8 +1,10 @@
 package com.inventario.controllers;
 
+import com.inventario.models.Gas;
 import com.inventario.models.Marca;
 import com.inventario.models.Model_Cassette;
 import com.inventario.utils.ExcelManager;
+import com.inventario.utils.FilterUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -17,25 +19,30 @@ public class Model_CassettesController {
     private TableView<Model_Cassette> tablaModel_Cas;
 
     @FXML
-    private TableColumn<Model_Cassette,String> colModelo;
+    private TableColumn<Model_Cassette,String> colModeloCas;
 
     @FXML
     private TableColumn<Model_Cassette,String> colDescripcion;
 
+    @FXML
+    private Button btnFiltroModeloCas;
+
     private MainAppController mainAppController;
+    private ObservableList<Model_Cassette> modelCassettes;
 
     public void setMainAppController(MainAppController mainAppController) {
         this.mainAppController = mainAppController;
     }
 
     public void initialize(){
-        colModelo.setCellValueFactory(new PropertyValueFactory<>("modelo"));
+        colModeloCas.setCellValueFactory(new PropertyValueFactory<>("modeloCas"));
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
         cargarDatos();
+        noOrdenar();
     }
 
     private void cargarDatos(){
-        ObservableList<Model_Cassette> modelCassettes = FXCollections.observableArrayList();
+        modelCassettes = FXCollections.observableArrayList();
         var excelFile = ExcelManager.leerHoja("PARAM_MODELOS_CAS");
         for(int i=1; i<excelFile.size() ; i++){
             var fila = excelFile.get(i);
@@ -55,7 +62,7 @@ public class Model_CassettesController {
         Dialog<Model_Cassette> dialog = crearDialogo(null);
         dialog.showAndWait().ifPresent(modelCassette -> {
             tablaModel_Cas.getItems().add(modelCassette);
-            ExcelManager.añadirFila("PARAM_MODELOS_CAS", modelCassette.getModelo(), modelCassette.getDescripcion());
+            ExcelManager.añadirFila("PARAM_MODELOS_CAS", modelCassette.getModeloCas(), modelCassette.getDescripcion());
         });
     }
 
@@ -69,9 +76,9 @@ public class Model_CassettesController {
         Dialog<Model_Cassette>dialog = crearDialogo(seleccionado);
         dialog.showAndWait().ifPresent(nuevo -> {
             ExcelManager.modificarFila("PARAM_MODELOS_CAS",
-                    new String[]{seleccionado.getModelo(), seleccionado.getDescripcion()},
-                    new String[]{nuevo.getModelo(), nuevo.getDescripcion()});
-            seleccionado.setModelo(nuevo.getModelo());
+                    new String[]{seleccionado.getModeloCas(), seleccionado.getDescripcion()},
+                    new String[]{nuevo.getModeloCas(), nuevo.getDescripcion()});
+            seleccionado.setModeloCas(nuevo.getModeloCas());
             seleccionado.setDescripcion(nuevo.getDescripcion());
             tablaModel_Cas.refresh();
         });
@@ -92,7 +99,7 @@ public class Model_CassettesController {
         confirmacion.showAndWait().ifPresent(respuesta -> {
             if(respuesta == ButtonType.OK){
                 tablaModel_Cas.getItems().remove(seleccionado);
-                ExcelManager.eliminarFila("PARAM_MODELOS_CAS", seleccionado.getModelo(), seleccionado.getDescripcion());
+                ExcelManager.eliminarFila("PARAM_MODELOS_CAS", seleccionado.getModeloCas(), seleccionado.getDescripcion());
             }
         });
     }
@@ -109,7 +116,7 @@ public class Model_CassettesController {
         descField.setPromptText("Descripcion");
 
         if(modelCassette != null){
-            modeloField.setText(modelCassette.getModelo());
+            modeloField.setText(modelCassette.getModeloCas());
             descField.setText(modelCassette.getDescripcion());
         }
 
@@ -127,5 +134,14 @@ public class Model_CassettesController {
             return null;
         });
         return dialog;
+    }
+
+    @FXML
+    private void configurarFiltroModeloCas(){
+        FilterUtils.abrirFiltroGenerico("Filtrar por Modelo", Model_Cassette::getModeloCas,btnFiltroModeloCas,tablaModel_Cas,modelCassettes);
+    }
+
+    private void noOrdenar(){
+        colModeloCas.setSortable(false);
     }
 }

@@ -3,6 +3,7 @@ package com.inventario.controllers;
 import com.inventario.models.Model_Cassette;
 import com.inventario.models.Model_Condensadora;
 import com.inventario.utils.ExcelManager;
+import com.inventario.utils.FilterUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -22,7 +23,11 @@ public class Model_CondensadorasController {
     @FXML
     private TableColumn<Model_Condensadora,String> colDescripcion;
 
+    @FXML
+    private Button btnFiltroModelo;
+
     private MainAppController mainAppController;
+    private ObservableList<Model_Condensadora> modelCondensadoras;
 
     public void setMainAppController(MainAppController mainAppController) {
         this.mainAppController = mainAppController;
@@ -32,10 +37,11 @@ public class Model_CondensadorasController {
         colModelo.setCellValueFactory(new PropertyValueFactory<>("modelo"));
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
         cargarDatos();
+        noOrdenar();
     }
 
     private void cargarDatos(){
-        ObservableList<Model_Condensadora> modelCondensadoras = FXCollections.observableArrayList();
+        modelCondensadoras = FXCollections.observableArrayList();
         var excelFile = ExcelManager.leerHoja("PARAM_MODELOS_COND");
         for(int i=1; i<excelFile.size() ; i++){
             var fila = excelFile.get(i);
@@ -138,5 +144,14 @@ public class Model_CondensadorasController {
             return null;
         });
         return dialog;
+    }
+
+    @FXML
+    private void configurarFiltroModelo(){
+        FilterUtils.abrirFiltroGenerico("Filtrar por Modelo", Model_Condensadora::getModelo,btnFiltroModelo,tablaModel_Cond,modelCondensadoras);
+    }
+
+    private void noOrdenar(){
+        colModelo.setSortable(false);
     }
 }

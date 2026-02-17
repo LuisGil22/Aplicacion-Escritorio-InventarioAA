@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.inventario.controllers.CassetteController"
+            stylesheets="@../css/parametros.css"
+            styleClass="vbox">
+
+    <HBox styleClass="box">
+        <Button text="Añadir" onAction="#onAddCas" styleClass="action-button"/>
+        <Button text="Modificar" onAction="#onEditCas" styleClass="action-button"/>
+        <Button text="Eliminar" onAction="#onDeleteCas" styleClass="action-button"/>
+    </HBox>
+
+    <TableView fx:id="tablaCassette" styleClass="table-view-cas">
+        <columns>
+            <TableColumn fx:id="colNumCassette" prefWidth="120">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="NUM_CASSETTE"/>
+                        <Button fx:id="btnFiltroNumCassette" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroNumCassette"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colNumSecuencia" prefWidth="120">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="NUM_SECUENCIA"/>
+                        <Button fx:id="btnFiltroNumSecuencia" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroNumSecuencia"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colEstado" prefWidth="90">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="ESTADO"/>
+                        <Button fx:id="btnFiltroEstado" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroEstado"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colPlanta" prefWidth="90">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="PLANTA"/>
+                        <Button fx:id="btnFiltroPlanta" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroPlanta"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colNombre" prefWidth="150">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="NOMBRE"/>
+                        <Button fx:id="btnFiltroNombre" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroNombre"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colPotenciaCalor" prefWidth="150">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="POTENCIA_CALOR"/>
+                        <Button fx:id="btnFiltroPotenciaCalor" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroPotenciaCalor"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colPotenciaFrio" prefWidth="150">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="POTENCIA_FRIO"/>
+                        <Button fx:id="btnFiltroPotenciaFrio" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroPotenciaFrio"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colMarcaModelo" prefWidth="150">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="MARCA-MODELO"/>
+                        <Button fx:id="btnFiltroMarcaModelo" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroMarcaModelo"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colNumSerieCas" prefWidth="150">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="NUM_SERIE_CAS"/>
+                        <Button fx:id="btnFiltroNumSerieCas" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroNumSerieCas"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colCondensadora" prefWidth="100">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="CONDENSADORA"/>
+                        <Button fx:id="btnFiltroCondensadora" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroCondensadora"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colLocalizacionCondensadora" prefWidth="160">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="LOCALIZACIÓN_CONDENSADORA"/>
+                        <Button fx:id="btnFiltroLocalizacionCondensadora" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroLocalizacionCondensadora"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colGas" prefWidth="90">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="GAS"/>
+                        <Button fx:id="btnFiltroGas" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroGas"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colFechaInst" prefWidth="150">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="FECHA_INSTALACION"/>
+                        <Button fx:id="btnFiltroFechaInst" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroFechaInst"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colFechaRev" prefWidth="150">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="FECHA_REVISION"/>
+                        <Button fx:id="btnFiltroFechaRev" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroFechaRev"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colAveria" prefWidth="100">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="AVERIA"/>
+                        <Button fx:id="btnFiltroAveria" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroAveria"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colFoto" prefWidth="100">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="FOTO"/>
+                        <Button fx:id="btnFiltroFoto" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroFoto"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+        </columns>
+    </TableView>
+    <VBox spacing="4" style="-fx-padding: 8 0 0 0;">
+        <Label text="Condensadora F - Línea Azul" styleClass="footer-label"/>
+        <Label text="Condensadora E - Línea Roja" styleClass="footer-label"/>
+        <Label text="Condensadora D - Línea Amarilla" styleClass="footer-label"/>
+    </VBox>
+</VBox>

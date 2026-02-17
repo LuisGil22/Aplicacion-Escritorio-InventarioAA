@@ -3,6 +3,7 @@ package com.inventario.controllers;
 import com.inventario.models.Gas;
 import com.inventario.models.Marca;
 import com.inventario.utils.ExcelManager;
+import com.inventario.utils.FilterUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -22,7 +23,11 @@ public class MarcaController {
     @FXML
     private TableColumn<Marca,String> colDescripcion;
 
+    @FXML
+    private Button btnFiltroMarca;
+
     private MainAppController mainAppController;
+    private ObservableList<Marca> marcas;
 
     public void setMainAppController(MainAppController mainAppController) {
         this.mainAppController = mainAppController;
@@ -32,10 +37,11 @@ public class MarcaController {
         colMarca.setCellValueFactory(new PropertyValueFactory<>("marca"));
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
         cargarDatos();
+        noOrdenar();
     }
 
     private void cargarDatos(){
-        ObservableList<Marca> marcas = FXCollections.observableArrayList();
+        marcas = FXCollections.observableArrayList();
         var excelFile = ExcelManager.leerHoja("PARAM_MARCAS");
         for(int i=1; i<excelFile.size() ; i++){
             var fila = excelFile.get(i);
@@ -137,5 +143,14 @@ public class MarcaController {
             return null;
         });
         return dialog;
+    }
+
+    @FXML
+    private void configurarFiltroMarca(){
+        FilterUtils.abrirFiltroGenerico("Filtrar por Marca", Marca::getMarca,btnFiltroMarca,tablaMarca,marcas);
+    }
+
+    private void noOrdenar(){
+        colMarca.setSortable(false);
     }
 }

@@ -20,7 +20,14 @@
 
     <TableView fx:id="tablaModel_Cas" styleClass="table-view">
         <columns>
-            <TableColumn text="MODELO" fx:id="colModelo" prefWidth="100"/>
+            <TableColumn fx:id="colModeloCas" prefWidth="150">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="MODELO"/>
+                        <Button fx:id="btnFiltroModeloCas" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroModeloCas"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
             <TableColumn text="DESCRIPCION" fx:id="colDescripcion" prefWidth="400"/>
         </columns>
     </TableView>

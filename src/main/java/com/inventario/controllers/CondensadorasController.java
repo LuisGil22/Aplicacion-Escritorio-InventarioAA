@@ -2,6 +2,7 @@ package com.inventario.controllers;
 
 import com.inventario.models.Condensadora;
 import com.inventario.utils.ExcelManager;
+import com.inventario.utils.FilterUtils;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -369,52 +370,52 @@ public class CondensadorasController {
 
     @FXML
     private void configurarFiltroCondensadora(){
-        configurarFiltro("Filtrar por Condensadora", Condensadora::getCondensadora,btnFiltroCondensadora);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Condensadora", Condensadora::getCondensadora,btnFiltroCondensadora,tablaCondensadoras,allDatos);
     }
 
     @FXML
     private void configurarFiltroNumSecuencia(){
-        configurarFiltro("Filtrar por Numero de Secuencia", item -> String.valueOf(item.getNumSecuencia()),btnFiltroNumSecuencia);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Numero de Secuencia", item -> String.valueOf(item.getNumSecuencia()),btnFiltroNumSecuencia,tablaCondensadoras,allDatos);
     }
 
     @FXML
     private void configurarFiltroEstado(){
-        configurarFiltro("Filtrar por Estado", Condensadora::getEstado,btnFiltroEstado);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Estado", Condensadora::getEstado,btnFiltroEstado,tablaCondensadoras,allDatos);
     }
 
     @FXML
     private void configurarFiltroMarca(){
-        configurarFiltro("Filtrar por Marca", Condensadora::getMarca,btnFiltroMarca);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Marca", Condensadora::getMarca,btnFiltroMarca,tablaCondensadoras,allDatos);
     }
 
     @FXML
     private void configurarFiltroModelo(){
-        configurarFiltro("Filtrar por Modelo", Condensadora::getModelo,btnFiltroModelo);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Modelo", Condensadora::getModelo,btnFiltroModelo,tablaCondensadoras,allDatos);
     }
 
     @FXML
     private void configurarFiltroNumSerie(){
-        configurarFiltro("Filtrar por Numero de Serie", item -> String.valueOf(item.getNumSerieCond()),btnFiltroNumSerie);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Numero de Serie", item -> String.valueOf(item.getNumSerieCond()),btnFiltroNumSerie,tablaCondensadoras,allDatos);
     }
 
     @FXML
     private void configurarFiltroLocCondensadoras(){
-        configurarFiltro("Filtrar por Localización de Condensadora", Condensadora::getLoc_condensadora,btnFiltroLocCondensadoras);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Localización de Condensadora", Condensadora::getLoc_condensadora,btnFiltroLocCondensadoras,tablaCondensadoras,allDatos);
     }
 
     @FXML
     private void configurarFiltroGas(){
-        configurarFiltro("Filtrar por Gas", Condensadora::getGas,btnFiltroGas);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Gas", Condensadora::getGas,btnFiltroGas,tablaCondensadoras,allDatos);
     }
 
     @FXML
     private void configurarFiltroFechaInst(){
-        configurarFiltro("Filtrar por Fecha de Instalación", Condensadora::getFechaInstalacion,btnFiltroFechaInst);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Instalación", Condensadora::getFechaInstalacion,btnFiltroFechaInst,tablaCondensadoras,allDatos);
     }
 
     @FXML
     private void configurarFiltroFechaRev(){
-        configurarFiltro("Filtrar por Fecha de Revisión", Condensadora::getFechaRevision,btnFiltroFechaRev);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Revisión", Condensadora::getFechaRevision,btnFiltroFechaRev,tablaCondensadoras,allDatos);
     }
 
     private void configurarFiltro(String titulo, Function<Condensadora,String>extractor,Button button){
