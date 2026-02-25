@@ -13,6 +13,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 
+import java.util.List;
+
 public class Model_CassettesController {
 
     @FXML
@@ -46,10 +48,10 @@ public class Model_CassettesController {
         var excelFile = ExcelManager.leerHoja("PARAM_MODELOS_CAS");
         for(int i=1; i<excelFile.size() ; i++){
             var fila = excelFile.get(i);
-            if(fila.size()>= 2){
+            if(!fila.isEmpty()){
                 String modelo = fila.get(0).trim();
-                String desc = fila.get(1).trim();
-                if(!modelo.isEmpty() && !desc.isEmpty()){
+                if(!modelo.isEmpty()){
+                    String desc = (fila.size() > 1) ? fila.get(1).trim() : "";
                     modelCassettes.add(new Model_Cassette(modelo,desc));
                 }
             }
@@ -75,12 +77,27 @@ public class Model_CassettesController {
         }
         Dialog<Model_Cassette>dialog = crearDialogo(seleccionado);
         dialog.showAndWait().ifPresent(nuevo -> {
-            ExcelManager.modificarFila("PARAM_MODELOS_CAS",
-                    new String[]{seleccionado.getModeloCas(), seleccionado.getDescripcion()},
-                    new String[]{nuevo.getModeloCas(), nuevo.getDescripcion()});
-            seleccionado.setModeloCas(nuevo.getModeloCas());
-            seleccionado.setDescripcion(nuevo.getDescripcion());
-            tablaModel_Cas.refresh();
+            List<List<String>> datos = ExcelManager.leerHoja("PARAM_MODELOS_CAS");
+            int index = -1;
+            for (int i = 1; i < datos.size(); i++) {
+                List<String> fila = datos.get(i);
+                // Comparar por la primera columna (GAS)
+                if (fila.size() > 0 && fila.get(0).trim().equals(seleccionado.getModeloCas())) {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index != -1) {
+                // Usar modificarFilaPorIndice
+                ExcelManager.modificarFila("PARAM_MODELOS_CAS", index, new String[]{nuevo.getModeloCas(), nuevo.getDescripcion()}
+                );
+                seleccionado.setModeloCas(nuevo.getModeloCas());
+                seleccionado.setDescripcion(nuevo.getDescripcion());
+                tablaModel_Cas.refresh();
+            } else {
+                mainAppController.showAlert("No se encontró el Modelo de Cassette en el archivo.");
+            }
         });
     }
 
@@ -91,6 +108,16 @@ public class Model_CassettesController {
             mainAppController.showAlert("Selecciona un modelo de cassette para eliminar.");
             return;
         }
+        String modeloCasAEliminar = seleccionado.getModeloCas();
+
+        if(ExcelManager.existParametroEnCassettes(modeloCasAEliminar,"MARCA/MODELO")){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Esta acción no está permitida");
+            alert.setHeaderText("No se puede eliminar este modelo de cassette");
+            alert.setContentText("El modelo de cassette '" +modeloCasAEliminar+ "' no se puede eliminar porque está siendo usada en la hoja 'Cassette'.");
+            alert.showAndWait();
+            return;
+        }
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar que lo quieres eliminar");
         confirmacion.setHeaderText("¿Estas seguro que deseas eliminarlo?");
@@ -99,7 +126,7 @@ public class Model_CassettesController {
         confirmacion.showAndWait().ifPresent(respuesta -> {
             if(respuesta == ButtonType.OK){
                 tablaModel_Cas.getItems().remove(seleccionado);
-                ExcelManager.eliminarFila("PARAM_MODELOS_CAS", seleccionado.getModeloCas(), seleccionado.getDescripcion());
+                ExcelManager.eliminarFila("PARAM_MODELOS_CAS", modeloCasAEliminar);
             }
         });
     }
@@ -120,7 +147,7 @@ public class Model_CassettesController {
             descField.setText(modelCassette.getDescripcion());
         }
 
-        VBox vBox = new VBox(10,new Label("Modelo: "), modeloField, new Label("Descripcion: ", descField));
+        VBox vBox = new VBox(10,new Label("Modelo: "), modeloField, new Label("Descripcion: "), descField);
         vBox.setPadding(new Insets(10));
 
         dialog.getDialogPane().setContent(vBox);
@@ -143,5 +170,6 @@ public class Model_CassettesController {
 
     private void noOrdenar(){
         colModeloCas.setSortable(false);
+        colDescripcion.setSortable(false);
     }
 }

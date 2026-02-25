@@ -5,19 +5,20 @@ import java.util.Date;
 public class Condensadora {
 
     private String condensadora;
-    private int numSecuencia;
+    private Integer numSecuencia;
     private String estado;
     private String marca;
     private String modelo;
-    private long numSerieCond;
+    private Long numSerieCond;
     private String loc_condensadora;
     private String gas;
     private String fechaInstalacion;
+    private String fechaBaja;
     private String fechaRevision;
     private String averia;
     private String observaciones;
 
-    public Condensadora(String condensadora, int numSecuencia,String estado, String marca, String modelo, long numSerieCond, String loc_condensadora, String gas, String fechaInstalacion, String fechaRevision, String averia, String observaciones) {
+    public Condensadora(String condensadora, Integer numSecuencia,String estado, String marca, String modelo, Long numSerieCond, String loc_condensadora, String gas, String fechaInstalacion,String fechaBaja, String fechaRevision, String averia, String observaciones) {
         this.condensadora = condensadora;
         this.numSecuencia = numSecuencia;
         this.estado = estado;
@@ -27,6 +28,7 @@ public class Condensadora {
         this.loc_condensadora = loc_condensadora;
         this.gas = gas;
         this.fechaInstalacion = fechaInstalacion;
+        this.fechaBaja = fechaBaja;
         this.fechaRevision = fechaRevision;
         this.averia = averia;
         this.observaciones = observaciones;
@@ -40,11 +42,11 @@ public class Condensadora {
         this.condensadora = condensadora;
     }
 
-    public int getNumSecuencia() {
+    public Integer getNumSecuencia() {
         return numSecuencia;
     }
 
-    public void setNumSecuencia(int numSecuencia) {
+    public void setNumSecuencia(Integer numSecuencia) {
         this.numSecuencia = numSecuencia;
     }
 
@@ -104,11 +106,11 @@ public class Condensadora {
         this.loc_condensadora = loc_condensadora;
     }
 
-    public long getNumSerieCond() {
+    public Long getNumSerieCond() {
         return numSerieCond;
     }
 
-    public void setNumSerieCond(long numSerieCond) {
+    public void setNumSerieCond(Long numSerieCond) {
         this.numSerieCond = numSerieCond;
     }
 
@@ -126,5 +128,13 @@ public class Condensadora {
 
     public void setMarca(String marca) {
         this.marca = marca;
+    }
+
+    public String getFechaBaja() {
+        return fechaBaja;
+    }
+
+    public void setFechaBaja(String fechaBaja) {
+        this.fechaBaja = fechaBaja;
     }
 }

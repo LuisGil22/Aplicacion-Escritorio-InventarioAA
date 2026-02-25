@@ -12,10 +12,16 @@
             stylesheets="@../css/parametros.css"
             styleClass="vbox">
 
-    <HBox styleClass="box">
-        <Button text="Añadir" onAction="#onAddCas" styleClass="action-button"/>
-        <Button text="Modificar" onAction="#onEditCas" styleClass="action-button"/>
-        <Button text="Eliminar" onAction="#onDeleteCas" styleClass="action-button"/>
+    <HBox spacing="10" style="-fx-padding: 5 10 5 10;">
+        <Label fx:id="lblActualizado" text="Actualizado: "
+               style="-fx-font-size: 12px;" HBox.hgrow="NEVER" />
+        <Pane HBox.hgrow="ALWAYS"/>
+        <HBox spacing="10" alignment="CENTER">
+            <Button text="Añadir" onAction="#onAddCas" styleClass="action-button"/>
+            <Button text="Modificar" onAction="#onEditCas" styleClass="action-button"/>
+            <Button text="Eliminar" onAction="#onDeleteCas" styleClass="action-button"/>
+        </HBox>
+        <Pane HBox.hgrow="ALWAYS"/>
     </HBox>
 
     <TableView fx:id="tablaCassette" styleClass="table-view-cas">
@@ -79,7 +85,7 @@
             <TableColumn fx:id="colMarcaModelo" prefWidth="150">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
-                        <Label text="MARCA-MODELO"/>
+                        <Label text="MARCA/MODELO"/>
                         <Button fx:id="btnFiltroMarcaModelo" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroMarcaModelo"/>
                     </HBox>
                 </graphic>
@@ -124,6 +130,14 @@
                     </HBox>
                 </graphic>
             </TableColumn>
+            <TableColumn fx:id="colFechaBaja" prefWidth="120">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="FECHA_BAJA"/>
+                        <Button fx:id="btnFiltroFechaBaja" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroFechaBaja"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
             <TableColumn fx:id="colFechaRev" prefWidth="150">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
@@ -148,11 +162,12 @@
                     </HBox>
                 </graphic>
             </TableColumn>
+            <TableColumn fx:id="colObservaciones" prefWidth="150" text="OBSERVACIONES"/>
         </columns>
     </TableView>
-    <VBox spacing="4" style="-fx-padding: 8 0 0 0;">
+    <!--<VBox spacing="4" style="-fx-padding: 8 0 0 0;">
         <Label text="Condensadora F - Línea Azul" styleClass="footer-label"/>
         <Label text="Condensadora E - Línea Roja" styleClass="footer-label"/>
         <Label text="Condensadora D - Línea Amarilla" styleClass="footer-label"/>
-    </VBox>
+    </VBox>-->
 </VBox>

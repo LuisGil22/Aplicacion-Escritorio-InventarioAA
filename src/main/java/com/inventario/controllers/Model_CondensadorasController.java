@@ -12,6 +12,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 
+import java.util.List;
+
 public class Model_CondensadorasController {
 
     @FXML
@@ -74,12 +76,27 @@ public class Model_CondensadorasController {
         }
         Dialog<Model_Condensadora>dialog = crearDialogo(seleccionada);
         dialog.showAndWait().ifPresent(nueva -> {
-            ExcelManager.modificarFila("PARAM_MODELOS_COND",
-                    new String[]{seleccionada.getModelo(), seleccionada.getDescripcion()},
-                    new String[]{nueva.getModelo(), nueva.getDescripcion()});
-            seleccionada.setModelo(nueva.getModelo());
-            seleccionada.setDescripcion(nueva.getDescripcion());
-            tablaModel_Cond.refresh();
+            List<List<String>> datos = ExcelManager.leerHoja("PARAM_MODELOS_COND");
+            int index = -1;
+            for (int i = 1; i < datos.size(); i++) {
+                List<String> fila = datos.get(i);
+                // Comparar por la primera columna (GAS)
+                if (fila.size() > 0 && fila.get(0).trim().equals(seleccionada.getModelo())) {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index != -1) {
+                // Usar modificarFilaPorIndice
+                ExcelManager.modificarFila("PARAM_MODELOS_COND", index, new String[]{nueva.getModelo(), nueva.getDescripcion()}
+                );
+                seleccionada.setModelo(nueva.getModelo());
+                seleccionada.setDescripcion(nueva.getDescripcion());
+                tablaModel_Cond.refresh();
+            } else {
+                mainAppController.showAlert("No se encontró el Modelo de condensadora en el archivo.");
+            }
         });
     }
 
@@ -109,7 +126,7 @@ public class Model_CondensadorasController {
         confirmacion.showAndWait().ifPresent(respuesta -> {
             if(respuesta == ButtonType.OK){
                 tablaModel_Cond.getItems().remove(seleccionada);
-                ExcelManager.eliminarFila("PARAM_MODELOS_COND", seleccionada.getModelo(), seleccionada.getDescripcion());
+                ExcelManager.eliminarFila("PARAM_MODELOS_COND", modeloAEliminar);
             }
         });
     }
@@ -130,7 +147,7 @@ public class Model_CondensadorasController {
             descField.setText(modelCondensadora.getDescripcion());
         }
 
-        VBox vBox = new VBox(10,new Label("Modelo: "), modeloField, new Label("Descripcion: ", descField));
+        VBox vBox = new VBox(10,new Label("Modelo: "), modeloField, new Label("Descripcion: "), descField);
         vBox.setPadding(new Insets(10));
 
         dialog.getDialogPane().setContent(vBox);
@@ -153,5 +170,6 @@ public class Model_CondensadorasController {
 
     private void noOrdenar(){
         colModelo.setSortable(false);
+        colDescripcion.setSortable(false);
     }
 }

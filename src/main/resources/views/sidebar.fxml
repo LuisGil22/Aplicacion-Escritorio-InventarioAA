@@ -25,6 +25,7 @@
             <Button text="MODEL-CASSETTES" onAction="#ClickMenu" styleClass="main-button"/>
             <Button text="MODEL-CONDENSADORAS" onAction="#ClickMenu" styleClass="main-button"/>
             <Button text="PLANTAS" onAction="#ClickMenu" styleClass="main-button"/>
+            <Button text="UBICACION-CASSETTE" onAction="#ClickMenu" styleClass="main-button"/>
         </VBox>
 
 

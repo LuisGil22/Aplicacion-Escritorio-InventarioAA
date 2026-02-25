@@ -46,6 +46,7 @@ public class CondensadorasController {
     @FXML private TableColumn<Condensadora,String>colLocCondensadoras;
     @FXML private TableColumn<Condensadora,String>colGas;
     @FXML private TableColumn<Condensadora,String>colFechaInstal;
+    @FXML private TableColumn<Condensadora, String> colFechaBaja;
     @FXML private TableColumn<Condensadora,String>colFechaRev;
     @FXML private TableColumn<Condensadora,String>colAveria;
     @FXML private TableColumn<Condensadora,String>colObservaciones;
@@ -62,12 +63,13 @@ public class CondensadorasController {
     @FXML private Button btnFiltroLocCondensadoras;
     @FXML private Button btnFiltroGas;
     @FXML private Button btnFiltroFechaInst;
+    @FXML private Button btnFiltroFechaBaja;
     @FXML private Button btnFiltroFechaRev;
 
     private MainAppController mainAppController;
     private ObservableList<Condensadora> allDatos;
-    private Boolean filtroActivo = true;
-    private Boolean filtroBaja = true;
+    //private Boolean filtroActivo = true;
+    //private Boolean filtroBaja = true;
 
     //private final Set<String>selectedValoresCondensadora = new LinkedHashSet<>();
     //private Boolean seleccionarTodos = true;
@@ -118,6 +120,7 @@ public class CondensadorasController {
         colLocCondensadoras.setCellValueFactory(new PropertyValueFactory<>("loc_condensadora"));
         colGas.setCellValueFactory(new PropertyValueFactory<>("gas"));
         colFechaInstal.setCellValueFactory(new PropertyValueFactory<>("fechaInstalacion"));
+        colFechaBaja.setCellValueFactory(new PropertyValueFactory<>("fechaBaja"));
         colFechaRev.setCellValueFactory(new PropertyValueFactory<>("fechaRevision"));
         colAveria.setCellValueFactory(new PropertyValueFactory<>("averia"));
         colObservaciones.setCellValueFactory(new PropertyValueFactory<>("observaciones"));
@@ -310,62 +313,75 @@ public class CondensadorasController {
         // Empezar desde i=1 (primera fila de datos)
         for (int i = 1; i < datos.size(); i++) {
             var fila = datos.get(i);
-
+            System.out.println("Procesando fila " + i  + ": " + fila);
             // Saltar filas vacías
             if (fila.isEmpty()) continue;
 
             // Verificar que tenga al menos 1 columna
-            if (fila.size() < 12) {
+            if (fila.size() < 13) {
                 // Completar con valores vacíos
-                while (fila.size() < 12) {
+                while (fila.size() < 13) {
                     fila.add("");
                 }
             }
 
-            String condensadora = fila.get(0);
-            String numSecuenciaStr = fila.get(1);
-            String estado = fila.get(2);
-            String marca = fila.get(3);
-            String modelo = fila.get(4);
-            String numSerie = fila.get(5);
-            String loc = fila.get(6);
-            String gas = fila.get(7);
-            String fechaInst = fila.get(8);
-            String fechaRev = fila.get(9);
-            String averia = fila.get(10);
-            String observaciones = fila.get(11);
+            String condensadora = fila.get(0).trim();
+            String numSecuenciaStr = fila.get(1).trim();
+            String estado = fila.get(2).trim();
+            String marca = fila.get(3).trim();
+            String modelo = fila.get(4).trim();
+            String numSerieStr = fila.get(5).trim();
+            String loc = fila.get(6).trim();
+            String gas = fila.get(7).trim();
+            String fechaInst = fila.get(8).trim();
+            String fechaBaja = fila.get(9).trim();
+            String fechaRev = fila.get(10).trim();
+            String averia = fila.get(11).trim();
+            String observaciones = fila.get(12).trim();
 
             // Solo procesar si hay al menos un valor significativo
-            if (condensadora.trim().isEmpty() && estado.trim().isEmpty()) {
+            if (condensadora.isEmpty() && estado.isEmpty()) {
                 continue;
             }
+            try {
+                // Parseo seguro (¡no asumas que los strings no están vacíos!)
+                Integer numSecuencia = (Integer) (numSecuenciaStr.trim().isEmpty() ? 1 : parseInt(numSecuenciaStr));
+                Long numSerie = parseLong(numSerieStr);
+                //fechaInst = (fechaInst != null) ? fechaInst.trim() : "";
+                //fechaRev = (fechaRev != null) ? fechaRev.trim() : "";
+                //LocalDate fechaInst = parseDate(formato, fechaInstStr);
 
-            // Parseo seguro (¡no asumas que los strings no están vacíos!)
-            int numSecuencia = numSecuenciaStr.trim().isEmpty() ? 1 : parseInt(numSecuenciaStr);
-            long numSerieLong = numSerie.trim().isEmpty() ? 0L : parseLong(numSerie);
-            //fechaInst = (fechaInst != null) ? fechaInst.trim() : "";
-            //fechaRev = (fechaRev != null) ? fechaRev.trim() : "";
-            //LocalDate fechaInst = parseDate(formato, fechaInstStr);
 
-
-            allDatos.add(new Condensadora(
-                    condensadora,
-                    numSecuencia,
-                    estado,
-                    marca,
-                    modelo,
-                    numSerieLong,
-                    loc,
-                    gas,
-                    fechaInst,
-                    fechaRev,
-                    averia,
-                    observaciones
-            ));
+                allDatos.add(new Condensadora(
+                        condensadora,
+                        numSecuencia,
+                        estado,
+                        marca,
+                        modelo,
+                        numSerie,
+                        loc,
+                        gas,
+                        fechaInst,
+                        fechaBaja,
+                        fechaRev,
+                        averia,
+                        observaciones
+                ));
+            }catch (Exception e){
+                System.err.println("Error fila " + i + ": " + e.getMessage());
+                e.printStackTrace();
+            }
         }
 
         tablaCondensadoras.setItems(allDatos);
         System.out.println("Cargados " + allDatos.size() + " registros de Condensadoras");
+
+        Platform.runLater(() -> {
+            Node scrollNode = tablaCondensadoras.lookup(".scroll-pane");
+            if (scrollNode instanceof ScrollPane sp) {
+                sp.setHvalue(0.0);
+            }
+        });
     }
 
     @FXML
@@ -414,11 +430,16 @@ public class CondensadorasController {
     }
 
     @FXML
+    private void configurarFiltroFechaBaja(){
+        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Baja", Condensadora::getFechaBaja,btnFiltroFechaBaja,tablaCondensadoras,allDatos);
+    }
+
+    @FXML
     private void configurarFiltroFechaRev(){
         FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Revisión", Condensadora::getFechaRevision,btnFiltroFechaRev,tablaCondensadoras,allDatos);
     }
 
-    private void configurarFiltro(String titulo, Function<Condensadora,String>extractor,Button button){
+    /**private void configurarFiltro(String titulo, Function<Condensadora,String>extractor,Button button){
         if (allDatos == null || allDatos.isEmpty()) {
             mainAppController.showAlert("No hay datos para filtrar.");
             return;
@@ -519,7 +540,7 @@ public class CondensadorasController {
         stage.setY(btnBounds.getMaxY() + 5);
         stage.setScene(new Scene(scrollPane));
         stage.show();
-    }
+    }**/
     /**@FXML
     public void onFiltrar(){
         String seleccionado = comboFiltroEstado.getValue();
@@ -627,9 +648,9 @@ public class CondensadorasController {
 
     private int parseInt(String dato) {
         try {
-            return dato == null || dato.trim().isEmpty() ? 0 : Integer.parseInt(dato.trim());
+            return dato == null || dato.trim().isEmpty() ? 1 : Integer.parseInt(dato.trim());
         } catch (NumberFormatException e) {
-            return 0;
+            return 1;
         }
     }
 
@@ -672,80 +693,48 @@ public class CondensadorasController {
 
         //Campos de texto
         TextField textCondensadora = new TextField();
+        Spinner<Integer> spiNumSecuencia = new Spinner<>(1,100,1);
+        spiNumSecuencia.setEditable(false);
+        ComboBox<String> comboEstado = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_ESTADO")));
+        ComboBox<String> comboMarca = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_MARCAS")));
+        ComboBox<String> comboModelo = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_MODELOS_COND")));
         TextField textNumSerie = new TextField();
+        ComboBox<String> comLocCondensadora = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_LOC_COND")));
+        ComboBox<String> comboGas = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_GASES")));
+        DatePicker dateFechaInst = new DatePicker();
+        DatePicker dateFechaBaja = new DatePicker();
+        DatePicker dateFechaRev = new DatePicker();
         TextField textAveria = new TextField();
         TextField textObservacion = new TextField();
         textAveria.setPrefHeight(40);
         textObservacion.setPrefHeight(60);
-
-        Spinner<Integer> spiNumSecuencia = new Spinner<>(1,100,1);
-        spiNumSecuencia.setEditable(false);
-
-        DatePicker dateFechaInst = new DatePicker();
-        CheckBox desinstaladaCond = new CheckBox("DESINSTALADA");
-
-        DatePicker dateFechaRev = new DatePicker();
-        CheckBox fechaSinVerificar = new CheckBox("Posible fecha sin verificar");
-
-        desinstaladaCond.setOnAction(e -> dateFechaInst.setDisable(desinstaladaCond.isSelected()));
-        fechaSinVerificar.setOnAction(e -> dateFechaRev.setDisable(fechaSinVerificar.isSelected()));
-
-        //Combos que se cargan desde las hojas de parámetros del excel
-        List<String> estados = cargarParametrosExcel("PARAM_ESTADO");
-        List<String> gases = cargarParametrosExcel("PARAM_GASES");
-        List<String> marcas = cargarParametrosExcel("PARAM_MARCAS");
-        List<String> modelos = cargarParametrosExcel("PARAM_MODELOS_COND");
-        List<String> locCondensadoras = cargarParametrosExcel("PARAM_LOC_COND");
-
-        ComboBox<String> comboEstado = new ComboBox<>(FXCollections.observableArrayList(estados));
-        ComboBox<String> comboGas = new ComboBox<>(FXCollections.observableArrayList(gases));
-        ComboBox<String> comboMarca = new ComboBox<>(FXCollections.observableArrayList(marcas));
-        ComboBox<String> comboModelo = new ComboBox<>(FXCollections.observableArrayList(modelos));
-        ComboBox<String> comLocCondensadora = new ComboBox<>(FXCollections.observableArrayList(locCondensadoras));
 
         //precargar los datos para modificar.
 
         if(editar != null){
             textCondensadora.setText(editar.getCondensadora());
             spiNumSecuencia.getValueFactory().setValue(editar.getNumSecuencia());
-            if(estados.contains(editar.getEstado())){
+            if(comboEstado.getItems().contains(editar.getEstado())){
                 comboEstado.setValue(editar.getEstado());
             }
-            if(marcas.contains(editar.getMarca())){
+            if(comboMarca.getItems().contains(editar.getMarca())){
                 comboMarca.setValue(editar.getMarca());
             }
-            if(modelos.contains(editar.getModelo())){
+            if(comboModelo.getItems().contains(editar.getModelo())){
                 comboModelo.setValue(editar.getModelo());
             }
-            textNumSerie.setText(String.valueOf(editar.getNumSerieCond()));
-            if(locCondensadoras.contains(editar.getLoc_condensadora())){
+            if (editar.getNumSerieCond() != null) {
+                textNumSerie.setText(String.valueOf(editar.getNumSerieCond()));
+            }
+            if(comLocCondensadora.getItems().contains(editar.getLoc_condensadora())){
                 comLocCondensadora.setValue(editar.getLoc_condensadora());
             }
-            if(gases.contains(editar.getGas())){
+            if(comboGas.getItems().contains(editar.getGas())){
                 comboGas.setValue(editar.getGas());
             }
-            if(editar.getFechaInstalacion() != null && editar.getFechaInstalacion().startsWith("DESINSTALADA")){
-                desinstaladaCond.setSelected(true);
-                dateFechaInst.setDisable(true);
-            }else{
-                try{
-                    LocalDate fecha = LocalDate.parse(editar.getFechaInstalacion(),DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-                    dateFechaInst.setValue(fecha);
-                } catch (Exception e) {
-                    mainAppController.showAlert("fecha invalida o vacia");
-                }
-            }
-            if(editar.getFechaRevision() != null && editar.getFechaRevision().startsWith("Posible fecha sin verificar")){
-                fechaSinVerificar.setSelected(true);
-                dateFechaRev.setDisable(true);
-            }else{
-                try{
-                    LocalDate fecha = LocalDate.parse(editar.getFechaRevision(),DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-                    dateFechaRev.setValue(fecha);
-                } catch (Exception e) {
-                    mainAppController.showAlert("fecha invalida o vacia");
-                }
-            }
+            setDatePicker(dateFechaInst, editar.getFechaInstalacion());
+            setDatePicker(dateFechaBaja, editar.getFechaBaja());
+            setDatePicker(dateFechaRev, editar.getFechaRevision());
             textAveria.setText(editar.getAveria());
             textObservacion.setText(editar.getObservaciones());
         }
@@ -774,12 +763,12 @@ public class CondensadorasController {
         gridPane.add(comLocCondensadora, 1, row++);
         gridPane.add(new Label("Gas: "), 0, row);
         gridPane.add(comboGas, 1, row++);
-        HBox hbFechaInst = new HBox(10,dateFechaInst,desinstaladaCond);
         gridPane.add(new Label("Fecha Instalación: "), 0 , row);
-        gridPane.add(hbFechaInst, 1, row++);
-        HBox hbFechaRev = new HBox(10,dateFechaRev,fechaSinVerificar);
+        gridPane.add(dateFechaInst, 1, row++);
+        gridPane.add(new Label("Fecha Baja: "), 0 , row);
+        gridPane.add(dateFechaBaja, 1, row++);
         gridPane.add(new Label("Fecha Revisión: "), 0 , row);
-        gridPane.add(hbFechaRev, 1, row++);
+        gridPane.add(dateFechaRev, 1, row++);
         gridPane.add(new Label("Averia: "), 0 , row);
         gridPane.add(textAveria, 1, row++);
         gridPane.add(new Label("Observación: "), 0 , row);
@@ -797,45 +786,61 @@ public class CondensadorasController {
                 return;
             }
 
+            Long numSerie = null;
+            if (!textNumSerie.getText().trim().isEmpty()) {
+                try {
+                    numSerie = Long.parseLong(textNumSerie.getText().trim());
+                } catch (NumberFormatException ex) {
+                    mainAppController.showAlert("El Nº Serie debe ser un número válido.");
+                    return;
+                }
+            }
             //Formatear fecha o texto
-            String fechaInst = desinstaladaCond.isSelected()? "DESINSTALADA" + LocalDate.now().format(formatter): (dateFechaInst.getValue() != null? dateFechaInst.getValue().format(formatter) : "");
-            String fechaRev = fechaSinVerificar.isSelected()? "Posible fecha sin verificar" + LocalDate.now().format(formatter): (dateFechaRev.getValue() != null? dateFechaRev.getValue().format(formatter) : "");
+            String fechaInst = dateFechaInst.getValue() != null? dateFechaInst.getValue().format(formatter) : "";
+            String fechaBaja = dateFechaBaja.getValue() != null? dateFechaBaja.getValue().format(formatter) : "";
+            String fechaRev = dateFechaRev.getValue() != null? dateFechaRev.getValue().format(formatter) : "";
+
             try {
+                String numSerieExcel = numSerie != null ? String.valueOf(numSerie) : "";
+
                 List<String>filaNueva = Arrays.asList(
                         condensadora,
-                        spiNumSecuencia.getValue().toString(),
+                        String.valueOf(spiNumSecuencia.getValue()),
                         comboEstado.getValue() != null? comboEstado.getValue() : "",
                         comboMarca.getValue() != null? comboMarca.getValue() : "",
                         comboModelo.getValue() != null? comboModelo.getValue() : "",
-                        textNumSerie.getText().trim(),
+                        numSerieExcel,
                         comLocCondensadora.getValue() != null? comLocCondensadora.getValue() : "",
                         comboGas.getValue() != null? comboGas.getValue() : "",
                         fechaInst,
+                        fechaBaja,
                         fechaRev,
                         textAveria.getText().trim(),
                         textObservacion.getText().trim()
                 );
                 if(editar == null){
+                    // Verificar clave compuesta única
+                    if (existeCondensadoraDuplicada(condensadora, spiNumSecuencia.getValue())) {
+                        mainAppController.showAlert("Ya existe una condensadora con ese número y secuencia.");
+                        return;
+                    }
                     ExcelManager.añadirFila("Condensadoras", filaNueva.toArray(new String[0]));
-                    cargarDatos();
                 }else{
-                    List<String>antiguaFila = Arrays.asList(
-                            editar.getCondensadora(),
-                            String.valueOf(editar.getNumSecuencia()),
-                            editar.getEstado(),
-                            editar.getMarca(),
-                            editar.getModelo(),
-                            String.valueOf(editar.getNumSerieCond()),
-                            editar.getLoc_condensadora(),
-                            editar.getGas(),
-                            editar.getFechaInstalacion(),
-                            editar.getFechaRevision(),
-                            editar.getAveria(),
-                            editar.getObservaciones()
-                    );
-                    ExcelManager.modificarFila("Condensadoras", antiguaFila.toArray(new String[0]),filaNueva.toArray(new String[0]));
-                    cargarDatos();
+                    List<List<String>> datos = ExcelManager.leerHoja("Condensadoras");
+
+                    int index = -1;
+
+                    for (int i = 1; i < datos.size(); i++) {
+                        if (datos.get(i).size() > 0 && datos.get(i).get(0).trim().equals(editar.getCondensadora())){
+                            index = i;
+                            break;
+                        }
+                    }
+                    if (index != -1){
+                        ExcelManager.modificarFila("Condensadoras", index, filaNueva.toArray(new String[0]));
+                    }
                 }
+                cargarDatos();
                 stage.close();
 
             } catch (Exception ex) {
@@ -853,6 +858,23 @@ public class CondensadorasController {
         Scene scene = new Scene(gridPane,500,600);
         stage.setScene(scene);
         stage.show();
+    }
+
+    private void setDatePicker(DatePicker picker, String fechaStr) {
+        if (fechaStr == null || fechaStr.trim().isEmpty()) return;
+        try {
+            LocalDate d = LocalDate.parse(fechaStr, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            picker.setValue(d);
+        } catch (Exception ignored) {}
+    }
+
+    private boolean existeCondensadoraDuplicada(String condensadora, int numSecuencia) {
+        for (Condensadora c : allDatos) {
+            if (c.getCondensadora().equals(condensadora) && c.getNumSecuencia() == numSecuencia) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @FXML
@@ -873,6 +895,11 @@ public class CondensadorasController {
             mainAppController.showAlert("Selecciona una condensadora para poder eliminarla");
             return;
         }
+        // Verificar si está en uso en Cassette
+        if (ExcelManager.existParametroEnCassettes(selected.getCondensadora(), "CONDENSADORA")) {
+            mainAppController.showAlert("No se puede eliminar: esta condensadora está en uso en la hoja 'Cassette'.");
+            return;
+        }
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Confirmar eliminación");
         alert.setHeaderText("¿Eliminar esta condensadora?");
@@ -890,17 +917,16 @@ public class CondensadorasController {
         List<String> lista = new ArrayList<>();
         try{
              List<List<String>> datos = ExcelManager.leerHoja(hoja);
-            if(datos.size()>1){
-                for(int i = 1; i<datos.size();i++){
-                    List<String> fila = datos.get(i);
-                    if(fila != null && !fila.isEmpty()){
-                        String valor = fila.get(0).trim();
-                        if(!valor.isEmpty() && !valor.equalsIgnoreCase("en blanco")) {
-                            lista.add(valor);
-                        }
+            for(int i = 1; i<datos.size();i++){
+                List<String> fila = datos.get(i);
+                if(!fila.isEmpty() && fila.get(0) != null){
+                    String valor = fila.get(0).trim();
+                    if(!valor.isEmpty() && !valor.equalsIgnoreCase("en blanco")) {
+                        lista.add(valor);
                     }
                 }
             }
+
         } catch (Exception e) {
             System.err.println("⚠️ Error al cargar: " + hoja);
             e.printStackTrace();
@@ -919,10 +945,13 @@ public class CondensadorasController {
         colLocCondensadoras.setSortable(false);
         colGas.setSortable(false);
         colFechaInstal.setSortable(false);
+        colFechaBaja.setSortable(false);
         colFechaRev.setSortable(false);
         colAveria.setSortable(false);
         colObservaciones.setSortable(false);
     }
+
+
     /**private String formatearFecha(String valor) {
         if (valor == null || valor.isEmpty()) return "";
         if (valor.contains("DESINSTALADO") || valor.contains("Posible")) {

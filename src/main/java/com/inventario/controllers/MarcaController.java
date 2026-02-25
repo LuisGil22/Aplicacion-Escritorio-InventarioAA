@@ -12,6 +12,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 
+import java.util.List;
+
 public class MarcaController {
 
     @FXML
@@ -74,12 +76,27 @@ public class MarcaController {
         }
         Dialog<Marca>dialog = crearDialogo(seleccionada);
         dialog.showAndWait().ifPresent(nueva -> {
-            ExcelManager.modificarFila("PARAM_MARCAS",
-                    new String[]{seleccionada.getMarca(), seleccionada.getDescripcion()},
-                    new String[]{nueva.getMarca(), nueva.getDescripcion()});
-            seleccionada.setMarca(nueva.getMarca());
-            seleccionada.setDescripcion(nueva.getDescripcion());
-            tablaMarca.refresh();
+            List<List<String>> datos = ExcelManager.leerHoja("PARAM_MARCAS");
+            int index = -1;
+            for (int i = 1; i < datos.size(); i++) {
+                List<String> fila = datos.get(i);
+                // Comparar por la primera columna (GAS)
+                if (fila.size() > 0 && fila.get(0).trim().equals(seleccionada.getMarca())) {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index != -1) {
+                // Usar modificarFilaPorIndice
+                ExcelManager.modificarFila("PARAM_MARCAS", index, new String[]{nueva.getMarca(), nueva.getDescripcion()}
+                );
+                seleccionada.setMarca(nueva.getMarca());
+                seleccionada.setDescripcion(nueva.getDescripcion());
+                tablaMarca.refresh();
+            } else {
+                mainAppController.showAlert("No se encontró la Marca en el archivo.");
+            }
         });
     }
 
@@ -108,7 +125,7 @@ public class MarcaController {
         confirmacion.showAndWait().ifPresent(respuesta -> {
             if(respuesta == ButtonType.OK){
                 tablaMarca.getItems().remove(seleccionada);
-                ExcelManager.eliminarFila("PARAM_MARCAS", seleccionada.getMarca(), seleccionada.getDescripcion());
+                ExcelManager.eliminarFila("PARAM_MARCAS", marcaAEliminar);
             }
         });
     }
@@ -129,7 +146,7 @@ public class MarcaController {
             descField.setText(marca.getDescripcion());
         }
 
-        VBox vBox = new VBox(10,new Label("Marca: "), marcaField, new Label("Descripcion: ", descField));
+        VBox vBox = new VBox(10, new Label("Marca: "),marcaField, new Label("Descripcion: "), descField);
         vBox.setPadding(new Insets(10));
 
         dialog.getDialogPane().setContent(vBox);
@@ -152,5 +169,6 @@ public class MarcaController {
 
     private void noOrdenar(){
         colMarca.setSortable(false);
+        colDescripcion.setSortable(false);
     }
 }

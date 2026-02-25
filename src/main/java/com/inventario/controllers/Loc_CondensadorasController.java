@@ -8,8 +8,12 @@ import com.inventario.utils.FilterUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.VBox;
+
+import java.util.List;
 
 public class Loc_CondensadorasController {
 
@@ -49,16 +53,10 @@ public class Loc_CondensadorasController {
 
     @FXML
     public void onAddLoc_Condensadoras(){
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Nuevo Loc_Condensadoras");
-        dialog.setHeaderText("Añadir nuevo Localizador de Condensadoras");
-        dialog.setContentText("Loc_Condensadoras:");
-
+        Dialog<Loc_Condensadoras>dialog = crearDialogo(null);
         dialog.showAndWait().ifPresent(loc_condensadoras -> {
-            if (!loc_condensadoras.trim().isEmpty()) {
-                tablaLoc_Condensadoras.getItems().add(new Loc_Condensadoras(loc_condensadoras));
-                ExcelManager.añadirFila("PARAM_LOC_COND", loc_condensadoras);
-            }
+            tablaLoc_Condensadoras.getItems().add(loc_condensadoras);
+            ExcelManager.añadirFila("PARAM_LOC_COND", loc_condensadoras.getLocalizacionCondensadoras());
         });
     }
 
@@ -77,10 +75,22 @@ public class Loc_CondensadorasController {
 
         dialog.showAndWait().ifPresent(nuevo -> {
             if (!nuevo.trim().isEmpty()) {
+                List<List<String>> datos = ExcelManager.leerHoja("PARAM_LOC_COND");
+                int index = -1;
 
-                ExcelManager.modificarFila("PARAM_LOC_COND", new String[]{actualLocCondensadoras},new String[]{nuevo});
-                selected.setLocalizacionCondensadoras(nuevo);
-                tablaLoc_Condensadoras.refresh();
+                for (int i= 1; i< datos.size(); i++){
+                    if(datos.get(i).size() > 0 && datos.get(i).get(0).trim().equals(actualLocCondensadoras)){
+                        index = i;
+                        break;
+                    }
+                }
+                if(index != -1) {
+                    ExcelManager.modificarFila("PARAM_LOC_COND", index, new String[]{nuevo});
+                    selected.setLocalizacionCondensadoras(nuevo);
+                    tablaLoc_Condensadoras.refresh();
+                }else{
+                    mainController.showAlert("No se encontró la Localizacion Condensadora en el archivo.");
+                }
             }
         });
     }
@@ -123,6 +133,38 @@ public class Loc_CondensadorasController {
 
     private void noOrdenar(){
         colLoc_Condensadoras.setSortable(false);
+    }
+
+    private Dialog<Loc_Condensadoras>crearDialogo(Loc_Condensadoras loc_condensadoras){
+        Dialog<Loc_Condensadoras>dialog = new Dialog<>();
+        dialog.setTitle(loc_condensadoras == null ? "➕ Añadir localizacion de Condensadora" : "✏️ Modificar Localizacion de condensadora");
+        dialog.setHeaderText(null);
+
+        TextField localizacionCondensadorasField = new TextField();
+
+
+        localizacionCondensadorasField.setPromptText("Localizacion de Condensadora");
+
+
+        if(loc_condensadoras != null){
+            localizacionCondensadorasField.setText(loc_condensadoras.getLocalizacionCondensadoras());
+
+        }
+
+        VBox vBox = new VBox(10, new Label("Localización Condensadora:"),localizacionCondensadorasField);
+        vBox.setPadding(new Insets(10));
+
+        dialog.getDialogPane().setContent(vBox);
+        ButtonType añadirBoton = new ButtonType(loc_condensadoras == null? "Añadir":"Guardar", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(añadirBoton,ButtonType.CANCEL);
+
+        dialog.setResultConverter(botonDialog -> {
+            if(botonDialog == añadirBoton) {
+                return new Loc_Condensadoras(localizacionCondensadorasField.getText());
+            }
+            return null;
+        });
+        return dialog;
     }
 
 }

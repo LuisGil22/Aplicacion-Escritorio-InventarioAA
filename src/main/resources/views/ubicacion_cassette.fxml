@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.inventario.controllers.UbicacionCassetteController"
+            stylesheets="@../css/parametros.css"
+            styleClass="vbox">
+
+    <HBox styleClass="box">
+        <Button text="Añadir" onAction="#onAddUbicacionCas" styleClass="action-button"/>
+        <Button text="Modificar" onAction="#onEditUbicacionCas" styleClass="action-button"/>
+        <Button text="Eliminar" onAction="#onDeleteUbicacionCas" styleClass="action-button"/>
+    </HBox>
+
+    <TableView fx:id="tablaUbicacionCassettes" styleClass="table-view">
+        <columns>
+            <TableColumn fx:id="colUbicacionCas" prefWidth="120">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="NOMBRE"/>
+                        <Button fx:id="btnFiltroUbicacionCas" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroUbicacionCas"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+        </columns>
+    </TableView>
+
+</VBox>

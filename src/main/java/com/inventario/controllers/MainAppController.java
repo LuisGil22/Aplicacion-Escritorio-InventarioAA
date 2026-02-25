@@ -224,6 +224,19 @@ public class MainAppController {
                     e.printStackTrace();
                 }
                 break;
+            case "UBICACION-CASSETTE":
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/ubicacion_cassette.fxml"));
+                    Node view = loader.load();
+                    UbicacionCassetteController ubicacionCassetteController = loader.getController();
+                    ubicacionCassetteController.setMainAppController(this);
+
+                    stackPaneContent.getChildren().setAll(view, SidebarButtonMostrar, VolverInicio);
+                    VolverInicio.setVisible(true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
             case "CONDENSADORAS":
                 try {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/condensadoras.fxml"));

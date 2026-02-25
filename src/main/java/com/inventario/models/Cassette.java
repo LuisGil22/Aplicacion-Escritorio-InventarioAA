@@ -4,7 +4,7 @@ import java.util.Objects;
 
 public class Cassette {
     private String numCassette;
-    private String numSecuencia;
+    private Integer numSecuencia;
     private String estado;
     private String planta;
     private String nombre;
@@ -16,11 +16,13 @@ public class Cassette {
     private String localizacionCondensadora;
     private String gas;
     private String fechaInstalacion;
+    private String fechaBaja;
     private String fechaRevision;
     private String averia;
     private String foto;
+    private String observaciones;
 
-    public Cassette(String numCassette, String numSecuencia, String estado, String planta, String nombre, Double potenciaCalor, Double potenciaFrio, String marcaModelo, String numSerieCas, String condensadora, String localizacionCondensadora, String gas, String fechaInstalacion, String fechaRevision, String averia, String foto) {
+    public Cassette(String numCassette, Integer numSecuencia, String estado, String planta, String nombre, Double potenciaCalor, Double potenciaFrio, String marcaModelo, String numSerieCas, String condensadora, String localizacionCondensadora, String gas, String fechaInstalacion,String fechaBaja, String fechaRevision, String averia, String foto, String observaciones) {
         this.numCassette = numCassette;
         this.numSecuencia = numSecuencia;
         this.estado = estado;
@@ -34,10 +36,13 @@ public class Cassette {
         this.localizacionCondensadora = localizacionCondensadora;
         this.gas = gas;
         this.fechaInstalacion = fechaInstalacion;
+        this.fechaBaja = fechaBaja;
         this.fechaRevision= fechaRevision;
         this.averia = averia;
         this.foto = foto;
+        this.observaciones = observaciones;
     }
+
 
     public String getNumCassette() {
         return numCassette;
@@ -47,11 +52,11 @@ public class Cassette {
         this.numCassette = numCassette;
     }
 
-    public String getNumSecuencia() {
+    public Integer getNumSecuencia() {
         return numSecuencia;
     }
 
-    public void setNumSecuencia(String numSecuencia) {
+    public void setNumSecuencia(Integer numSecuencia) {
         this.numSecuencia = numSecuencia;
     }
 
@@ -143,6 +148,14 @@ public class Cassette {
         this.fechaInstalacion = fechaInstalacion;
     }
 
+    public String getFechaBaja() {
+        return fechaBaja;
+    }
+
+    public void setFechaBaja(String fechaBaja) {
+        this.fechaBaja = fechaBaja;
+    }
+
     public String getFechaRevision() {
         return fechaRevision;
     }
@@ -165,6 +178,14 @@ public class Cassette {
 
     public void setFoto(String foto) {
         this.foto = foto;
+    }
+
+    public String getObservaciones() {
+        return observaciones;
+    }
+
+    public void setObservaciones(String observaciones) {
+        this.observaciones = observaciones;
     }
 
     @Override

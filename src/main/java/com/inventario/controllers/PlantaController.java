@@ -12,6 +12,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 
+import java.util.List;
+
 public class PlantaController {
 
     @FXML
@@ -45,10 +47,10 @@ public class PlantaController {
         var excelFile = ExcelManager.leerHoja("PARAM_PLANTAS");
         for(int i=1; i<excelFile.size() ; i++){
             var fila = excelFile.get(i);
-            if(fila.size()>= 2){
+            if(!fila.isEmpty()){
                 String planta = fila.get(0).trim();
-                String desc = fila.get(1).trim();
-                if(!planta.isEmpty() && !desc.isEmpty()){
+                if(!planta.isEmpty()){
+                    String desc = (fila.size() > 1) ? fila.get(1).trim() : "";
                     plantas.add(new Planta(planta,desc));
                 }
             }
@@ -74,12 +76,27 @@ public class PlantaController {
         }
         Dialog<Planta>dialog = crearDialogo(seleccionada);
         dialog.showAndWait().ifPresent(nueva -> {
-            ExcelManager.modificarFila("PARAM_PLANTAS",
-                    new String[]{seleccionada.getPlanta(), seleccionada.getDescripcion()},
-                    new String[]{nueva.getPlanta(), nueva.getDescripcion()});
-            seleccionada.setPlanta(nueva.getPlanta());
-            seleccionada.setDescripcion(nueva.getDescripcion());
-            tablaPlantas.refresh();
+            List<List<String>> datos = ExcelManager.leerHoja("PARAM_PLANTAS");
+            int index = -1;
+            for (int i = 1; i < datos.size(); i++) {
+                List<String> fila = datos.get(i);
+                // Comparar por la primera columna (GAS)
+                if (fila.size() > 0 && fila.get(0).trim().equals(seleccionada.getPlanta())) {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index != -1) {
+                // Usar modificarFilaPorIndice
+                ExcelManager.modificarFila("PARAM_PLANTAS", index, new String[]{nueva.getPlanta(), nueva.getDescripcion()}
+                );
+                seleccionada.setPlanta(nueva.getPlanta());
+                seleccionada.setDescripcion(nueva.getDescripcion());
+                tablaPlantas.refresh();
+            } else {
+                mainAppController.showAlert("No se encontró la planta en el archivo.");
+            }
         });
     }
 
@@ -90,6 +107,17 @@ public class PlantaController {
             mainAppController.showAlert("Selecciona una planta para eliminar.");
             return;
         }
+
+        String plantaAEliminar = seleccionada.getPlanta();
+        if(ExcelManager.existParametroEnCassettes(plantaAEliminar,"PLANTA")){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Esta acción no está permitida");
+            alert.setHeaderText("No se puede eliminar esta planta");
+            alert.setContentText("La planta '" +plantaAEliminar+ "' no se puede eliminar porque está siendo usada en la hoja 'Cassette'.");
+            alert.showAndWait();
+            return;
+        }
+
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar que la quieres eliminar");
         confirmacion.setHeaderText("¿Estas seguro que deseas eliminarla?");
@@ -98,14 +126,14 @@ public class PlantaController {
         confirmacion.showAndWait().ifPresent(respuesta -> {
             if(respuesta == ButtonType.OK){
                 tablaPlantas.getItems().remove(seleccionada);
-                ExcelManager.eliminarFila("PARAM_PLANTAS", seleccionada.getPlanta(), seleccionada.getDescripcion());
+                ExcelManager.eliminarFila("PARAM_PLANTAS", plantaAEliminar);
             }
         });
     }
 
     private Dialog<Planta>crearDialogo(Planta planta){
         Dialog<Planta>dialog = new Dialog<>();
-        dialog.setTitle(planta == null ? "➕ Añadir Gas" : "✏️ Modificar Gas");
+        dialog.setTitle(planta == null ? "➕ Añadir Planta" : "✏️ Modificar Planta");
         dialog.setHeaderText(null);
 
         TextField plantaField = new TextField();
@@ -142,5 +170,6 @@ public class PlantaController {
 
     private void noOrdenar(){
         colPlanta.setSortable(false);
+        colDescripcion.setSortable(false);
     }
 }

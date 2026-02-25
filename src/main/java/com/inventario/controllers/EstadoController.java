@@ -11,6 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import org.apache.poi.ss.usermodel.*;
 import java.io.*;
+import java.util.List;
 
 public class EstadoController {
 
@@ -79,10 +80,22 @@ public class EstadoController {
 
         dialog.showAndWait().ifPresent(nuevo -> {
             if (!nuevo.trim().isEmpty()) {
+                List<List<String>> datos = ExcelManager.leerHoja("PARAM_ESTADO");
+                int index = -1;
 
-                ExcelManager.modificarFila("PARAM_ESTADO", new String[]{actualEstado},new String[]{nuevo});
-                selected.setEstado(nuevo);
-                tablaEstados.refresh();
+                for (int i= 1; i< datos.size(); i++){
+                    if(datos.get(i).size() > 0 && datos.get(i).get(0).trim().equals(actualEstado)){
+                        index = i;
+                        break;
+                    }
+                }
+                if(index != -1) {
+                    ExcelManager.modificarFila("PARAM_ESTADO", index, new String[]{nuevo});
+                    selected.setEstado(nuevo);
+                    tablaEstados.refresh();
+                }else{
+                    mainController.showAlert("No se encontró el estado en el archivo.");
+                }
             }
         });
     }

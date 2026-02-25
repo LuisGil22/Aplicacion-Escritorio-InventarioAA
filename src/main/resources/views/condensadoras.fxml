@@ -92,6 +92,14 @@
                     </HBox>
                 </graphic>
             </TableColumn>
+            <TableColumn fx:id="colFechaBaja" prefWidth="120">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="FECHA BAJA"/>
+                        <Button fx:id="btnFiltroFechaBaja" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroFechaBaja"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
             <TableColumn fx:id="colFechaRev" prefWidth="150">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">

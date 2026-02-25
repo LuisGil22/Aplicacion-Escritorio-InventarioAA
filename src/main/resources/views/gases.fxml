@@ -25,7 +25,31 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn text="DESCRIPCION" fx:id="colDescripcion" prefWidth="400"/>
+            <TableColumn fx:id="colPcg_Pca" prefWidth="100">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="PCG/PCA"/>
+                        <Button fx:id="btnFiltroPcg_Pca" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroPcg_Pca"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colFechaCaducidad" prefWidth="100">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="FECHA CADUCIDAD"/>
+                        <Button fx:id="btnFiltroFechaCad" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroFechaCad"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colFechaRevision" prefWidth="100">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="FECHA REVISION"/>
+                        <Button fx:id="btnFiltroFechaRev" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroFechaRev"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn text="OBSERVACIONES" fx:id="colObservaciones" prefWidth="400"/>
         </columns>
     </TableView>
 
