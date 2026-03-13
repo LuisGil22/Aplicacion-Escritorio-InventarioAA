@@ -1,6 +1,5 @@
 package com.inventario.controllers;
 
-import com.inventario.models.Condensadora;
 import com.inventario.models.Estado;
 import com.inventario.utils.ExcelManager;
 import com.inventario.utils.FilterUtils;
@@ -9,28 +8,48 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import org.apache.poi.ss.usermodel.*;
-import java.io.*;
 import java.util.List;
 
+/**
+ * Controlador para la gestión de estados válidos en la hoja PARAM_ESTADO del inventario.
+ * <p>
+ * Proporciona funcionalidades para:
+ * </p>
+ * <ul>
+ *   <li>Visualizar estados válidos (ACTIVA, BAJA, AVERIADO)</li>
+ *   <li>Añadir nuevos estados</li>
+ *   <li>Modificar estados existentes</li>
+ *   <li>Eliminar estados (con validación de uso en Cassette/Condensadoras)</li>
+ *   <li>Filtrar por estado</li>
+ * </ul>
+ *
+ * @author Luis Gil
+ */
 public class EstadoController {
 
-    @FXML
-    private TableView<Estado> tablaEstados;
-
-    @FXML
-    private TableColumn<Estado, String> colEstado;
+    /** Campos FXML */
+    @FXML private TableView<Estado> tablaEstados;
+    @FXML private TableColumn<Estado, String> colEstado;
 
     @FXML private Button btnFiltroEstado;
 
-    // Referencia al controlador principal
+    /** Dependencias */
     private MainAppController mainController;
     private ObservableList<Estado>estados;
 
+    /**
+     * Metodo para establecer la dependencia con el controlador principal de la aplicación.
+     *
+     * @param controller instancia del controlador principal
+     */
     public void setMainController(MainAppController controller) {
         this.mainController = controller;
     }
 
+    /**
+     * Metodo para inicializar el controlador al cargar la vista FXML.
+     * Configura columnas, carga datos y desactiva ordenación.
+     */
     @FXML
     public void initialize() {
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
@@ -38,6 +57,10 @@ public class EstadoController {
         noOrdenar();
     }
 
+    /**
+     * Metodo para cargar los datos de la hoja PARAM_ESTADO del archivo Excel y mostrarlos en la tabla.
+     * Omite filas vacías o con valores nulos.
+     */
     private void cargarDatos() {
         estados = FXCollections.observableArrayList();
         var excelFile = ExcelManager.leerHoja("PARAM_ESTADO");
@@ -50,6 +73,10 @@ public class EstadoController {
         tablaEstados.setItems(estados);
     }
 
+    /**
+     * Metodo para abrir un diálogo y añadir un nuevo estado.
+     * Valida que el valor no esté vacío antes de guardar.
+     */
     @FXML
     public void onAdd() {
         TextInputDialog dialog = new TextInputDialog();
@@ -65,6 +92,10 @@ public class EstadoController {
         });
     }
 
+    /**
+     * Metodo para abrir un diálogo para modificar el estado seleccionado.
+     * Valida que haya una selección activa y que el nuevo valor no esté vacío.
+     */
     @FXML
     public void onEdit() {
         Estado selected = tablaEstados.getSelectionModel().getSelectedItem();
@@ -100,6 +131,10 @@ public class EstadoController {
         });
     }
 
+    /**
+     * Metodo para eliminar el estado seleccionado tras confirmación.
+     * Verifica que no esté en uso en las hojas Cassette o Condensadoras.
+     */
     @FXML
     public void onDelete() {
         Estado selected = tablaEstados.getSelectionModel().getSelectedItem();
@@ -131,11 +166,18 @@ public class EstadoController {
         });
     }
 
+    /**
+     * Metodo para configurar el filtro de la columna ESTADO.
+     */
     @FXML
     private void configurarFiltroEstado(){
         FilterUtils.abrirFiltroGenerico("Filtrar por Estado", Estado::getEstado,btnFiltroEstado,tablaEstados,estados);
     }
 
+    /**
+     * Metodo para desactivar la ordenación en la columna de la tabla.
+     * Mejora la estabilidad visual al trabajar con datos no ordenados.
+     */
     private void noOrdenar(){
         colEstado.setSortable(false);
     }

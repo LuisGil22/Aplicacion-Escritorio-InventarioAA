@@ -1,6 +1,5 @@
 package com.inventario.controllers;
 
-import com.inventario.models.Gas;
 import com.inventario.models.Planta;
 import com.inventario.utils.ExcelManager;
 import com.inventario.utils.FilterUtils;
@@ -14,27 +13,46 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 
+/**
+ * Controlador para la gestión de plantas en la hoja PARAM_PLANTAS del inventario.
+ * <p>
+ * Proporciona funcionalidades para:
+ * </p>
+ * <ul>
+ *   <li>Visualizar plantas registradas</li>
+ *   <li>Añadir nuevas plantas</li>
+ *   <li>Modificar plantas existentes</li>
+ *   <li>Eliminar plantas (con validación de uso en Cassette)</li>
+ *   <li>Filtrar por planta o descripción</li>
+ * </ul>
+ *
+ * @author Luis Gil
+ */
 public class PlantaController {
 
-    @FXML
-    private TableView<Planta> tablaPlantas;
+    /** Campos FXML */
+    @FXML private TableView<Planta> tablaPlantas;
+    @FXML private TableColumn<Planta,String> colPlanta;
+    @FXML private TableColumn<Planta,String> colDescripcion;
+    @FXML private Button btnFiltroPlanta;
 
-    @FXML
-    private TableColumn<Planta,String> colPlanta;
-
-    @FXML
-    private TableColumn<Planta,String> colDescripcion;
-
-    @FXML
-    private Button btnFiltroPlanta;
-
+    /** Dependencias */
     private MainAppController mainAppController;
     private ObservableList<Planta> plantas;
 
+    /**
+     * Metodo para establecer la dependencia con el controlador principal de la aplicación.
+     *
+     * @param mainAppController instancia del controlador principal
+     */
     public void setMainAppController(MainAppController mainAppController) {
         this.mainAppController = mainAppController;
     }
 
+    /**
+     * Metodo para inicializar el controlador al cargar la vista FXML.
+     * Configura columnas, carga datos y desactiva ordenación.
+     */
     public void initialize(){
         colPlanta.setCellValueFactory(new PropertyValueFactory<>("planta"));
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
@@ -42,6 +60,10 @@ public class PlantaController {
         noOrdenar();
     }
 
+    /**
+     * Metodo para cargar los datos de la hoja PARAM_PLANTAS del archivo Excel y mostrarlos en la tabla.
+     * Omite filas vacías o con valores nulos.
+     */
     private void cargarDatos(){
         plantas = FXCollections.observableArrayList();
         var excelFile = ExcelManager.leerHoja("PARAM_PLANTAS");
@@ -58,6 +80,10 @@ public class PlantaController {
         tablaPlantas.setItems(plantas);
     }
 
+    /**
+     * Metodo para abrir un diálogo y añadir una nueva Planta.
+     * Valida que el valor no esté vacío antes de guardar.
+     */
     @FXML
     public void onAddPlanta(){
         Dialog<Planta> dialog = crearDialogo(null);
@@ -67,6 +93,10 @@ public class PlantaController {
         });
     }
 
+    /**
+     * Metodo para abrir un diálogo para modificar la Planta seleccionada.
+     * Valida que haya una selección activa y que el nuevo valor no esté vacío.
+     */
     @FXML
     public void onEditPlanta(){
         Planta seleccionada = tablaPlantas.getSelectionModel().getSelectedItem();
@@ -80,7 +110,7 @@ public class PlantaController {
             int index = -1;
             for (int i = 1; i < datos.size(); i++) {
                 List<String> fila = datos.get(i);
-                // Comparar por la primera columna (GAS)
+
                 if (fila.size() > 0 && fila.get(0).trim().equals(seleccionada.getPlanta())) {
                     index = i;
                     break;
@@ -88,7 +118,7 @@ public class PlantaController {
             }
 
             if (index != -1) {
-                // Usar modificarFilaPorIndice
+
                 ExcelManager.modificarFila("PARAM_PLANTAS", index, new String[]{nueva.getPlanta(), nueva.getDescripcion()}
                 );
                 seleccionada.setPlanta(nueva.getPlanta());
@@ -100,6 +130,10 @@ public class PlantaController {
         });
     }
 
+    /**
+     * Metodo para eliminar la Planta seleccionada tras confirmación.
+     * Verifica que no esté en uso en la hoja Cassette.
+     */
     @FXML
     public void onDeletePlanta(){
         Planta seleccionada = tablaPlantas.getSelectionModel().getSelectedItem();
@@ -131,6 +165,12 @@ public class PlantaController {
         });
     }
 
+    /**
+     * Metodo para crear un diálogo personalizado para añadir o modificar una planta.
+     *
+     * @param planta planta a modificar (null para nuevo registro)
+     * @return diálogo configurado
+     */
     private Dialog<Planta>crearDialogo(Planta planta){
         Dialog<Planta>dialog = new Dialog<>();
         dialog.setTitle(planta == null ? "➕ Añadir Planta" : "✏️ Modificar Planta");
@@ -163,11 +203,18 @@ public class PlantaController {
         return dialog;
     }
 
+    /**
+     * Metodo para configurar el filtro de la columna PLANTA.
+     */
     @FXML
     private void configurarFiltroPlanta(){
         FilterUtils.abrirFiltroGenerico("Filtrar por Planta", Planta::getPlanta,btnFiltroPlanta,tablaPlantas,plantas);
     }
 
+    /**
+     * Metodo para desactivar la ordenación en la columna de la tabla.
+     * Mejora la estabilidad visual al trabajar con datos no ordenados.
+     */
     private void noOrdenar(){
         colPlanta.setSortable(false);
         colDescripcion.setSortable(false);

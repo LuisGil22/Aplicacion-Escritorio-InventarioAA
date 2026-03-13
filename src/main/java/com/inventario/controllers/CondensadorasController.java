@@ -4,38 +4,41 @@ import com.inventario.models.Condensadora;
 import com.inventario.utils.ExcelManager;
 import com.inventario.utils.FilterUtils;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.geometry.*;
-import javafx.scene.Cursor;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
-import javafx.stage.Popup;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
-
-import java.sql.Date;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-import static java.lang.Integer.parseInt;
-
+/**
+ ** Controlador para la gestión de condensadoras en la hoja Condensadoras del inventario.
+ *  <p>
+ *   Proporciona funcionalidades para:
+ *  </p>
+ *  <ul>
+ *     <li>Visualizar y editar condensadoras</li>
+ *     <li>Filtrar por cualquier columna mediante el sistema genérico de filtros</li>
+ *     <li>Gestionar automáticamente averías al cambiar el estado a AVERIADO/ACTIVA</li>
+ *     <li>Validar duplicados (CONDENSADORA + NUM_SECUENCIA)</li>
+ *     <li>Prevenir eliminación si la condensadora está en uso en Cassette</li>
+ *  </ul>
+ *
+ *  @author Luis Gil
+ */
 public class CondensadorasController {
+
+    /* Campos FXML */
     @FXML private TableView<Condensadora> tablaCondensadoras;
     @FXML private TableColumn<Condensadora,String>colCondensadoras;
     @FXML private TableColumn<Condensadora,Integer>colNumSecuencia;
@@ -51,8 +54,6 @@ public class CondensadorasController {
     @FXML private TableColumn<Condensadora,String>colAveria;
     @FXML private TableColumn<Condensadora,String>colObservaciones;
 
-    //@FXML private ComboBox<String> comboFiltroEstado;
-    //@FXML private Button btnFiltrar;
 
     @FXML private Button btnFiltroCondensadora;
     @FXML private Button btnFiltroNumSecuencia;
@@ -66,50 +67,33 @@ public class CondensadorasController {
     @FXML private Button btnFiltroFechaBaja;
     @FXML private Button btnFiltroFechaRev;
 
+    /** Dependencias  */
     private MainAppController mainAppController;
     private ObservableList<Condensadora> allDatos;
-    //private Boolean filtroActivo = true;
-    //private Boolean filtroBaja = true;
 
-    //private final Set<String>selectedValoresCondensadora = new LinkedHashSet<>();
-    //private Boolean seleccionarTodos = true;
-    //private final Map<String, CheckBox> checkItems = new HashMap<>();
-    private final Map<String,Set<String>> selectedValores = new HashMap<>();
-    private final Map<String,Boolean>seleccionarTodos = new HashMap<>();
-    private Button botonActual;
-
-    // ComboBoxes para parámetros
-    /**private ComboBox<String>comboEstado;
-    private ComboBox<String>comboGas;
-    private ComboBox<String>comboMarca;
-    private ComboBox<String>comboModelo;
-    private ComboBox<String>comLocCondensadora;
-
-    // Campos de texto
-    private TextField textCondensadora;
-    private TextField textNumSerie;
-    private TextField textAveria;
-    private TextField textObservacion;
-
-    //variable para modificar condensadora.
-
-    private Condensadora seleccionarCondensadora;
-
-    //private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");**/
-
-
+    /**
+     * Establece la dependencia con el controlador principal de la aplicación.
+     *
+     * @param mainAppController instancia del controlador principal
+     */
     public void setMainAppController(MainAppController mainAppController) {
         this.mainAppController = mainAppController;
     }
 
+    /**
+     * Método que inicializa el controlador al cargar la vista FXML.
+     * Configura columnas, carga datos y desactiva ordenación.
+     */
     @FXML
     public void initialize(){
         confColumnas();
-        //cargarFiltroEstados();
         cargarDatos();
         noOrdenar();
     }
 
+    /**
+     * Método que configura las columnas de la tabla Condensadoras.
+     */
     private void confColumnas(){
         colCondensadoras.setCellValueFactory(new PropertyValueFactory<>("condensadora"));
         colNumSecuencia.setCellValueFactory(new PropertyValueFactory<>("numSecuencia"));
@@ -126,200 +110,22 @@ public class CondensadorasController {
         colObservaciones.setCellValueFactory(new PropertyValueFactory<>("observaciones"));
     }
 
-    /**private void cargarFiltroEstados(){
-        ObservableList<String>estados = FXCollections.observableArrayList("Todos");
-        var datos = ExcelManager.leerHoja("PARAM_ESTADO");
-        for(int i=1;i<datos.size();i++){
-            if(!datos.get(i).isEmpty() && !datos.get(i).get(0).trim().isEmpty()){
-                estados.add(datos.get(i).get(0));
-            }
-        }
-        comboFiltroEstado.setItems(estados);
-        comboFiltroEstado.setValue("Todos");
-    }**/
-
-    /**@FXML
-    private void configurarFiltroCondensadora() {
-        if (allDatos == null || allDatos.isEmpty()) {
-            mainAppController.showAlert("No hay datos para filtrar.");
-            return;
-        }
-
-        // Obtener valores únicos de CONDENSADORA (sin duplicados, ordenados)
-        Set<String> set = new LinkedHashSet<>();
-        for (Condensadora item : allDatos) {
-            String v = item.getCondensadora();
-            if (v != null && !v.trim().isEmpty()) {
-                set.add(v.trim());
-            }
-        }
-        List<String> valoresColumnasCondensadora = new ArrayList<>(set);
-
-        // Crear ventana de filtro (como en ParamEstado)
-        Stage stage = new Stage();
-        stage.setTitle("Filtrar por Condensadora");
-        stage.initModality(Modality.WINDOW_MODAL);
-        stage.initOwner(btnFiltroCondensadora.getScene().getWindow());
-
-
-        VBox vbox = new VBox(10);
-        vbox.setPadding(new Insets(10));
-        vbox.setMaxWidth(250);
-
-        // Checkbox "Todos"
-        CheckBox cbTodos = new CheckBox("Todos");
-        cbTodos.setSelected(seleccionarTodos);
-        cbTodos.setOnAction(e -> {
-            boolean sel = cbTodos.isSelected();
-            seleccionarTodos = sel;
-            if(sel) {
-                selectedValoresCondensadora.clear();
-                checkItems.values().forEach(cb -> cb.setSelected(false));
-            }
-        });
-
-        vbox.getChildren().add(cbTodos);
-
-        // Checkboxes por valor
-        checkItems.clear();
-        for (String valor : valoresColumnasCondensadora) {
-            CheckBox cb = new CheckBox(valor);
-            boolean wasSelected = selectedValoresCondensadora.contains(valor);
-            cb.setSelected(wasSelected);
-            checkItems.put(valor, cb);
-            cb.setOnAction(e ->{
-                if(cb.isSelected()){
-                    selectedValoresCondensadora.add(valor);
-                    cbTodos.setSelected(false);
-                    seleccionarTodos = false;
-                }else{
-                    selectedValoresCondensadora.remove(valor);
-                }
-            });
-            vbox.getChildren().add(cb);
-        }
-
-        // Botones Aceptar/Cancelar
-        HBox hbButtons = new HBox(10);
-        Button btnAceptar = new Button("Aceptar");
-        Button btnCancelar = new Button("Cancelar");
-
-        btnAceptar.setOnAction(e -> {
-
-            if(seleccionarTodos){
-                tablaCondensadoras.setItems(allDatos);
-            }else{
-                ObservableList<Condensadora> filtrados = allDatos.filtered(item ->{
-                    String cond = item.getCondensadora();
-                    return cond != null && selectedValoresCondensadora.contains(cond.trim());
-                });
-                tablaCondensadoras.setItems(filtrados);
-            }
-            stage.close();
-        });
-
-        btnCancelar.setOnAction(e -> stage.close());
-
-        hbButtons.getChildren().addAll(btnAceptar, btnCancelar);
-        vbox.getChildren().add(hbButtons);
-
-        ScrollPane scrollPane = new ScrollPane(vbox);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setPrefWidth(250);
-        scrollPane.setPrefHeight(450);
-        scrollPane.setMaxHeight(600);
-        scrollPane.setMinHeight(350);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-
-        // 🎯 Posicionar debajo del botón ▼
-        Bounds btnBounds = btnFiltroCondensadora.localToScreen(btnFiltroCondensadora.getBoundsInLocal());
-        stage.setX(btnBounds.getMinX() - 40);
-        stage.setY(btnBounds.getMaxY() + 5);
-        stage.setScene(new Scene(scrollPane));
-        stage.show();
-    }**/
-    /**private void aplicarFiltroCondensadora() {
-        // Si no hay checkboxes, mostrar todo
-        if (checkItems.isEmpty()) {
-            tablaCondensadoras.setItems(allDatos);
-            return;
-        }
-
-        // Obtener valores seleccionados
-        Set<String> seleccionados = checkItems.entrySet().stream()
-                .filter(entry -> entry.getValue().isSelected())
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
-
-        // Si ninguno está seleccionado, mostrar vacío
-        if (seleccionados.isEmpty()) {
-            tablaCondensadoras.setItems(FXCollections.observableArrayList());
-            return;
-        }
-
-        // Filtrar
-        ObservableList<Condensadora> filtrados = allDatos.filtered(
-                item -> {
-                    String cond = item.getCondensadora();
-                    return cond != null && seleccionados.contains(cond.trim());
-                }
-        );
-
-        tablaCondensadoras.setItems(filtrados);
-    }**/
-    /**private void cargarDatos(){
-        allDatos = FXCollections.observableArrayList();
-        var datos = ExcelManager.leerHoja("Condensadoras");
-        DateTimeFormatter formato = DateTimeFormatter.ofPattern("d/M/yyyy");
-
-        for(int i=2;i<datos.size();i++){
-            var fila = datos.get(i);
-            if (fila.isEmpty() || (fila.size() > 0 && "CONDENSADORA".equals(fila.get(0)))) {
-                continue;
-            }
-            if(fila.size() <= 12) {continue;}
-            String condensadoras = fila.get(0);
-            String numSecuenciaStr = fila.get(1);
-            String estado = fila.get(2);
-            String marca = fila.get(3);
-            String modelo = fila.get(4);
-            String numSerieStr = fila.get(5);
-            String loc_condensadoras = fila.get(6);
-            String gas = fila.get(7);
-            String fechaInstStr = fila.get(8);
-            String fechaRevStr = fila.get(9);
-            String averia = fila.get(10);
-            String observaciones = fila.get(11);
-
-            int numSecuencia = parseInt(numSecuenciaStr);
-            long numSerie = parseLong(numSerieStr);
-            LocalDate fechaInst = parseDate(fechaInstStr,formato);
-            LocalDate fechaRev = parseDate(fechaRevStr,formato);
-
-            allDatos.add(new Condensadora(
-                    condensadoras,numSecuencia,estado,marca,modelo,numSerie,loc_condensadoras,gas,fechaInst != null? Date.valueOf(fechaInst):null,fechaRev != null? Date.valueOf(fechaRev):null,averia,observaciones
-            ));
-        }
-        tablaCondensadoras.setItems(allDatos);
-        System.out.println("Cargados " + allDatos.size() + " registros de Condensadoras");
-    }**/
-
+    /**
+     * Método para cargar los datos de la hoja Condensadoras del archivo Excel y los muestra en la tabla.
+     * Omite filas vacías y valida el formato de los datos antes de crear objetos Condensadora.
+     */
     private void cargarDatos() {
         allDatos = FXCollections.observableArrayList();
         var datos = ExcelManager.leerHoja("Condensadoras");
-        //DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/M/yyyy");
 
-        // Empezar desde i=1 (primera fila de datos)
         for (int i = 1; i < datos.size(); i++) {
             var fila = datos.get(i);
             System.out.println("Procesando fila " + i  + ": " + fila);
-            // Saltar filas vacías
+
             if (fila.isEmpty()) continue;
 
-            // Verificar que tenga al menos 1 columna
+
             if (fila.size() < 13) {
-                // Completar con valores vacíos
                 while (fila.size() < 13) {
                     fila.add("");
                 }
@@ -339,18 +145,14 @@ public class CondensadorasController {
             String averia = fila.get(11).trim();
             String observaciones = fila.get(12).trim();
 
-            // Solo procesar si hay al menos un valor significativo
+
             if (condensadora.isEmpty() && estado.isEmpty()) {
                 continue;
             }
             try {
-                // Parseo seguro (¡no asumas que los strings no están vacíos!)
+
                 Integer numSecuencia = (Integer) (numSecuenciaStr.trim().isEmpty() ? 1 : parseInt(numSecuenciaStr));
                 Long numSerie = parseLong(numSerieStr);
-                //fechaInst = (fechaInst != null) ? fechaInst.trim() : "";
-                //fechaRev = (fechaRev != null) ? fechaRev.trim() : "";
-                //LocalDate fechaInst = parseDate(formato, fechaInstStr);
-
 
                 allDatos.add(new Condensadora(
                         condensadora,
@@ -384,6 +186,9 @@ public class CondensadorasController {
         });
     }
 
+    /**
+     * Métodos para configurar los filtros en las columnas de la tabla Condensadoras.
+     */
     @FXML
     private void configurarFiltroCondensadora(){
         FilterUtils.abrirFiltroGenerico("Filtrar por Condensadora", Condensadora::getCondensadora,btnFiltroCondensadora,tablaCondensadoras,allDatos);
@@ -439,213 +244,13 @@ public class CondensadorasController {
         FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Revisión", Condensadora::getFechaRevision,btnFiltroFechaRev,tablaCondensadoras,allDatos);
     }
 
-    /**private void configurarFiltro(String titulo, Function<Condensadora,String>extractor,Button button){
-        if (allDatos == null || allDatos.isEmpty()) {
-            mainAppController.showAlert("No hay datos para filtrar.");
-            return;
-        }
-        this.botonActual = button;
-        String clave = titulo;
-
-        if(!selectedValores.containsKey(clave)){
-            selectedValores.put(clave,new LinkedHashSet<>());
-            seleccionarTodos.put(clave,true);
-        }
-        Set<String>seleccionados = selectedValores.get(clave);
-        boolean todos = seleccionarTodos.get(clave);
-
-        Set<String> valoresUnicos = new LinkedHashSet<>();
-        for (Condensadora item : allDatos) {
-            String v = extractor.apply(item);
-            if (v != null && !v.trim().isEmpty()) {
-                valoresUnicos.add(v.trim());
-            }
-        }
-        Stage stage = new Stage();
-        stage.setTitle(titulo);
-        stage.initModality(Modality.WINDOW_MODAL);
-        stage.initOwner(button.getScene().getWindow());
-
-        VBox vbox = new VBox(10);
-        vbox.setPadding(new Insets(10));
-        vbox.setMaxWidth(250);
-
-        Map<String,CheckBox>checkBoxMap = new HashMap<>();
-        // Checkbox "Todos"
-        CheckBox cbTodos = new CheckBox("Todos");
-        cbTodos.setSelected(todos);
-        cbTodos.setOnAction(e -> {
-            boolean sel = cbTodos.isSelected();
-            seleccionarTodos.put(clave,sel);
-            if(sel) {
-                seleccionados.clear();
-                checkBoxMap.values().forEach(cb -> cb.setSelected(false));
-            }
-        });
-
-        vbox.getChildren().add(cbTodos);
-
-        // Checkboxes por valor
-        for (String valor : valoresUnicos) {
-            CheckBox cb = new CheckBox(valor);
-            cb.setSelected(seleccionados.contains(valor));
-            checkBoxMap.put(valor, cb);
-            cb.setOnAction(e -> {
-                if (cb.isSelected()) {
-                    seleccionados.add(valor);
-                    cbTodos.setSelected(false);
-                    seleccionarTodos.put(clave, false);
-                } else {
-                    seleccionados.remove(valor);
-                }
-            });
-            vbox.getChildren().add(cb);
-        }
-
-        // Botones Aceptar/Cancelar
-        HBox hbButtons = new HBox(10);
-        Button btnAceptar = new Button("Aceptar");
-        Button btnCancelar = new Button("Cancelar");
-
-        btnAceptar.setOnAction(e -> {
-
-            if(seleccionarTodos.get(clave)){
-                tablaCondensadoras.setItems(allDatos);
-            }else{
-                ObservableList<Condensadora> filtrados = allDatos.filtered(item ->{
-                    String cond = extractor.apply(item);
-                    return cond != null && seleccionados.contains(cond.trim());
-                });
-                tablaCondensadoras.setItems(filtrados);
-            }
-            stage.close();
-        });
-        btnCancelar.setOnAction(e -> stage.close());
-
-        hbButtons.getChildren().addAll(btnAceptar, btnCancelar);
-        vbox.getChildren().add(hbButtons);
-
-        ScrollPane scrollPane = new ScrollPane(vbox);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setPrefWidth(250);
-        scrollPane.setPrefHeight(450);
-        scrollPane.setMaxHeight(600);
-        scrollPane.setMinHeight(350);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-
-        // 🎯 Posicionar debajo del botón ▼
-        Bounds btnBounds = button.localToScreen(button.getBoundsInLocal());
-        stage.setX(btnBounds.getMinX() - 40);
-        stage.setY(btnBounds.getMaxY() + 5);
-        stage.setScene(new Scene(scrollPane));
-        stage.show();
-    }**/
-    /**@FXML
-    public void onFiltrar(){
-        String seleccionado = comboFiltroEstado.getValue();
-        if("Todos".equals(seleccionado)){
-            tablaCondensadoras.setItems(allDatos);
-        }else {
-            ObservableList<Condensadora> filtrados = FXCollections.observableArrayList();
-
-            String seleccionLimpia = seleccionado.trim().toUpperCase();
-
-            for (Condensadora condensadora : allDatos) {
-                String estado = condensadora.getEstado();
-                if (estado != null && estado.trim().toUpperCase().equals(seleccionLimpia)) {
-                    filtrados.add(condensadora);
-                }
-            }
-            tablaCondensadoras.setItems(filtrados);
-        }
-    }**/
-
-    /**public void configurarFiltroEstado(){
-
-        Popup popup = new Popup();
-
-        VBox menu = new VBox(5);
-        menu.setStyle("-fx-background-color: white; -fx-border-color: gray; -fx-padding: 10px;");
-
-        // Checkbox para "Todos"
-        CheckBox chkTodos = new CheckBox("Todos");
-        CheckBox chkActivo = new CheckBox("ACTIVO");
-        CheckBox chkBaja = new CheckBox("BAJA");
-
-        chkTodos.setSelected(filtroActivo && filtroBaja);
-        chkActivo.setSelected(filtroActivo);
-        chkBaja.setSelected(filtroBaja);
-
-        chkTodos.setOnAction(e -> {
-            if (chkTodos.isSelected()) {
-                chkActivo.setSelected(true);
-                chkBaja.setSelected(true);
-            }else{
-                chkActivo.setSelected(false);
-                chkBaja.setSelected(false);
-            }
-            filtroActivo = chkActivo.isSelected();
-            filtroBaja = chkBaja.isSelected();
-            aplicarFiltro(chkActivo, chkBaja);
-        });
-
-        // Checkbox para ACTIVO
-        //CheckMenuItem chkActivo = new CheckMenuItem("ACTIVO");
-
-        chkActivo.setOnAction(e -> {
-            if (!chkActivo.isSelected()) {
-                chkTodos.setSelected(false);
-            }
-            filtroActivo = chkActivo.isSelected();
-            aplicarFiltro(chkActivo, chkBaja);
-        });
-
-        // Checkbox para BAJA
-        //CheckMenuItem chkBaja = new CheckMenuItem("BAJA");
-
-        chkBaja.setOnAction(e -> {
-            if (!chkBaja.isSelected()) {
-                chkTodos.setSelected(false);
-            }
-            filtroBaja = chkBaja.isSelected();
-            aplicarFiltro(chkActivo, chkBaja);
-        });
-
-
-
-        // Botones Aceptar/Cancelar
-        HBox botones = new HBox(10);
-        Button btnAceptar = new Button("Aceptar");
-        Button btnCancelar = new Button("Cancelar");
-
-        btnAceptar.setOnAction(e -> popup.hide());
-        btnCancelar.setOnAction(e -> {
-            // Restaurar estado
-            chkActivo.setSelected(true);
-            chkBaja.setSelected(true);
-            chkTodos.setSelected(true);
-            aplicarFiltro(chkActivo, chkBaja);
-            popup.hide();
-        });
-        botones.getChildren().addAll(btnAceptar, btnCancelar);
-
-        menu.getChildren().addAll(
-                chkTodos,
-                chkActivo,
-                chkBaja,
-                new Separator(),
-                botones
-        );
-
-        popup.getContent().add(menu);
-        HBox graphic = (HBox) colEstado.getGraphic();
-        Button boton = (Button) graphic.getChildren().get(1);
-        var bounds = boton.localToScreen(boton.getBoundsInLocal());
-        popup.show(boton.getScene().getWindow(), bounds.getMinX(), bounds.getMaxY());
-    }**/
-
-
+    /**
+     * Metodo para convertir un String a entero de forma segura.
+     * Devuelve 1 si el valor es nulo, vacío o no es numérico.
+     *
+     * @param dato String a convertir
+     * @return valor entero (mínimo 1)
+     */
     private int parseInt(String dato) {
         try {
             return dato == null || dato.trim().isEmpty() ? 1 : Integer.parseInt(dato.trim());
@@ -654,6 +259,13 @@ public class CondensadorasController {
         }
     }
 
+    /**
+     * Metodo para convertir un String a long de forma segura.
+     * Devuelve 0L si el valor es nulo, vacío o no es numérico.
+     *
+     * @param dato String a convertir
+     * @return valor long
+     */
     private long parseLong(String dato){
         try {
             return dato.isEmpty()? 0L : Long.parseLong(dato);
@@ -662,36 +274,28 @@ public class CondensadorasController {
         }
     }
 
-
-    /**private void aplicarFiltro(CheckBox chkActivo, CheckBox chkBaja) {
-        ObservableList<Condensadora> filtrados = FXCollections.observableArrayList();
-
-
-        for (Condensadora c : allDatos) {
-            String estado = c.getEstado();
-            if (estado == null) continue;
-
-            if (filtroActivo && "ACTIVO".equalsIgnoreCase(estado.trim())) {
-                filtrados.add(c);
-            } else if (filtroBaja && "BAJA".equalsIgnoreCase(estado.trim())) {
-                filtrados.add(c);
-            }
-        }
-        tablaCondensadoras.setItems(filtrados);
-    }**/
-
+    /**
+     * Metodo para abrir el formulario y añadir una nueva condensadora.
+     */
     @FXML
     private void onAddCond(){
         onAddForm(null);
     }
 
+    /**
+     * Metodo para abrir el formulario para añadir o modificar condensadoras.
+     * Precarga datos si se está modificando un registro existente.
+     *
+     * @param editar si es null se abre formulario para añadir condensadora y
+     *               si no es null para modificar condensadora seleccionada.
+     */
     private void onAddForm(Condensadora editar){
         Stage stage = new Stage();
         stage.setTitle(editar == null ? "Añadir Nueva Condensadora" : "Modificar Condensadora");
         stage.initModality(Modality.WINDOW_MODAL);
         stage.initOwner(tablaCondensadoras.getScene().getWindow());
 
-        //Campos de texto
+        /**Campos de texto*/
         TextField textCondensadora = new TextField();
         Spinner<Integer> spiNumSecuencia = new Spinner<>(1,100,1);
         spiNumSecuencia.setEditable(false);
@@ -706,10 +310,9 @@ public class CondensadorasController {
         DatePicker dateFechaRev = new DatePicker();
         TextField textAveria = new TextField();
         TextField textObservacion = new TextField();
-        textAveria.setPrefHeight(40);
         textObservacion.setPrefHeight(60);
 
-        //precargar los datos para modificar.
+        /** precargar los datos para modificar.*/
 
         if(editar != null){
             textCondensadora.setText(editar.getCondensadora());
@@ -739,7 +342,7 @@ public class CondensadorasController {
             textObservacion.setText(editar.getObservaciones());
         }
 
-        //Creacion del formulario.
+        /** Creacion del formulario.*/
         GridPane gridPane = new GridPane();
         gridPane.setHgap(10);
         gridPane.setVgap(8);
@@ -774,7 +377,7 @@ public class CondensadorasController {
         gridPane.add(new Label("Observación: "), 0 , row);
         gridPane.add(textObservacion, 1, row++);
 
-        //Creacion de los botones guardar y cancelar
+        /** Creacion de los botones guardar y cancelar.*/
         Button btnGuardar = new Button("Guardar");
         Button btnCancelar = new Button("Cancelar");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -795,10 +398,11 @@ public class CondensadorasController {
                     return;
                 }
             }
-            //Formatear fecha o texto
+            /** Formatear fecha o texto.*/
             String fechaInst = dateFechaInst.getValue() != null? dateFechaInst.getValue().format(formatter) : "";
             String fechaBaja = dateFechaBaja.getValue() != null? dateFechaBaja.getValue().format(formatter) : "";
             String fechaRev = dateFechaRev.getValue() != null? dateFechaRev.getValue().format(formatter) : "";
+            String estado = comboEstado.getValue() != null? comboEstado.getValue() : "";
 
             try {
                 String numSerieExcel = numSerie != null ? String.valueOf(numSerie) : "";
@@ -806,7 +410,7 @@ public class CondensadorasController {
                 List<String>filaNueva = Arrays.asList(
                         condensadora,
                         String.valueOf(spiNumSecuencia.getValue()),
-                        comboEstado.getValue() != null? comboEstado.getValue() : "",
+                        estado,
                         comboMarca.getValue() != null? comboMarca.getValue() : "",
                         comboModelo.getValue() != null? comboModelo.getValue() : "",
                         numSerieExcel,
@@ -815,11 +419,14 @@ public class CondensadorasController {
                         fechaInst,
                         fechaBaja,
                         fechaRev,
-                        textAveria.getText().trim(),
+                        "",
                         textObservacion.getText().trim()
                 );
-                if(editar == null){
-                    // Verificar clave compuesta única
+                boolean esNuevo = (editar == null);
+                int indexExcel = -1;
+
+                if(esNuevo){
+                    /** Verificar clave compuesta única.*/
                     if (existeCondensadoraDuplicada(condensadora, spiNumSecuencia.getValue())) {
                         mainAppController.showAlert("Ya existe una condensadora con ese número y secuencia.");
                         return;
@@ -828,20 +435,94 @@ public class CondensadorasController {
                 }else{
                     List<List<String>> datos = ExcelManager.leerHoja("Condensadoras");
 
-                    int index = -1;
-
                     for (int i = 1; i < datos.size(); i++) {
                         if (datos.get(i).size() > 0 && datos.get(i).get(0).trim().equals(editar.getCondensadora())){
-                            index = i;
+                            indexExcel = i;
                             break;
                         }
                     }
-                    if (index != -1){
-                        ExcelManager.modificarFila("Condensadoras", index, filaNueva.toArray(new String[0]));
+                    if (indexExcel != -1){
+                        ExcelManager.modificarFila("Condensadoras", indexExcel, filaNueva.toArray(new String[0]));
                     }
                 }
-                cargarDatos();
-                stage.close();
+
+                /** Gestión Automática de Averias.*/
+                String estadoAnterior = null;
+                if (!esNuevo) {
+                    List<List<String>> datosCond = ExcelManager.leerHoja("Condensadoras");
+
+                    for (int i = 1; i < datosCond.size(); i++) {
+                        List<String> fila = datosCond.get(i);
+                        System.out.println("Comparando: '" + fila.get(0) + "' vs '" + condensadora + "'");
+                        if (fila.size() > 0 && fila.get(0).trim().equals(textCondensadora) ){
+                            estadoAnterior = fila.get(2).trim(); // columna ESTADO
+                            break;
+                        }
+                    }
+                    if(estadoAnterior == null || estadoAnterior.isEmpty()){
+                        estadoAnterior = editar.getEstado();
+                    }
+                }
+
+                String numAveria = "";
+                String estadoActual = comboEstado.getValue() != null ? comboEstado.getValue() : "";
+                System.out.println(" estadoAnterior = '" + estadoAnterior + "'");
+                System.out.println(" estadoActual = '" + estadoActual + "'");
+                /** Si cambia de ACTIVA a AVERIADO crea una averia.*/
+                if ("ACTIVA".equals(estadoAnterior) && "AVERIADO".equals(estadoActual)) {
+                    System.out.println("¡ENTRA EN EL IF!");
+                    List<List<String>> averias = ExcelManager.leerHoja("AVERIAS");
+                    int maxNum = 0;
+                    for (int i = 1; i < averias.size(); i++) {
+                        if (!averias.get(i).isEmpty()) {
+                            String numStr = averias.get(i).get(0).trim();
+                            try {
+                                int n = Integer.parseInt(numStr);
+                                if (n > maxNum) maxNum = n;
+                            } catch (NumberFormatException ignored) {}
+                        }
+                    }
+                    numAveria = String.format("%04d", maxNum + 1);
+                    String planta = "";
+                    String localizacion = comLocCondensadora.getValue() != null ? comLocCondensadora.getValue() : "";
+                    String observaciones = textObservacion.getText().trim();
+                    ExcelManager.registrarAveriaAutomaticamente("CONDENSADORA",condensadora,planta, localizacion, observaciones, "Condensadoras", numAveria);
+                }
+
+                /** Si cambia de AVERIADO a ACTIVA la columna estado marca REPARADO.*/
+                if ("AVERIADO".equals(estadoAnterior) && "ACTIVA".equals(estadoActual)) {
+                    ExcelManager.marcarAveriaComoReparada("CONDENSADORA", condensadora);
+                }
+
+                Condensadora actualizada = new Condensadora(
+                        condensadora,
+                        spiNumSecuencia.getValue(),
+                        estadoActual,
+                        comboMarca.getValue() != null ? comboMarca.getValue() : "",
+                        comboModelo.getValue() != null ? comboModelo.getValue() : "",
+                        numSerie,
+                        comLocCondensadora.getValue() != null ? comLocCondensadora.getValue() : "",
+                        comboGas.getValue() != null ? comboGas.getValue() : "",
+                        fechaInst,
+                        fechaBaja,
+                        fechaRev,
+                        numAveria,
+                        textObservacion.getText().trim()
+                );
+                if (esNuevo) {
+                    allDatos.add(actualizada);
+                } else {
+                    int pos = allDatos.indexOf(editar);
+                    if (pos != -1) {
+                        allDatos.set(pos, actualizada);
+                    }
+                }
+
+
+                Platform.runLater(() -> {
+                    tablaCondensadoras.refresh();
+                    stage.close();
+                });
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -860,6 +541,12 @@ public class CondensadorasController {
         stage.show();
     }
 
+    /**
+     * Metodo para establecer la fecha en un DatePicker a partir de un String con formato dd/MM/yyyy.
+     *
+     * @param picker DatePicker a configurar
+     * @param fechaStr fecha en formato String (dd/MM/yyyy)
+     */
     private void setDatePicker(DatePicker picker, String fechaStr) {
         if (fechaStr == null || fechaStr.trim().isEmpty()) return;
         try {
@@ -868,6 +555,13 @@ public class CondensadorasController {
         } catch (Exception ignored) {}
     }
 
+    /**
+     * Metodo para verificar si existe una condensadora duplicada con la misma clave compuesta (CONDENSADORA + NUM_SECUENCIA).
+     *
+     * @param condensadora código de la condensadora
+     * @param numSecuencia número de secuencia
+     * @return true si existe duplicado, false en caso contrario
+     */
     private boolean existeCondensadoraDuplicada(String condensadora, int numSecuencia) {
         for (Condensadora c : allDatos) {
             if (c.getCondensadora().equals(condensadora) && c.getNumSecuencia() == numSecuencia) {
@@ -877,6 +571,10 @@ public class CondensadorasController {
         return false;
     }
 
+    /**
+     * Metodo para abrir el formulario y modificar la condensadora seleccionada.
+     * Valida que haya una selección activa antes de abrir el formulario.
+     */
     @FXML
     public void onEditCond(){
         Condensadora seleccionada = tablaCondensadoras.getSelectionModel().getSelectedItem();
@@ -884,10 +582,14 @@ public class CondensadorasController {
             mainAppController.showAlert("Selecciona una condensadora para modificar.");
             return;
         }
-        //this.seleccionarCondensadora = seleccionada;
+
         onAddForm(seleccionada);
     }
 
+    /**
+     * Metodo para eliminar la condensadora seleccionada tras confirmación.
+     * Verifica que no esté en uso en la hoja Cassette antes de eliminar.
+     */
     @FXML
     public void onDeleteCond(){
         Condensadora selected = tablaCondensadoras.getSelectionModel().getSelectedItem();
@@ -895,7 +597,7 @@ public class CondensadorasController {
             mainAppController.showAlert("Selecciona una condensadora para poder eliminarla");
             return;
         }
-        // Verificar si está en uso en Cassette
+        /** Verificar si está en uso en Cassette.*/
         if (ExcelManager.existParametroEnCassettes(selected.getCondensadora(), "CONDENSADORA")) {
             mainAppController.showAlert("No se puede eliminar: esta condensadora está en uso en la hoja 'Cassette'.");
             return;
@@ -913,6 +615,13 @@ public class CondensadorasController {
         });
     }
 
+    /**
+     * Metodo para cargar los parámetros de una hoja específica del Excel (ej. PARAM_ESTADO, PARAM_MARCAS).
+     * Omite valores vacíos y "en blanco".
+     *
+     * @param hoja nombre de la hoja de parámetros
+     * @return lista de valores válidos
+     */
     private List<String> cargarParametrosExcel(String hoja){
         List<String> lista = new ArrayList<>();
         try{
@@ -934,7 +643,10 @@ public class CondensadorasController {
         return lista;
     }
 
-
+    /**
+     * Metodo para desactivar la ordenación en todas las columnas de la tabla.
+     * Mejora la estabilidad visual al trabajar con datos no ordenados.
+     */
     private void noOrdenar(){
         colCondensadoras.setSortable(false);
         colNumSecuencia.setSortable(false);
@@ -950,64 +662,4 @@ public class CondensadorasController {
         colAveria.setSortable(false);
         colObservaciones.setSortable(false);
     }
-
-
-    /**private String formatearFecha(String valor) {
-        if (valor == null || valor.isEmpty()) return "";
-        if (valor.contains("DESINSTALADO") || valor.contains("Posible")) {
-            return valor; // Mantener texto especial
-        }
-
-        // Intentar parsear como fecha
-        try {
-            // Soportar formatos: "1/1/07", "6/17/25", "7/1/24"
-            DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("M/d/yy");
-            LocalDate date = LocalDate.parse(valor, inputFormat);
-
-            // Convertir año 2 dígitos a 4 dígitos con lógica razonable
-            int year = date.getYear();
-            if (year < 1950) year += 100; // Ej: 25 → 2025, 07 → 2007
-
-            LocalDate corrected = LocalDate.of(year, date.getMonth(), date.getDayOfMonth());
-            return corrected.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-        } catch (Exception e) {
-            return valor; // Si falla, devolver el original
-        }
-    }**/
-
-    /**private LocalDate parseDate( DateTimeFormatter formato, String dato){
-        if(dato == null || dato.trim().isEmpty() || dato.contains("DESINSTALADO")){
-            return null;
-        }
-        try{
-            if(dato.contains("/")) {
-                return LocalDate.parse(dato.trim(), formato);
-            }else{
-                return LocalDate.parse(dato.trim().split(" ")[2] + "/" +
-                                getNumeroMes(dato.trim().split(" ")[1]) + "/" +
-                                dato.trim().split(" ")[5],
-                        DateTimeFormatter.ofPattern("dd/M/yyyy"));
-            }
-        }catch(DateTimeParseException e){
-            return null;
-        }
-    }
-
-    private String getNumeroMes(String numeroMes){
-        return switch (numeroMes.toLowerCase()){
-            case "jan" -> "1";
-            case "feb" -> "2";
-            case "mar" -> "3";
-            case "apr" -> "4";
-            case "may" -> "5";
-            case "jun" -> "6";
-            case "jul" -> "7";
-            case "aug" -> "8";
-            case "sep" -> "9";
-            case "oct" -> "10";
-            case "nov" -> "11";
-            case "dec" -> "12";
-            default -> "1";
-        };
-    }**/
 }

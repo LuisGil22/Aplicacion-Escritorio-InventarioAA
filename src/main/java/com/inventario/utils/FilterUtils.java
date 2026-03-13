@@ -1,36 +1,49 @@
 package com.inventario.utils;
 
-import com.inventario.models.Condensadora;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.Node;
-import javafx.scene.Scene;
+import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.geometry.Bounds;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
+/**
+ * Utilidad para la gestión de filtros genéricos en tablas JavaFX.
+ * <p>
+ * Proporciona un menú de filtro reutilizable con checkboxes para cualquier columna de una TableView,
+ * manteniendo el estado de selección entre usos y permitiendo filtrar por múltiples valores.
+ * </p>
+ *
+ * @author Luis Gil
+ */
 public class FilterUtils {
 
-    // Estado global por columna (clave = título del filtro)
+    /** Estado global por columna (clave = título del filtro)*/
     private static final Map<String, Set<String>> selectedValues = new HashMap<>();
     private static final Map<String, Boolean> todosSelected = new HashMap<>();
 
 
 
     /**
-     * Abre un menú de filtro genérico para una columna.
+     * Abre un menú de filtro genérico para una columna específica de una TableView.
+     * <p>
+     * El menú muestra checkboxes para cada valor único encontrado en la columna,
+     * incluyendo una opción Todos para desactivar el filtro.
+     * </p>
      *
-     * @param titulo        Título del filtro (ej. "Filtrar por Condensadora")
-     * @param extractor     Función que extrae el valor de cada fila (ej. item -> item.getCondensadora())
-     * @param boton         Botón ▼ que activa el filtro (para posicionamiento)
-     * @param tableView     TableView donde se aplica el filtro
+     * @param titulo        título del menú de filtro (ej. "Filtrar por Condensadora")
+     * @param extractor     función que extrae el valor de la columna deseada de cada elemento
+     * @param boton         botón que activó el filtro (usado para posicionamiento)
+     * @param tableView     tabla donde se aplicará el filtro
+     * @param originalItems lista original de elementos (sin filtrar)
+     * @param <T>           tipo de los elementos en la tabla
      */
     public static <T> void abrirFiltroGenerico(
             String titulo,
@@ -44,7 +57,6 @@ public class FilterUtils {
             return;
         }
 
-        // Inicializar estado si es primera vez
         if (!selectedValues.containsKey(titulo)) {
             selectedValues.put(titulo, new LinkedHashSet<>());
             todosSelected.put(titulo, true);
@@ -53,7 +65,6 @@ public class FilterUtils {
         Set<String> seleccionados = selectedValues.get(titulo);
         boolean todos = todosSelected.get(titulo);
 
-        // Obtener valores únicos (solo no vacíos)
         Set<String> valoresUnicos = new LinkedHashSet<>();
         for (T item : originalItems) {
             String valor = extractor.apply(item);
@@ -71,7 +82,6 @@ public class FilterUtils {
         vbox.setPadding(new Insets(10));
         vbox.setMaxWidth(250);
 
-        // Checkbox "Todos"
         Map<String, CheckBox> checkBoxes = new HashMap<>();
         String clave = titulo;
         CheckBox cbTodos = new CheckBox("Todos");
@@ -85,8 +95,6 @@ public class FilterUtils {
             }
         });
         vbox.getChildren().add(cbTodos);
-
-        // Checkboxes por valor
 
         for (String valor : valoresUnicos) {
             CheckBox cb = new CheckBox(valor);
@@ -105,11 +113,9 @@ public class FilterUtils {
             vbox.getChildren().add(cb);
         }
 
-        // Botones
         HBox hbButtons = new HBox(10);
         Button btnAceptar = new Button("Aceptar");
         Button btnCancelar = new Button("Cancelar");
-
 
         btnAceptar.setOnAction(e -> {
             Boolean esTodos = todosSelected.getOrDefault(clave, false);
@@ -129,7 +135,6 @@ public class FilterUtils {
         hbButtons.getChildren().addAll(btnAceptar, btnCancelar);
         vbox.getChildren().add(hbButtons);
 
-        // Scroll y posición
         ScrollPane scrollPane = new ScrollPane(vbox);
         scrollPane.setFitToWidth(true);
         scrollPane.setPrefWidth(220);
@@ -146,6 +151,11 @@ public class FilterUtils {
         stage.show();
     }
 
+    /**
+     * Muestra una alerta de advertencia con el mensaje especificado.
+     *
+     * @param message mensaje a mostrar en la alerta
+     */
     private static void showAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Advertencia");

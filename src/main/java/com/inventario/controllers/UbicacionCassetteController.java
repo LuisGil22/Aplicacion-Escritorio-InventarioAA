@@ -1,6 +1,5 @@
 package com.inventario.controllers;
 
-import com.inventario.models.Estado;
 import com.inventario.models.Ubicacion_Cassette;
 import com.inventario.utils.ExcelManager;
 import com.inventario.utils.FilterUtils;
@@ -9,27 +8,47 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-
 import java.util.List;
 
+/**
+ * Controlador para la gestión de ubicaciones de cassettes en la hoja PARAM_UBICACIONES_CASSETTES del inventario.
+ * <p>
+ * Proporciona funcionalidades para:
+ * </p>
+ * <ul>
+ *   <li>Visualizar ubicaciones registradas</li>
+ *   <li>Añadir nuevas ubicaciones</li>
+ *   <li>Modificar ubicaciones existentes</li>
+ *   <li>Eliminar ubicaciones (con validación de uso en Cassette)</li>
+ *   <li>Filtrar por nombre de ubicación</li>
+ * </ul>
+ *
+ * @author Luis Gil
+ */
 public class UbicacionCassetteController {
 
-    @FXML
-    private TableView<Ubicacion_Cassette> tablaUbicacionCassettes;
+    /** Campos FXML */
+    @FXML private TableView<Ubicacion_Cassette> tablaUbicacionCassettes;
+    @FXML private TableColumn<Ubicacion_Cassette,String> colUbicacionCas;
+    @FXML private Button btnFiltroUbicacionCas;
 
-    @FXML
-    private TableColumn<Ubicacion_Cassette,String> colUbicacionCas;
-
-    @FXML
-    private Button btnFiltroUbicacionCas;
-
+    /** Dependencias */
     private MainAppController mainAppController;
     private ObservableList<Ubicacion_Cassette> ubicacionCassettes;
 
+    /**
+     * Metodo para establecer la dependencia con el controlador principal de la aplicación.
+     *
+     * @param mainAppController instancia del controlador principal
+     */
     public void setMainAppController(MainAppController mainAppController) {
         this.mainAppController = mainAppController;
     }
 
+    /**
+     * Metodo para inicializar el controlador al cargar la vista FXML.
+     * Configura columnas, carga datos y desactiva ordenación.
+     */
     @FXML
     public void initialize(){
         colUbicacionCas.setCellValueFactory(new PropertyValueFactory<>("nombre"));
@@ -37,6 +56,10 @@ public class UbicacionCassetteController {
         noOrdenar();
     }
 
+    /**
+     * Metodo para cargar los datos de la hoja PARAM_UBICACIONES_CASSETTES del archivo Excel y mostrarlos en la tabla.
+     * Omite filas vacías o con valores nulos.
+     */
     private void cargarDatos() {
         ubicacionCassettes = FXCollections.observableArrayList();
         var excelFile = ExcelManager.leerHoja("PARAM_UBICACIONES_CASSETTES");
@@ -49,6 +72,10 @@ public class UbicacionCassetteController {
         tablaUbicacionCassettes.setItems(ubicacionCassettes);
     }
 
+    /**
+     * Metodo para abrir un diálogo y añadir una nueva Ubicación de Cassette.
+     * Válida que el valor no esté vacío antes de guardar.
+     */
     @FXML
     public void onAddUbicacionCas(){
         TextInputDialog dialog = new TextInputDialog();
@@ -64,6 +91,10 @@ public class UbicacionCassetteController {
         });
     }
 
+    /**
+     * Metodo para abrir un diálogo para modificar la Ubicación de Cassette seleccionada.
+     * Válida que haya una selección activa y que el nuevo valor no esté vacío.
+     */
     @FXML
     public void onEditUbicacionCas(){
         Ubicacion_Cassette selected = tablaUbicacionCassettes.getSelectionModel().getSelectedItem();
@@ -99,6 +130,10 @@ public class UbicacionCassetteController {
         });
     }
 
+    /**
+     * Metodo para eliminar la Ubicación de Cassette seleccionada tras confirmación.
+     * Verifíca que no esté en uso en las hojas Cassette o Condensadoras.
+     */
     @FXML
     public void onDeleteUbicacionCas(){
         Ubicacion_Cassette selected = tablaUbicacionCassettes.getSelectionModel().getSelectedItem();
@@ -130,11 +165,18 @@ public class UbicacionCassetteController {
         });
     }
 
+    /**
+     * Metodo para configurar el filtro de la columna NOMBRE.
+     */
     @FXML
     private void configurarFiltroUbicacionCas(){
         FilterUtils.abrirFiltroGenerico("Filtrar por Nombre", Ubicacion_Cassette::getNombre,btnFiltroUbicacionCas,tablaUbicacionCassettes,ubicacionCassettes);
     }
 
+    /**
+     * Metodo para desactivar la ordenación en la columna de la tabla.
+     * Mejora la estabilidad visual al trabajar con datos no ordenados.
+     */
     private void noOrdenar(){
         colUbicacionCas.setSortable(false);
     }

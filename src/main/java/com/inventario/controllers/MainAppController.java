@@ -9,7 +9,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -17,39 +16,53 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Window;
 import javafx.util.Duration;
-import org.apache.poi.ss.usermodel.*;
 import java.io.IOException;
 
-
+/**
+ * Controlador principal de la aplicación de inventario de aire acondicionado.
+ * <p>
+ * Gestiona la navegación entre vistas, el diseño responsivo, la barra lateral (sidebar),
+ * y proporciona acceso global a funcionalidades comunes (como mostrar alertas).
+ * </p>
+ * <p>
+ * Implementa el patrón Singleton mediante {@link #INSTANCE} para permitir acceso global
+ * desde otros controladores.
+ * </p>
+ *
+ * @author Luis Gil
+ */
 public class MainAppController {
 
+    /**
+     * Instancia única del controlador principal.
+     * Permite acceso global desde otros controladores para mostrar alertas,
+     * cargar vistas o ajustar el diseño.
+     */
     public static MainAppController INSTANCE;
 
-    @FXML
-    private VBox sidebarInclude;
+    /** Campos FXML */
+    @FXML private VBox sidebarInclude;
+    @FXML private SidebarController sidebarIncludeController;
+    @FXML private Button SidebarButtonMostrar;
+    @FXML private StackPane stackPaneContent;
+    @FXML private Label VolverInicio;
+    @FXML private HeaderController headerController;
 
-    @FXML
-    private SidebarController sidebarIncludeController;
-
-    @FXML
-    private Button SidebarButtonMostrar;
-
-    @FXML
-    private StackPane stackPaneContent;
-
-    @FXML
-    private Label VolverInicio;
-
-    @FXML
-    private HeaderController headerController;
-
-
+    /** Estado interno */
     private boolean isSidebarVisible = true;
     private ImageView fondoImageView;
 
-
+    /**
+     * Metodo para inicializar el controlador al cargar la vista FXML.
+     * Configura:
+     * <ul>
+     *   <li>La instancia singleton ({@link #INSTANCE})</li>
+     *   <li>La dependencia con SidebarController</li>
+     *   <li>El evento de clic en "volver al inicio"</li>
+     *   <li>El listener de cambio de tamaño para diseño responsivo</li>
+     * </ul>
+     */
     @FXML
     public void initialize(){
         INSTANCE = this;
@@ -85,31 +98,24 @@ public class MainAppController {
                 }
             }
         });
-        /**System.out.println("=== MainAppController.initialize() ===");
-        System.out.println("headerController = " + headerController);
-        if (headerController != null) {
-            System.out.println("headerController.tituloApp = " + headerController.tituloApp);
-            System.out.println("headerController.exitButton = " + headerController.exitButton);
-            System.out.println("headerController.btnMenuMovil = " + headerController.btnMenuMovil);
-        }**/
     }
 
+    /**
+     * Metodo para manejar el evento de clic en el botón de menú móvil (☰) del header.
+     * Alterna la visibilidad del sidebar con animación suave.
+     */
     @FXML
     public void ClickSidebar(){
-
         toggleSidebarMovil();
-        /**if(isSidebarVisible) {
-            animacionSidebar(240, 0, () -> {
-                SidebarButtonMostrar.setText("»");
-            });
-        } else {
-            animacionSidebar(0,240, () -> {
-                SidebarButtonMostrar.setText("«");
-            });
-        }
-        isSidebarVisible = !isSidebarVisible;**/
     }
 
+    /**
+     * Metodo para animar el sidebar cambiando su ancho con una transición suave de 700ms.
+     *
+     * @param fromWidth ancho inicial en píxeles
+     * @param toWidth ancho final en píxeles
+     * @param onFinished acción a ejecutar al finalizar la animación
+     */
     private void animacionSidebar(double fromWidth, double toWidth, Runnable onFinished){
         Timeline timeline = new Timeline();
         timeline.getKeyFrames().add(new KeyFrame(
@@ -119,17 +125,23 @@ public class MainAppController {
                 new KeyValue(sidebarInclude.maxWidthProperty(),toWidth)
         ));
         if(onFinished != null){
-            //timeline.setOnFinished(e -> onFinished.run());
             timeline.setOnFinished(e -> {
-                // Asegurar que el center no se mueva
-                stackPaneContent.setMinWidth(600); // Fija ancho mínimo temporalmente
+                stackPaneContent.setMinWidth(600);
                 onFinished.run();
-                Platform.runLater(() -> stackPaneContent.setMinWidth(0)); // Restaura
+                Platform.runLater(() -> stackPaneContent.setMinWidth(0));
             });
         }
         timeline.play();
     }
 
+    /**
+     * Metodo para cargar una vista específica en el contenedor principal según el nombre del menú.
+     * <p>
+     * Soporta todas las vistas del sistema: parámetros, equipos y averías.
+     * </p>
+     *
+     * @param menuName nombre del menú (ej. "CONDENSADORAS", "AVERÍAS", "ESTADO")
+     */
     public void loadView(String menuName) {
         String path;
         switch (menuName) {
@@ -263,18 +275,34 @@ public class MainAppController {
                     e.printStackTrace();
                 }
                 break;
+            case "AVERÍAS":
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/averia.fxml"));
+                    Node view = loader.load();
+                    AveriaController averiaController = loader.getController();
+                    averiaController.setMainAppController(this);
+
+                    stackPaneContent.getChildren().setAll(view, SidebarButtonMostrar, VolverInicio);
+                    VolverInicio.setVisible(true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
             default:
                 mostrarMensajeBienvenida();
         }
     }
 
-
-
+    /**
+     * Metodo para mostrar la pantalla de bienvenida con fondo de imagen y mensaje instructivo.
+     * <p>
+     * Limpia la selección activa del sidebar y ajusta el fondo según el ancho actual.
+     * </p>
+     */
     public void mostrarMensajeBienvenida() {
         if(sidebarIncludeController != null){
             sidebarIncludeController.clearSeleccion();
         }
-
         Platform.runLater(() -> {
             if (fondoImageView == null){
                 Image img = new Image(getClass().getResourceAsStream("/imagenes/Background.png"));
@@ -285,7 +313,6 @@ public class MainAppController {
                 fondoImageView.setFitHeight(600);
             }
 
-            // Ajustar tamaño inicial
             double w = stackPaneContent.getWidth();
             if (w >= 800) {
                 fondoImageView.setFitWidth(800);
@@ -311,39 +338,21 @@ public class MainAppController {
 
             stackPaneContent.getChildren().setAll(fondoImageView, content, SidebarButtonMostrar, VolverInicio);
             VolverInicio.setVisible(false);
-            /**ImageView fondo = new ImageView(new Image(getClass().getResourceAsStream("/imagenes/Background.png")));
-            fondo.setPreserveRatio(false);
-            fondo.opacityProperty().bind(stackPaneContent.opacityProperty().multiply(0.2));
-            fondo.fitWidthProperty().bind(stackPaneContent.widthProperty());
-            fondo.fitHeightProperty().bind(stackPaneContent.heightProperty());
-
-            Label label = new Label("Haz clic en un menú para cargar su contenido");
-            StackPane.setAlignment(label, Pos.TOP_CENTER);
-            label.getStyleClass().add("label-text");
-
-            if (headerController != null) {
-                if (headerController.tituloApp != null) {
-                    headerController.tituloApp.setText("Inventario para Mantenimiento de Aire Acondicionado");
-                }
-                if (headerController.btnMenuMovil != null) {
-                    headerController.btnMenuMovil.setVisible(false); // Ocultar ☰ en pantalla de inicio
-                }
-                if (headerController.exitButton != null) {
-                    headerController.exitButton.setVisible(true); // Asegurar que "Salir" esté visible
-                }
-            }
-
-            // Mantener el botón
-            stackPaneContent.getChildren().setAll(fondo, label, SidebarButtonMostrar, VolverInicio);
-            VolverInicio.setVisible(false);**/
         });
     }
 
+    /**
+     * Metodo para navegar a la pantalla de inicio (mensaje de bienvenida).
+     */
     private void VolverAlInicio(){
-
         mostrarMensajeBienvenida();
     }
 
+    /**
+     * Metodo para mostrar una alerta de advertencia con el mensaje especificado.
+     *
+     * @param message mensaje a mostrar en la alerta
+     */
     public void showAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Advertencia");
@@ -352,6 +361,13 @@ public class MainAppController {
         alert.showAndWait();
     }
 
+    /**
+     * Metodo que alterna la visibilidad del sidebar con animación.
+     * <p>
+     * Si está visible → lo oculta (ancho 240 → 0).<br>
+     * Si está oculto → lo muestra (ancho 0 → 240).
+     * </p>
+     */
     public void toggleSidebarMovil() {
         if (isSidebarVisible) {
             animacionSidebar(240, 0, () -> SidebarButtonMostrar.setText("»"));
@@ -361,45 +377,41 @@ public class MainAppController {
         isSidebarVisible = !isSidebarVisible;
     }
 
+    /**
+     * Metodo para ajustar el diseño de la aplicación según el ancho de la ventana (diseño responsivo).
+     * <p>
+     * Cambia:
+     * </p>
+     * <ul>
+     *   <li>El título en el header (versión corta/larga)</li>
+     *   <li>La visibilidad del botón de menú móvil (☰)</li>
+     *   <li>El tamaño del fondo de bienvenida</li>
+     *   <li>La visibilidad del sidebar en modo móvil</li>
+     * </ul>
+     *
+     * @param ancho ancho actual de la ventana en píxeles
+     */
     public void ajustarDiseno(double ancho) {
-        //System.out.println("=== ajustarDiseno() llamado ===");
-        //System.out.println("Ancho recibido: " + ancho);
         if (Double.isNaN(ancho) || ancho <= 0){
-            //System.out.println("⚠️ Ancho inválido, saliendo.");
             return;
         }
         boolean esModoMovil = ancho <= 800;
-        //System.out.println("Modo móvil: " + esModoMovil);
 
         if(headerController != null) {
-
-                // 👇 Usar el controlador del header
-                if (headerController.tituloApp != null) {
-                    //System.out.println("✅ Actualizando título...");
-                    headerController.tituloApp.setText(
-                            esModoMovil ? "Inventario A.A." : "Inventario para Mantenimiento de Aire Acondicionado"
-                    );
-                //}else {
-                    //System.out.println("❌ tituloApp es NULL");
-                }
-                // Mostrar/ocultar icono ☰
-                if (headerController.btnMenuMovil != null) {
-                    //System.out.println("✅ Mostrando/ocultando ☰...");
-                    headerController.btnMenuMovil.setVisible(esModoMovil);
-                //}else {
-                    //System.out.println("❌ btnMenuMovil es NULL");
-                }
-
-                if (headerController.exitButton != null) {
-                    //System.out.println("✅ Asegurando que 'Salir' esté visible...");
-                    headerController.exitButton.setVisible(true);
-                //}else {
-                    //System.out.println("❌ headerController es NULL");
-                }
+            if (headerController.tituloApp != null) {
+                headerController.tituloApp.setText(
+                        esModoMovil ? "Inventario A.A." : "Inventario para Mantenimiento de Aire Acondicionado"
+                );
+            }
+            if (headerController.btnMenuMovil != null) {
+                headerController.btnMenuMovil.setVisible(esModoMovil);
+            }
+            if (headerController.exitButton != null) {
+                headerController.exitButton.setVisible(true);
+            }
 
         }
 
-        // Actualizar sidebar
         SidebarButtonMostrar.setVisible(!esModoMovil);
 
         if (esModoMovil && isSidebarVisible) {
@@ -410,7 +422,6 @@ public class MainAppController {
             isSidebarVisible = true;
         }
 
-        // Ajustar el fondo también
         if (fondoImageView != null) {
             if (ancho >= 800) {
                 fondoImageView.setFitWidth(800);
@@ -429,6 +440,10 @@ public class MainAppController {
             }
         }
     }
+
+    /**
+     * Metodo para cerrar la aplicación de forma segura.
+     */
     @FXML
     public void salir() {
         Platform.exit();

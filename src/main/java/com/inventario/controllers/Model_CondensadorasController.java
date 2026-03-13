@@ -1,6 +1,5 @@
 package com.inventario.controllers;
 
-import com.inventario.models.Model_Cassette;
 import com.inventario.models.Model_Condensadora;
 import com.inventario.utils.ExcelManager;
 import com.inventario.utils.FilterUtils;
@@ -11,30 +10,48 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
-
 import java.util.List;
 
+/**
+ * Controlador para la gestión de modelos de condensadoras en la hoja PARAM_MODELOS_COND del inventario.
+ * <p>
+ * Proporciona funcionalidades para:
+ * </p>
+ * <ul>
+ *   <li>Visualizar modelos de condensadoras registrados</li>
+ *   <li>Añadir nuevos modelos</li>
+ *   <li>Modificar modelos existentes</li>
+ *   <li>Eliminar modelos (con validación de uso en Condensadoras)</li>
+ *   <li>Filtrar por modelo o descripción</li>
+ * </ul>
+ *
+ * @author Luis Gil
+ */
 public class Model_CondensadorasController {
 
-    @FXML
-    private TableView<Model_Condensadora> tablaModel_Cond;
+    /** Campos FXML */
+    @FXML private TableView<Model_Condensadora> tablaModel_Cond;
+    @FXML private TableColumn<Model_Condensadora,String> colModelo;
+    @FXML private TableColumn<Model_Condensadora,String> colDescripcion;
+    @FXML private Button btnFiltroModelo;
 
-    @FXML
-    private TableColumn<Model_Condensadora,String> colModelo;
-
-    @FXML
-    private TableColumn<Model_Condensadora,String> colDescripcion;
-
-    @FXML
-    private Button btnFiltroModelo;
-
+    /** Dependencias */
     private MainAppController mainAppController;
     private ObservableList<Model_Condensadora> modelCondensadoras;
 
+    /**
+     * Metodo para establecer la dependencia con el controlador principal de la aplicación.
+     *
+     * @param mainAppController instancia del controlador principal
+     */
     public void setMainAppController(MainAppController mainAppController) {
         this.mainAppController = mainAppController;
     }
 
+    /**
+     * Metodo para inicializar el controlador al cargar la vista FXML.
+     * Configura columnas, carga datos y desactiva ordenación.
+     */
     public void initialize(){
         colModelo.setCellValueFactory(new PropertyValueFactory<>("modelo"));
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
@@ -42,6 +59,10 @@ public class Model_CondensadorasController {
         noOrdenar();
     }
 
+    /**
+     * Metodo para cargar los datos de la hoja PARAM_MODELOS_COND del archivo Excel y mostrarlos en la tabla.
+     * Omite filas vacías o con valores nulos.
+     */
     private void cargarDatos(){
         modelCondensadoras = FXCollections.observableArrayList();
         var excelFile = ExcelManager.leerHoja("PARAM_MODELOS_COND");
@@ -58,6 +79,10 @@ public class Model_CondensadorasController {
         tablaModel_Cond.setItems(modelCondensadoras);
     }
 
+    /**
+     * Metodo para abrir un diálogo y añadir un nuevo Modelo de Condensadora.
+     * Valida que el valor no esté vacío antes de guardar.
+     */
     @FXML
     public void onAddModel_Cond(){
         Dialog<Model_Condensadora> dialog = crearDialogo(null);
@@ -67,6 +92,10 @@ public class Model_CondensadorasController {
         });
     }
 
+    /**
+     * Metodo para abrir un diálogo para modificar el Modelo de Condensadora seleccionado.
+     * Valida que haya una selección activa y que el nuevo valor no esté vacío.
+     */
     @FXML
     public void onEditModel_Cond(){
         Model_Condensadora seleccionada = tablaModel_Cond.getSelectionModel().getSelectedItem();
@@ -80,7 +109,7 @@ public class Model_CondensadorasController {
             int index = -1;
             for (int i = 1; i < datos.size(); i++) {
                 List<String> fila = datos.get(i);
-                // Comparar por la primera columna (GAS)
+
                 if (fila.size() > 0 && fila.get(0).trim().equals(seleccionada.getModelo())) {
                     index = i;
                     break;
@@ -88,7 +117,7 @@ public class Model_CondensadorasController {
             }
 
             if (index != -1) {
-                // Usar modificarFilaPorIndice
+
                 ExcelManager.modificarFila("PARAM_MODELOS_COND", index, new String[]{nueva.getModelo(), nueva.getDescripcion()}
                 );
                 seleccionada.setModelo(nueva.getModelo());
@@ -100,6 +129,10 @@ public class Model_CondensadorasController {
         });
     }
 
+    /**
+     * Metodo para eliminar el Modelo de Condensadora seleccionado tras confirmación.
+     * Verifica que no esté en uso en la hoja Cassette o Condensadora.
+     */
     @FXML
     public void onDeleteModel_Cond(){
         Model_Condensadora seleccionada = tablaModel_Cond.getSelectionModel().getSelectedItem();
@@ -131,9 +164,15 @@ public class Model_CondensadorasController {
         });
     }
 
+    /**
+     * Metodo para crear un diálogo personalizado para añadir o modificar un modelo de Condensadora.
+     *
+     * @param modelCondensadora modelo de condensadora a modificar (null para nuevo registro)
+     * @return diálogo configurado
+     */
     private Dialog<Model_Condensadora>crearDialogo(Model_Condensadora modelCondensadora){
         Dialog<Model_Condensadora>dialog = new Dialog<>();
-        dialog.setTitle(modelCondensadora == null ? "➕ Añadir Modelo" : "✏️ Modificar Modelo");
+        dialog.setTitle(modelCondensadora == null ? "Añadir Modelo" : "Modificar Modelo");
         dialog.setHeaderText(null);
 
         TextField modeloField = new TextField();
@@ -163,11 +202,18 @@ public class Model_CondensadorasController {
         return dialog;
     }
 
+    /**
+     * Metodo para configurar el filtro de la columna MODELO.
+     */
     @FXML
     private void configurarFiltroModelo(){
         FilterUtils.abrirFiltroGenerico("Filtrar por Modelo", Model_Condensadora::getModelo,btnFiltroModelo,tablaModel_Cond,modelCondensadoras);
     }
 
+    /**
+     * Metodo para desactivar la ordenación en la columna de la tabla.
+     * Mejora la estabilidad visual al trabajar con datos no ordenados.
+     */
     private void noOrdenar(){
         colModelo.setSortable(false);
         colDescripcion.setSortable(false);

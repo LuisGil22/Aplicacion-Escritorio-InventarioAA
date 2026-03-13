@@ -2,7 +2,31 @@ package com.inventario.models;
 
 import java.util.Objects;
 
+/**
+ * Representa un cassette de aire acondicionado en el sistema de inventario.
+ * <p>
+ * Esta entidad se corresponde con la hoja Cassette del archivo Excel Inventario AA V2.xlsx.
+ * Cada instancia almacena los datos técnicos, de ubicación y estado de un cassette,
+ * incluyendo su relación con una condensadora y posibles averías.
+ … *   <li>Columna H: MARCA/MODELO</li>
+ *   <li>Columna I: NUM_SERIE_CAS</li>
+ *   <li>Columna J: CONDENSADORA (clave foránea a hoja Condensadoras)</li>
+ *   <li>Columna K: LOCALIZACIÓN_CONDENSADORA</li>
+ *   <li>Columna L: GAS (R-410A, R-32, etc.)</li>
+ *   <li>Columnas M-O: FECHAS (instalación, baja, revisión)</li>
+ *   <li>Columna P: AVERIA (NUM_AVERIA si está averiado, ej. "0001")</li>
+ *   <li>Columnas Q-R: FOTO y OBSERVACIONES</li>
+ * </ul>
+ *
+ * @author Luis Gil
+ */
 public class Cassette {
+    /** Estados válidos según hoja PARAM_ESTADO */
+    public static final String ESTADO_ACTIVA = "ACTIVA";
+    public static final String ESTADO_BAJA = "BAJA";
+    public static final String ESTADO_AVERIADO = "AVERIADO";
+
+    /** Campos que corresponden a las columnas de la hoja Cassette */
     private String numCassette;
     private Integer numSecuencia;
     private String estado;
@@ -22,6 +46,33 @@ public class Cassette {
     private String foto;
     private String observaciones;
 
+    /**
+     * Constructor por defecto (requerido por JavaFX y frameworks de serialización).
+     */
+    public Cassette() {}
+
+    /**
+     * Constructor completo para crear un nuevo cassette.
+     *
+     * @param numCassette               Identificador del cassette (no puede ser null/empty)
+     * @param numSecuencia             Número de secuencia (≥ 1)
+     * @param estado                   Estado actual (debe ser válido)
+     * @param planta                   Planta de ubicación
+     * @param nombre                   Nombre descriptivo
+     * @param potenciaCalor            Potencia en modo calor (puede ser null)
+     * @param potenciaFrio             Potencia en modo frío (puede ser null)
+     * @param marcaModelo              Marca y modelo
+     * @param numSerieCas              Número de serie
+     * @param condensadora             Condensadora asociada
+     * @param localizacionCondensadora Ubicación de la condensadora
+     * @param gas                      Tipo de gas refrigerante
+     * @param fechaInstalacion         Fecha de instalación (dd/MM/yyyy)
+     * @param fechaBaja                Fecha de baja (dd/MM/yyyy)
+     * @param fechaRevision            Fecha de revisión (dd/MM/yyyy)
+     * @param averia                   Número de averia (puede estar vacío)
+     * @param foto                     Referencia a foto
+     * @param observaciones            Observaciones adicionales
+     */
     public Cassette(String numCassette, Integer numSecuencia, String estado, String planta, String nombre, Double potenciaCalor, Double potenciaFrio, String marcaModelo, String numSerieCas, String condensadora, String localizacionCondensadora, String gas, String fechaInstalacion,String fechaBaja, String fechaRevision, String averia, String foto, String observaciones) {
         this.numCassette = numCassette;
         this.numSecuencia = numSecuencia;
@@ -44,6 +95,7 @@ public class Cassette {
     }
 
 
+    /** Getters y setters para cada campo */
     public String getNumCassette() {
         return numCassette;
     }
@@ -57,7 +109,7 @@ public class Cassette {
     }
 
     public void setNumSecuencia(Integer numSecuencia) {
-        this.numSecuencia = numSecuencia;
+        this.numSecuencia =  (numSecuencia != null && numSecuencia > 0) ? numSecuencia : 1;
     }
 
     public String getEstado() {
@@ -65,6 +117,11 @@ public class Cassette {
     }
 
     public void setEstado(String estado) {
+        if (!ESTADO_ACTIVA.equals(estado) &&
+                !ESTADO_BAJA.equals(estado) &&
+                !ESTADO_AVERIADO.equals(estado)) {
+            throw new IllegalArgumentException("El estado debe ser 'ACTIVA', 'BAJA' o 'AVERIADO'");
+        }
         this.estado = estado;
     }
 
@@ -188,6 +245,7 @@ public class Cassette {
         this.observaciones = observaciones;
     }
 
+    /** Equals y hashCode basados en numCassette y numSecuencia, que juntos identifican un cassette único */
     @Override
     public boolean equals(Object o) {
         if(this == o){
@@ -203,5 +261,13 @@ public class Cassette {
         return Objects.hash(numCassette, numSecuencia);
     }
 
+    @Override
+    public String toString() {
+        return "Cassette{" +
+                "numCassette='" + numCassette + '\'' +
+                ", numSecuencia=" + numSecuencia +
+                ", estado='" + estado + '\'' +
+                '}';
+    }
 
 }

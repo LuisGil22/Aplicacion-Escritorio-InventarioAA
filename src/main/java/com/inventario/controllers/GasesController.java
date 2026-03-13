@@ -1,6 +1,5 @@
 package com.inventario.controllers;
 
-import com.inventario.models.Estado;
 import com.inventario.models.Gas;
 import com.inventario.utils.ExcelManager;
 import com.inventario.utils.FilterUtils;
@@ -14,55 +13,69 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import org.apache.poi.ss.usermodel.*;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
-
+/**
+ * Controlador para la gestión de gases en la hoja PARAM_GASES del inventario.
+ * <p>
+ * Proporciona funcionalidades para:
+ * </p>
+ * <ul>
+ *   <li>Visualizar gases registrados</li>
+ *   <li>Añadir nuevos gases</li>
+ *   <li>Modificar gases existentes</li>
+ *   <li>Eliminar gases (con validación de uso en Condensadoras)</li>
+ *   <li>Filtrar por cualquier columna</li>
+ * </ul>
+ *
+ * @author Luis Gil
+ */
 public class GasesController {
 
-    @FXML
-    private TableView<Gas> tablaGases;
+    /** Campos FXML */
+    @FXML private TableView<Gas> tablaGases;
+    @FXML private TableColumn<Gas, String> colGas;
+    @FXML private TableColumn<Gas, String> colPcg_Pca;
+    @FXML private TableColumn<Gas, String> colFechaCaducidad;
+    @FXML private TableColumn<Gas, String> colFechaRevision;
+    @FXML private TableColumn<Gas, String> colObservaciones;
 
-    @FXML
-    private TableColumn<Gas, String> colGas;
-    @FXML
-    private TableColumn<Gas, String> colPcg_Pca;
-    @FXML
-    private TableColumn<Gas, String> colFechaCaducidad;
-    @FXML
-    private TableColumn<Gas, String> colFechaRevision;
-    @FXML
-    private TableColumn<Gas, String> colObservaciones;
+    @FXML private Button btnFiltroGas;
+    @FXML private Button btnFiltroPcg_Pca;
+    @FXML private Button btnFiltroFechaCad;
+    @FXML private Button btnFiltroFechaRev;
 
-    @FXML
-    private Button btnFiltroGas;
-    @FXML
-    private Button btnFiltroPcg_Pca;
-    @FXML
-    private Button btnFiltroFechaCad;
-    @FXML
-    private Button btnFiltroFechaRev;
-
+    /** Dependencias */
     private MainAppController mainAppController;
     private ObservableList<Gas>gases;
 
+    /**
+     * Metodo para establecer la dependencia con el controlador principal de la aplicación.
+     *
+     * @param controller instancia del controlador principal
+     */
     public void setMainAppController(MainAppController controller){
         this.mainAppController = controller;
     }
 
+    /**
+     * Metodo para inicializar el controlador al cargar la vista FXML.
+     * Configura columnas, carga datos y desactiva ordenación.
+     */
     public void initialize(){
         confColumnas();
         cargarDatos();
         noOrdenar();
     }
 
+    /**
+     * Metodo para configurar las columnas de la tabla Gas.
+     */
     public void confColumnas(){
         colGas.setCellValueFactory(new PropertyValueFactory<>("gas"));
         colPcg_Pca.setCellValueFactory(new PropertyValueFactory<>("pcg_pca"));
@@ -71,6 +84,11 @@ public class GasesController {
         colObservaciones.setCellValueFactory(new PropertyValueFactory<>("observaciones"));
     }
 
+    /**
+     * Metodo para cargar los datos de la hoja PARAM_GASES del archivo Excel y mostrarlos en la tabla.
+     * Omite filas vacías o con valores nulos.
+     * Valida el formato de los datos antes de crear objetos Gas.
+     */
     private void cargarDatos(){
         gases = FXCollections.observableArrayList();
         List<List<String>> datos = ExcelManager.leerHoja("PARAM_GASES");
@@ -98,13 +116,12 @@ public class GasesController {
          tablaGases.setItems(gases);
     }
 
+    /**
+     * Metodo para abrir el formulario y añadir un nuevo gas.
+     */
     @FXML
     public void onAddGases(){
-        /**Dialog<Gas>dialog = crearDialogo(null);
-        dialog.showAndWait().ifPresent(gas -> {
-            tablaGases.getItems().add(gas);
-            ExcelManager.añadirFila("PARAM_GASES", gas.getGas(), String.valueOf(gas.getPcg_pca()),gas.getFechaCaducidad(),gas.getFechaRevision(),gas.getObservaciones());
-        });**/
+
         Stage stage = new Stage();
         stage.setTitle("Añadir Nuevo Gas");
         stage.initModality(Modality.WINDOW_MODAL);
@@ -168,6 +185,10 @@ public class GasesController {
         stage.show();
     }
 
+    /**
+     * Metodo para abrir el formulario y modificar el gas seleccionado.
+     * Valida que haya una selección activa antes de abrir el formulario.
+     */
     @FXML
     public void onEditGases(){
         Gas seleccionado = tablaGases.getSelectionModel().getSelectedItem();
@@ -175,33 +196,7 @@ public class GasesController {
             mainAppController.showAlert("Selecciona un gas para modificar.");
             return;
         }
-       /** Dialog<Gas>dialog = crearDialogo(seleccionado);
-        dialog.showAndWait().ifPresent(nuevo -> {
-            List<List<String>> datos = ExcelManager.leerHoja("PARAM_GASES");
-            int index = -1;
-            for (int i = 1; i < datos.size(); i++) {
-                List<String> fila = datos.get(i);
-                // Comparar por la primera columna (GAS)
-                if (fila.size() > 0 && fila.get(0).trim().equals(seleccionado.getGas())) {
-                    index = i;
-                    break;
-                }
-            }
 
-            if (index != -1) {
-                // Usar modificarFilaPorIndice
-                ExcelManager.modificarFila("PARAM_GASES", index, new String[]{nuevo.getGas(), nuevo.getPcg_pca() != null ? String.valueOf(nuevo.getPcg_pca()) : "", nuevo.getFechaCaducidad(), nuevo.getFechaRevision(), nuevo.getObservaciones()}
-                );
-                seleccionado.setGas(nuevo.getGas());
-                seleccionado.setPcg_pca(nuevo.getPcg_pca());
-                seleccionado.setFechaCaducidad(nuevo.getFechaCaducidad());
-                seleccionado.setFechaRevision(nuevo.getFechaRevision());
-                seleccionado.setObservaciones(nuevo.getObservaciones());
-                tablaGases.refresh();
-            } else {
-                mainAppController.showAlert("No se encontró el gas en el archivo.");
-            }
-        });**/
         Stage stage = new Stage();
         stage.setTitle("Modificar Gas");
         stage.initModality(Modality.WINDOW_MODAL);
@@ -276,6 +271,10 @@ public class GasesController {
         stage.show();
     }
 
+    /**
+     * Metodo para eliminar el gas seleccionado tras confirmación.
+     * Verifica que no esté en uso en la hoja Condensadoras.
+     */
     @FXML
     public void onDeleteGases(){
         Gas seleccionado = tablaGases.getSelectionModel().getSelectedItem();
@@ -307,38 +306,13 @@ public class GasesController {
         });
     }
 
-    /**private Dialog<Gas>crearDialogo(Gas gas){
-        Dialog<Gas>dialog = new Dialog<>();
-        dialog.setTitle(gas == null ? "➕ Añadir Gas" : "✏️ Modificar Gas");
-        dialog.setHeaderText(null);
-
-        TextField gasField = new TextField();
-        TextField descField = new TextField();
-
-        gasField.setPromptText("Gas");
-        descField.setPromptText("Descripcion");
-
-        if(gas != null){
-            gasField.setText(gas.getGas());
-            descField.setText(gas.getDescripcion());
-        }
-
-        VBox vBox = new VBox(10, new Label("Gas:"),gasField, new Label("Descripción:"), descField);
-        vBox.setPadding(new Insets(10));
-
-        dialog.getDialogPane().setContent(vBox);
-        ButtonType añadirBoton = new ButtonType(gas == null? "Añadir":"Guardar", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(añadirBoton,ButtonType.CANCEL);
-
-        dialog.setResultConverter(botonDialog -> {
-            if(botonDialog == añadirBoton) {
-                return new Gas(gasField.getText(), descField.getText());
-            }
-            return null;
-        });
-        return dialog;
-    }**/
-
+    /**
+     * Metodo para convertir un String a Double de forma segura.
+     * Limpia caracteres no numéricos y maneja coma decimal.
+     *
+     * @param s String a convertir
+     * @return valor Double o null si no es válido
+     */
     private Double parseDouble(String s) {
         if (s == null || s.trim().isEmpty()) return null;
         try {
@@ -348,6 +322,12 @@ public class GasesController {
         }
     }
 
+    /**
+     * Metodo para establecer la fecha en un DatePicker a partir de un String con formato dd/MM/yyyy.
+     *
+     * @param datePicker DatePicker a configurar
+     * @param fecha fecha en formato String (dd/MM/yyyy)
+     */
     private void setDatePicker(DatePicker datePicker, String fecha) {
         if (fecha == null || fecha.trim().isEmpty()) return;
         try {
@@ -356,6 +336,7 @@ public class GasesController {
         } catch (Exception ignored) {}
     }
 
+    /** Metodos para configurar los filtros de las columnas en la tabla Gas.*/
     @FXML
     private void configurarFiltroGas(){
         FilterUtils.abrirFiltroGenerico("Filtrar por Gas", Gas::getGas,btnFiltroGas,tablaGases,gases);
@@ -376,6 +357,10 @@ public class GasesController {
         FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Revision", Gas::getFechaRevision, btnFiltroFechaRev,tablaGases,gases);
     }
 
+    /**
+     * Desactiva la ordenación en todas las columnas de la tabla.
+     * Mejora la estabilidad visual al trabajar con datos no ordenados.
+     */
     private void noOrdenar(){
         colGas.setSortable(false);
         colPcg_Pca.setSortable(false);

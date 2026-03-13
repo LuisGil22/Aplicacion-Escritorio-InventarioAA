@@ -1,6 +1,5 @@
 package com.inventario.controllers;
 
-import com.inventario.models.Gas;
 import com.inventario.models.Marca;
 import com.inventario.utils.ExcelManager;
 import com.inventario.utils.FilterUtils;
@@ -11,30 +10,48 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
-
 import java.util.List;
 
+/**
+ * Controlador para la gestión de marcas en la hoja PARAM_MARCAS del inventario.
+ * <p>
+ * Proporciona funcionalidades para:
+ * </p>
+ * <ul>
+ *   <li>Visualizar marcas registradas</li>
+ *   <li>Añadir nuevas marcas</li>
+ *   <li>Modificar marcas existentes</li>
+ *   <li>Eliminar marcas (con validación de uso en Condensadoras)</li>
+ *   <li>Filtrar por marca o descripción</li>
+ * </ul>
+ *
+ * @author Luis Gil
+ */
 public class MarcaController {
 
-    @FXML
-    private TableView<Marca> tablaMarca;
+    /** Campos FXML */
+    @FXML private TableView<Marca> tablaMarca;
+    @FXML private TableColumn<Marca,String> colMarca;
+    @FXML private TableColumn<Marca,String> colDescripcion;
+    @FXML private Button btnFiltroMarca;
 
-    @FXML
-    private TableColumn<Marca,String> colMarca;
-
-    @FXML
-    private TableColumn<Marca,String> colDescripcion;
-
-    @FXML
-    private Button btnFiltroMarca;
-
+    /** Dependencias */
     private MainAppController mainAppController;
     private ObservableList<Marca> marcas;
 
+    /**
+     * Metodo para establecer la dependencia con el controlador principal de la aplicación.
+     *
+     * @param mainAppController instancia del controlador principal
+     */
     public void setMainAppController(MainAppController mainAppController) {
         this.mainAppController = mainAppController;
     }
 
+    /**
+     * Metodo para inicializar el controlador al cargar la vista FXML.
+     * Configura columnas, carga datos y desactiva ordenación.
+     */
     public void initialize(){
         colMarca.setCellValueFactory(new PropertyValueFactory<>("marca"));
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
@@ -42,6 +59,10 @@ public class MarcaController {
         noOrdenar();
     }
 
+    /**
+     * Metodo para cargar los datos de la hoja PARAM_MARCAS del archivo Excel y mostrarlos en la tabla.
+     * Omite filas vacías o con valores nulos.
+     */
     private void cargarDatos(){
         marcas = FXCollections.observableArrayList();
         var excelFile = ExcelManager.leerHoja("PARAM_MARCAS");
@@ -58,6 +79,10 @@ public class MarcaController {
         tablaMarca.setItems(marcas);
     }
 
+    /**
+     * Metodo para abrir un diálogo y añadir una nueva Marca.
+     * Valida que el valor no esté vacío antes de guardar.
+     */
     @FXML
     public void onAddMarca(){
         Dialog<Marca> dialog = crearDialogo(null);
@@ -67,6 +92,10 @@ public class MarcaController {
         });
     }
 
+    /**
+     * Metodo para abrir un diálogo para modificar la Marca seleccionada.
+     * Valida que haya una selección activa y que el nuevo valor no esté vacío.
+     */
     @FXML
     public void onEditMarca(){
         Marca seleccionada = tablaMarca.getSelectionModel().getSelectedItem();
@@ -80,7 +109,7 @@ public class MarcaController {
             int index = -1;
             for (int i = 1; i < datos.size(); i++) {
                 List<String> fila = datos.get(i);
-                // Comparar por la primera columna (GAS)
+
                 if (fila.size() > 0 && fila.get(0).trim().equals(seleccionada.getMarca())) {
                     index = i;
                     break;
@@ -88,7 +117,7 @@ public class MarcaController {
             }
 
             if (index != -1) {
-                // Usar modificarFilaPorIndice
+
                 ExcelManager.modificarFila("PARAM_MARCAS", index, new String[]{nueva.getMarca(), nueva.getDescripcion()}
                 );
                 seleccionada.setMarca(nueva.getMarca());
@@ -100,6 +129,10 @@ public class MarcaController {
         });
     }
 
+    /**
+     * Metodo para eliminar la Marca seleccionada tras confirmación.
+     * Verifica que no esté en uso en las hojas Cassette o Condensadoras.
+     */
     @FXML
     public void onDeleteMarca(){
         Marca seleccionada = tablaMarca.getSelectionModel().getSelectedItem();
@@ -130,9 +163,10 @@ public class MarcaController {
         });
     }
 
+
     private Dialog<Marca>crearDialogo(Marca marca){
         Dialog<Marca>dialog = new Dialog<>();
-        dialog.setTitle(marca == null ? "➕ Añadir Marca" : "✏️ Modificar Marca");
+        dialog.setTitle(marca == null ? "Añadir Marca" : "Modificar Marca");
         dialog.setHeaderText(null);
 
         TextField marcaField = new TextField();
@@ -162,11 +196,18 @@ public class MarcaController {
         return dialog;
     }
 
+    /**
+     * Metodo para configurar el filtro de la columna MARCA.
+     */
     @FXML
     private void configurarFiltroMarca(){
         FilterUtils.abrirFiltroGenerico("Filtrar por Marca", Marca::getMarca,btnFiltroMarca,tablaMarca,marcas);
     }
 
+    /**
+     * Metodo para desactivar la ordenación en la columna de la tabla.
+     * Mejora la estabilidad visual al trabajar con datos no ordenados.
+     */
     private void noOrdenar(){
         colMarca.setSortable(false);
         colDescripcion.setSortable(false);

@@ -1,7 +1,5 @@
 package com.inventario.controllers;
 
-import com.inventario.models.Estado;
-import com.inventario.models.Gas;
 import com.inventario.models.Loc_Condensadoras;
 import com.inventario.utils.ExcelManager;
 import com.inventario.utils.FilterUtils;
@@ -12,26 +10,32 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
-
 import java.util.List;
 
 public class Loc_CondensadorasController {
 
-    @FXML
-    private TableView<Loc_Condensadoras> tablaLoc_Condensadoras;
+    /** Campos FXML */
+    @FXML private TableView<Loc_Condensadoras> tablaLoc_Condensadoras;
+    @FXML private TableColumn<Loc_Condensadoras,String> colLoc_Condensadoras;
+    @FXML private Button btnFiltroLocCondensadoras;
 
-    @FXML
-    private TableColumn<Loc_Condensadoras,String> colLoc_Condensadoras;
-    @FXML
-    private Button btnFiltroLocCondensadoras;
-
+    /** Dependencias */
     private MainAppController mainController;
     private ObservableList<Loc_Condensadoras> loc_condensadoras;
 
+    /**
+     * Metodo para establecer la dependencia con el controlador principal de la aplicación.
+     *
+     * @param controller instancia del controlador principal
+     */
     public void setMainController(MainAppController controller) {
         this.mainController = controller;
     }
 
+    /**
+     * Metodo para inicializar el controlador al cargar la vista FXML.
+     * Configura columnas, carga datos y desactiva ordenación.
+     */
     @FXML
     public void initialize() {
         colLoc_Condensadoras.setCellValueFactory(new PropertyValueFactory<>("localizacionCondensadoras"));
@@ -39,6 +43,10 @@ public class Loc_CondensadorasController {
         noOrdenar();
     }
 
+    /**
+     * Metodo para cargar los datos de la hoja PARAM_LOC_COND del archivo Excel y mostrarlos en la tabla.
+     * Omite filas vacías o con valores nulos.
+     */
     public void cargarDatos(){
         loc_condensadoras = FXCollections.observableArrayList();
         var excelFile = ExcelManager.leerHoja("PARAM_LOC_COND");
@@ -51,6 +59,10 @@ public class Loc_CondensadorasController {
         tablaLoc_Condensadoras.setItems(loc_condensadoras);
     }
 
+    /**
+     * Metodo para abrir un diálogo y añadir una nueva localizacion de condensadora.
+     * Valida que el valor no esté vacío antes de guardar.
+     */
     @FXML
     public void onAddLoc_Condensadoras(){
         Dialog<Loc_Condensadoras>dialog = crearDialogo(null);
@@ -60,6 +72,10 @@ public class Loc_CondensadorasController {
         });
     }
 
+    /**
+     * Metodo para abrir un diálogo para modificar la localizacion de condensadora seleccionada.
+     * Valida que haya una selección activa y que el nuevo valor no esté vacío.
+     */
     @FXML
     public void onEditLoc_Condensadoras(){
         Loc_Condensadoras selected = tablaLoc_Condensadoras.getSelectionModel().getSelectedItem();
@@ -95,6 +111,10 @@ public class Loc_CondensadorasController {
         });
     }
 
+    /**
+     * Metodo para eliminar la localizacion de condensadora seleccionada tras confirmación.
+     * Verifica que no esté en uso en la hoja Condensadoras.
+     */
     @FXML
     public void onDeleteLoc_Condensadoras(){
         Loc_Condensadoras selected = tablaLoc_Condensadoras.getSelectionModel().getSelectedItem();
@@ -126,18 +146,31 @@ public class Loc_CondensadorasController {
         });
     }
 
+    /**
+     * Metodo para configurar el filtro de la columna LOCALIZACION_CONDENSADORAS.
+     */
     @FXML
     private void configurarFiltroLocCondensadoras(){
         FilterUtils.abrirFiltroGenerico("Filtrar por Localización Condensadoras", Loc_Condensadoras::getLocalizacionCondensadoras,btnFiltroLocCondensadoras,tablaLoc_Condensadoras,loc_condensadoras);
     }
 
+    /**
+     * Metodo para desactivar la ordenación en la columna de la tabla.
+     * Mejora la estabilidad visual al trabajar con datos no ordenados.
+     */
     private void noOrdenar(){
         colLoc_Condensadoras.setSortable(false);
     }
 
+    /**
+     * Metodo para crear un diálogo personalizado para añadir o modificar una localización de condensadora.
+     *
+     * @param loc_condensadoras localización a modificar (null para nuevo registro)
+     * @return diálogo configurado
+     */
     private Dialog<Loc_Condensadoras>crearDialogo(Loc_Condensadoras loc_condensadoras){
         Dialog<Loc_Condensadoras>dialog = new Dialog<>();
-        dialog.setTitle(loc_condensadoras == null ? "➕ Añadir localizacion de Condensadora" : "✏️ Modificar Localizacion de condensadora");
+        dialog.setTitle(loc_condensadoras == null ? "Añadir localizacion de Condensadora" : "Modificar Localizacion de condensadora");
         dialog.setHeaderText(null);
 
         TextField localizacionCondensadorasField = new TextField();

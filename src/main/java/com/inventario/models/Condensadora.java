@@ -1,9 +1,29 @@
 package com.inventario.models;
 
-import java.util.Date;
 
+import java.util.Objects;
+
+/**
+ * Representa una condensadora de aire acondicionado en el sistema de inventario.
+ * <p>
+ * Esta entidad se corresponde con la hoja Condensadoras del archivo Excel Inventario AA V2.xlsx.
+ * Cada instancia almacena los datos técnicos, de ubicación y estado de una condensadora,
+ * incluyendo su relación con cassettes y posibles averías.
+ … *   <li>Columna H: GAS (R-410A, R-32, etc.)</li>
+ *   <li>Columnas I-K: FECHAS (instalación, baja, revisión)</li>
+ *   <li>Columna L: AVERIA (NUM_AVERIA si está averiada, ej. "0001")</li>
+ *   <li>Columna M: OBSERVACIONES</li>
+ * </ul>
+ *
+ * @author Luis Gil
+ */
 public class Condensadora {
+    /** Estados válidos según hoja PARAM_ESTADO */
+    public static final String ESTADO_ACTIVA = "ACTIVA";
+    public static final String ESTADO_BAJA = "BAJA";
+    public static final String ESTADO_AVERIADO = "AVERIADO";
 
+    /** Campos de la Entidad */
     private String condensadora;
     private Integer numSecuencia;
     private String estado;
@@ -18,6 +38,28 @@ public class Condensadora {
     private String averia;
     private String observaciones;
 
+    /**
+     * Constructor por defecto (requerido por JavaFX y frameworks de serialización).
+     */
+    public Condensadora() {}
+
+    /**
+     * Constructor completo para crear una nueva condensadora.
+     *
+     * @param condensadora       Identificador único de la condensadora
+     * @param numSecuencia      Número de secuencia (≥ 1)
+     * @param estado            Estado actual (debe ser válido)
+     * @param marca             Marca del equipo
+     * @param modelo            Modelo del equipo
+     * @param numSerieCond      Número de serie (puede ser null)
+     * @param loc_condensadora  Ubicación física
+     * @param gas               Tipo de gas refrigerante
+     * @param fechaInstalacion  Fecha de instalación (dd/MM/yyyy)
+     * @param fechaBaja         Fecha de baja (dd/MM/yyyy)
+     * @param fechaRevision     Fecha de revisión (dd/MM/yyyy)
+     * @param averia            Número de avería (puede estar vacío)
+     * @param observaciones     Observaciones adicionales
+     */
     public Condensadora(String condensadora, Integer numSecuencia,String estado, String marca, String modelo, Long numSerieCond, String loc_condensadora, String gas, String fechaInstalacion,String fechaBaja, String fechaRevision, String averia, String observaciones) {
         this.condensadora = condensadora;
         this.numSecuencia = numSecuencia;
@@ -34,6 +76,7 @@ public class Condensadora {
         this.observaciones = observaciones;
     }
 
+    /** Getters y setters */
     public String getCondensadora() {
         return condensadora;
     }
@@ -47,7 +90,7 @@ public class Condensadora {
     }
 
     public void setNumSecuencia(Integer numSecuencia) {
-        this.numSecuencia = numSecuencia;
+        this.numSecuencia =  (numSecuencia != null && numSecuencia > 0) ? numSecuencia : 1;
     }
 
     public String getEstado() {
@@ -55,6 +98,11 @@ public class Condensadora {
     }
 
     public void setEstado(String estado) {
+        if (!ESTADO_ACTIVA.equals(estado) &&
+                !ESTADO_BAJA.equals(estado) &&
+                !ESTADO_AVERIADO.equals(estado)) {
+            throw new IllegalArgumentException("El estado debe ser 'ACTIVA', 'BAJA' o 'AVERIADO'");
+        }
         this.estado = estado;
     }
 
@@ -136,5 +184,29 @@ public class Condensadora {
 
     public void setFechaBaja(String fechaBaja) {
         this.fechaBaja = fechaBaja;
+    }
+
+    /** Equals y hashCode basados en condensadora y numSecuencia, juntos identifican una condensadora única */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Condensadora that = (Condensadora) o;
+        return Objects.equals(condensadora, that.condensadora) &&
+                Objects.equals(numSecuencia, that.numSecuencia);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(condensadora, numSecuencia);
+    }
+
+    @Override
+    public String toString() {
+        return "Condensadora{" +
+                "condensadora='" + condensadora + '\'' +
+                ", numSecuencia=" + numSecuencia +
+                ", estado='" + estado + '\'' +
+                '}';
     }
 }
