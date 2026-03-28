@@ -256,6 +256,7 @@ public class GasesController {
                 );
                 ExcelManager.modificarFila("PARAM_GASES", index , filaNueva.toArray(new String[0]));
                 cargarDatos();
+                tablaGases.refresh();
                 stage.close();
             }else{
                 mainAppController.showAlert("No se encontro el Gas en el archivo.");

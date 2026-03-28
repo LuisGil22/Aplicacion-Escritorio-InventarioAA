@@ -20,6 +20,7 @@
             <Button text="Añadir" onAction="#onAddCas" styleClass="action-button"/>
             <Button text="Modificar" onAction="#onEditCas" styleClass="action-button"/>
             <Button text="Eliminar" onAction="#onDeleteCas" styleClass="action-button"/>
+            <Button text="Sustituir" onAction="#onSustituirCas" styleClass="action-button"/>
         </HBox>
         <Pane HBox.hgrow="ALWAYS"/>
     </HBox>

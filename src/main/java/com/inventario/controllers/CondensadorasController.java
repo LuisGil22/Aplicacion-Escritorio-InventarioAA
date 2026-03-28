@@ -15,6 +15,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import java.time.LocalDate;
@@ -116,11 +117,11 @@ public class CondensadorasController {
      */
     private void cargarDatos() {
         allDatos = FXCollections.observableArrayList();
-        var datos = ExcelManager.leerHoja("Condensadoras");
+        List<List<String>> datos = ExcelManager.leerHoja("Condensadoras");
 
         for (int i = 1; i < datos.size(); i++) {
-            var fila = datos.get(i);
-            System.out.println("Procesando fila " + i  + ": " + fila);
+            List<String> fila = datos.get(i);
+            //System.out.println("Procesando fila " + i  + ": " + fila);
 
             if (fila.isEmpty()) continue;
 
@@ -170,13 +171,13 @@ public class CondensadorasController {
                         observaciones
                 ));
             }catch (Exception e){
-                System.err.println("Error fila " + i + ": " + e.getMessage());
+                //System.err.println("Error fila " + i + ": " + e.getMessage());
                 e.printStackTrace();
             }
         }
 
         tablaCondensadoras.setItems(allDatos);
-        System.out.println("Cargados " + allDatos.size() + " registros de Condensadoras");
+        //System.out.println("Cargados " + allDatos.size() + " registros de Condensadoras");
 
         Platform.runLater(() -> {
             Node scrollNode = tablaCondensadoras.lookup(".scroll-pane");
@@ -297,8 +298,21 @@ public class CondensadorasController {
 
         /**Campos de texto*/
         TextField textCondensadora = new TextField();
-        Spinner<Integer> spiNumSecuencia = new Spinner<>(1,100,1);
-        spiNumSecuencia.setEditable(false);
+        Label avisoRellenar = new Label("campo Obligarorio");
+        avisoRellenar.setTextFill(Color.RED);
+        avisoRellenar.setVisible(false);
+        if (editar != null) {
+            textCondensadora.setText(editar.getCondensadora());
+            textCondensadora.setEditable(false);
+        }else{
+            textCondensadora.textProperty().addListener((obs, oldText, newText) -> {
+                if (!newText.equals(newText.toUpperCase())) {
+                    textCondensadora.setText(newText.toUpperCase());
+                }
+            });
+        }
+
+
         ComboBox<String> comboEstado = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_ESTADO")));
         ComboBox<String> comboMarca = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_MARCAS")));
         ComboBox<String> comboModelo = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_MODELOS_COND")));
@@ -315,8 +329,7 @@ public class CondensadorasController {
         /** precargar los datos para modificar.*/
 
         if(editar != null){
-            textCondensadora.setText(editar.getCondensadora());
-            spiNumSecuencia.getValueFactory().setValue(editar.getNumSecuencia());
+
             if(comboEstado.getItems().contains(editar.getEstado())){
                 comboEstado.setValue(editar.getEstado());
             }
@@ -351,9 +364,8 @@ public class CondensadorasController {
         int row = 0;
 
         gridPane.add(new Label("Condensadora: "), 0 , row);
-        gridPane.add(textCondensadora, 1, row++);
-        gridPane.add(new Label("num.Secuencia: "),0 , row);
-        gridPane.add(spiNumSecuencia,1 ,row++);
+        gridPane.add(textCondensadora, 1, row);
+        gridPane.add(avisoRellenar, 2, row++);
         gridPane.add(new Label("Estado: "), 0, row);
         gridPane.add(comboEstado, 1, row++);
         gridPane.add(new Label("Marca: "), 0, row);
@@ -383,9 +395,10 @@ public class CondensadorasController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
         btnGuardar.setOnAction(e ->{
-            String condensadora = textCondensadora.getText().trim();
+            String condensadora = textCondensadora.getText().trim().toUpperCase();
             if(condensadora.isEmpty()){
-                mainAppController.showAlert("El campo Condensadora es obligatorio.");
+                avisoRellenar.setVisible(true);
+                //mainAppController.showAlert("El campo Condensadora es obligatorio.");
                 return;
             }
 
@@ -405,11 +418,25 @@ public class CondensadorasController {
             String estado = comboEstado.getValue() != null? comboEstado.getValue() : "";
 
             try {
+                int numSecuencia = 1;
+                if(editar == null){
+                    for(Condensadora cond : allDatos){
+                        if(cond.getCondensadora().equals(condensadora)){
+                            mainAppController.showAlert("La condensadora " + condensadora + " ya existe, Pero puedes sustituirla \n clicando en el boton Sustituir");
+                            return;
+                            /**if(cond.getNumSecuencia() >= numSecuencia){
+                                numSecuencia = cond.getNumSecuencia() + 1;
+                            }*/
+                        }
+                    }
+                }else{
+                    numSecuencia = editar.getNumSecuencia();
+                }
                 String numSerieExcel = numSerie != null ? String.valueOf(numSerie) : "";
 
                 List<String>filaNueva = Arrays.asList(
                         condensadora,
-                        String.valueOf(spiNumSecuencia.getValue()),
+                        String.valueOf(numSecuencia),
                         estado,
                         comboMarca.getValue() != null? comboMarca.getValue() : "",
                         comboModelo.getValue() != null? comboModelo.getValue() : "",
@@ -426,23 +453,21 @@ public class CondensadorasController {
                 int indexExcel = -1;
 
                 if(esNuevo){
-                    /** Verificar clave compuesta única.*/
-                    if (existeCondensadoraDuplicada(condensadora, spiNumSecuencia.getValue())) {
-                        mainAppController.showAlert("Ya existe una condensadora con ese número y secuencia.");
-                        return;
-                    }
-                    ExcelManager.añadirFila("Condensadoras", filaNueva.toArray(new String[0]));
+                    ExcelManager.añadirFilaOrdenada("Condensadoras", filaNueva.toArray(new String[0]));
+                    //cargarDatos();
                 }else{
                     List<List<String>> datos = ExcelManager.leerHoja("Condensadoras");
 
                     for (int i = 1; i < datos.size(); i++) {
-                        if (datos.get(i).size() > 0 && datos.get(i).get(0).trim().equals(editar.getCondensadora())){
+                        List<String> fila = datos.get(i);
+                        if (fila.size() > 1 && fila.get(0).trim().equals(editar.getCondensadora()) && fila.get(1).trim().equals(String.valueOf(editar.getNumSecuencia()))){
                             indexExcel = i;
                             break;
                         }
                     }
                     if (indexExcel != -1){
                         ExcelManager.modificarFila("Condensadoras", indexExcel, filaNueva.toArray(new String[0]));
+                        //cargarDatos();
                     }
                 }
 
@@ -453,7 +478,7 @@ public class CondensadorasController {
 
                     for (int i = 1; i < datosCond.size(); i++) {
                         List<String> fila = datosCond.get(i);
-                        System.out.println("Comparando: '" + fila.get(0) + "' vs '" + condensadora + "'");
+                        //System.out.println("Comparando: '" + fila.get(0) + "' vs '" + condensadora + "'");
                         if (fila.size() > 0 && fila.get(0).trim().equals(textCondensadora) ){
                             estadoAnterior = fila.get(2).trim(); // columna ESTADO
                             break;
@@ -466,11 +491,11 @@ public class CondensadorasController {
 
                 String numAveria = "";
                 String estadoActual = comboEstado.getValue() != null ? comboEstado.getValue() : "";
-                System.out.println(" estadoAnterior = '" + estadoAnterior + "'");
-                System.out.println(" estadoActual = '" + estadoActual + "'");
+                //System.out.println(" estadoAnterior = '" + estadoAnterior + "'");
+                //System.out.println(" estadoActual = '" + estadoActual + "'");
                 /** Si cambia de ACTIVA a AVERIADO crea una averia.*/
                 if ("ACTIVA".equals(estadoAnterior) && "AVERIADO".equals(estadoActual)) {
-                    System.out.println("¡ENTRA EN EL IF!");
+                    //System.out.println("¡ENTRA EN EL IF!");
                     List<List<String>> averias = ExcelManager.leerHoja("AVERIAS");
                     int maxNum = 0;
                     for (int i = 1; i < averias.size(); i++) {
@@ -496,7 +521,8 @@ public class CondensadorasController {
 
                 Condensadora actualizada = new Condensadora(
                         condensadora,
-                        spiNumSecuencia.getValue(),
+                        //spiNumSecuencia.getValue(),
+                        numSecuencia,
                         estadoActual,
                         comboMarca.getValue() != null ? comboMarca.getValue() : "",
                         comboModelo.getValue() != null ? comboModelo.getValue() : "",
@@ -510,19 +536,40 @@ public class CondensadorasController {
                         textObservacion.getText().trim()
                 );
                 if (esNuevo) {
-                    allDatos.add(actualizada);
+                    //allDatos.add(actualizada);
                 } else {
                     int pos = allDatos.indexOf(editar);
                     if (pos != -1) {
                         allDatos.set(pos, actualizada);
                     }
                 }
+                stage.close();
 
+                new Thread(() -> {
+                    try {
+                        ExcelManager.calcularYActualizarRevisionIndividual("CONDENSADORA", condensadora, fechaInst); //  Primero escribe en Excel
+                        Platform.runLater(() -> {
+                            cargarDatos(); //  Luego recarga la tabla
+                            tablaCondensadoras.refresh();
 
-                Platform.runLater(() -> {
+                        });
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }).start();
+
+               /** Platform.runLater(() -> {
+                    cargarDatos();
+                    new Thread(() -> {
+                        try {
+                            ExcelManager.calcularYActualizarTodasLasRevisiones();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }).start();
                     tablaCondensadoras.refresh();
                     stage.close();
-                });
+                });*/
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -616,6 +663,84 @@ public class CondensadorasController {
     }
 
     /**
+     * Metodo para sustituir la condensadora seleccionada tras confirmación,
+     * por otra creada con las mismas propiedades más significativas.
+     * El estado de la sustituida será BAJA con la fecha actual en FECHA_BAJA.
+     * El estado de la nueva será ACTIVA con fecha actual en FECHA_INSTALACION.
+     */
+    @FXML
+    public void onSustituirCond(){
+        Condensadora selected = tablaCondensadoras.getSelectionModel().getSelectedItem();
+        if(selected == null){
+            mainAppController.showAlert("Selecciona una condensadora para poder sustituirla");
+            return;
+        }
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirmar sustitución");
+        alert.setHeaderText("Estas seguro de querer sustituir esta Condensadora?");
+        alert.setContentText("Se dara de baja esta condensadora y se activara una nueva");
+        alert.showAndWait().ifPresent(response -> {
+            if(response == ButtonType.OK){
+                try{
+                    int secuenciaPorDefecto = 1;
+                    for(Condensadora cond : allDatos){
+                        if(cond.getCondensadora().equals(selected.getCondensadora())){
+                            if(cond.getNumSecuencia() > secuenciaPorDefecto){
+                                secuenciaPorDefecto = cond.getNumSecuencia();
+                            }
+                        }
+                    }
+                    int secuenciaNueva = secuenciaPorDefecto + 1;
+
+                    /** Crear nueva Condensadora */
+                    String fechaActual = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    List<String> filaNueva = Arrays.asList(
+                        selected.getCondensadora(),
+                        String.valueOf(secuenciaNueva),
+                        "ACTIVA",
+                        selected.getMarca(),
+                        selected.getModelo(),
+                        "",
+                        selected.getLoc_condensadora(),
+                        selected.getGas(),
+                        fechaActual,
+                        "",
+                        "",
+                        "",
+                        ""
+                    );
+                    ExcelManager.añadirFilaOrdenada("Condensadoras", filaNueva.toArray(new String[0]));
+
+                    /** Actualizar Condensadora seleccionada */
+                    List<List<String>> hojaCond = ExcelManager.leerHoja("Condensadoras");
+                    for(int i = 1; i < hojaCond.size(); i++){
+                        List<String> filaCond = hojaCond.get(i);
+                        if(filaCond.size() > 0 && filaCond.get(0).trim().equals(selected.getCondensadora())){
+                            while(filaCond.size() < 10){
+                                filaCond.add("");
+                            }
+                            filaCond.set(2, "BAJA");
+                            filaCond.set(9, fechaActual);
+                            ExcelManager.modificarFila("Condensadoras", i, filaCond.toArray(new String[0]));
+                            break;
+                        }
+                    }
+                    cargarDatos();
+                    Platform.runLater(() -> {
+                        tablaCondensadoras.refresh();
+                    });
+                    mainAppController.showAlert("Condensadora sustituida con éxito");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    mainAppController.showAlert("Error al sustituir la Condensadora.");
+                }
+            }
+        });
+
+    }
+
+    /**
      * Metodo para cargar los parámetros de una hoja específica del Excel (ej. PARAM_ESTADO, PARAM_MARCAS).
      * Omite valores vacíos y "en blanco".
      *
@@ -648,7 +773,7 @@ public class CondensadorasController {
      * Mejora la estabilidad visual al trabajar con datos no ordenados.
      */
     private void noOrdenar(){
-        colCondensadoras.setSortable(false);
+        //colCondensadoras.setSortable(false);
         colNumSecuencia.setSortable(false);
         colEstado.setSortable(false);
         colMarca.setSortable(false);

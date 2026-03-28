@@ -144,11 +144,11 @@ public class EstadoController {
         }
 
         String estadoAEliminar = selected.getEstado();
-        if(ExcelManager.existParametroEnCondensadoras(estadoAEliminar,ExcelManager.Columnas.ESTADO)){
+        if(ExcelManager.existParametroEnCondensadoras(estadoAEliminar,ExcelManager.Columnas.ESTADO) && ExcelManager.existParametroEnCassettes(estadoAEliminar,ExcelManager.Columnas.ESTADO)){
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Esta acción no está permitida");
             alert.setHeaderText("No se puede eliminar este estado");
-            alert.setContentText("El estado '" +estadoAEliminar+ "' no se puede eliminar porque está siendo usado en la hoja 'Condensadoras'.");
+            alert.setContentText("El estado '" +estadoAEliminar+ "' no se puede eliminar porque está siendo usado en la hoja 'Condensadoras' 0 'Cassette'.");
             alert.showAndWait();
             return;
         }

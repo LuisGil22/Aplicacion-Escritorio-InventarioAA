@@ -18,6 +18,7 @@
         <Button text="CONDENSADORAS" onAction="#ClickMenu" styleClass="main-button"/>
         <Button text="CASSETTES" onAction="#ClickMenu" styleClass="main-button"/>
         <Button text="AVERÍAS" onAction="#ClickMenu" styleClass="main-button"/>
+        <Button text="REVISIONES" onAction="#ClickMenu" styleClass="main-button"/>
 
         <Button fx:id="tituloParametros" text="▼ PARÁMETROS" onAction="#btnParametros" styleClass="parametros-header"/>
         <VBox fx:id="vboxParametros" visible="false" spacing="4" styleClass="parametros-submenu-container">
@@ -29,6 +30,8 @@
             <Button text="MODEL-CONDENSADORAS" onAction="#ClickMenu" styleClass="main-button"/>
             <Button text="PLANTAS" onAction="#ClickMenu" styleClass="main-button"/>
             <Button text="UBICACION-CASSETTE" onAction="#ClickMenu" styleClass="main-button"/>
+            <Button text="CORREOS-ELECTRONICOS" onAction="#ClickMenu" styleClass="main-button"/>
+            <Button text="DIAS-REVISION" onAction="#ClickMenu" styleClass="main-button"/>
         </VBox>
 
 

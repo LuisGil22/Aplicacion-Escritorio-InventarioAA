@@ -16,6 +16,7 @@
         <Button text="Añadir" onAction="#onAddCond" styleClass="action-button"/>
         <Button text="Modificar" onAction="#onEditCond" styleClass="action-button"/>
         <Button text="Eliminar" onAction="#onDeleteCond" styleClass="action-button"/>
+        <Button text="Sustituir" onAction="#onSustituirCond" styleClass="action-button"/>
     </HBox>
 
     <TableView fx:id="tablaCondensadoras" styleClass="table-view-cond">

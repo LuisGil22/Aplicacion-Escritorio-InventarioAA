@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.inventario.controllers.DiaRevisionController"
+      stylesheets="@../css/parametros.css"
+      styleClass="vbox">
+
+    <HBox styleClass="box">
+        <Button text="Modificar" onAction="#onModificarDias" styleClass="action-button"/>
+    </HBox>
+
+    <TableView fx:id="tablaDiasRevision" styleClass="table-view">
+        <columns>
+            <TableColumn fx:id="colDias" prefWidth="120">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="DIAS"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+        </columns>
+    </TableView>
+
+</VBox>

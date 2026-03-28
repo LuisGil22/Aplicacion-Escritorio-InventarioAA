@@ -5,12 +5,17 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+
 import java.io.IOException;
+import java.util.Locale;
+import java.util.TimeZone;
 
 public class MainApp extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
+        Locale.setDefault(new Locale("es", "ES"));
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Madrid"));
         // Cargamos la VISTA PRINCIPAL (que incluirá header, menú y contenido)
         FXMLLoader fxmlLoader = new FXMLLoader(MainApp.class.getResource("/views/mainApp.fxml"));
         Scene scene = new Scene(fxmlLoader.load());

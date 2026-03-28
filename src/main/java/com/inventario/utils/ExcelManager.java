@@ -12,6 +12,7 @@ import javax.mail.internet.MimeMessage;
 import java.io.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -30,7 +31,8 @@ import java.util.Properties;
 public class ExcelManager {
 
     private static File excelFile;
-    private static final DataFormatter formatter = new DataFormatter(Locale.ENGLISH);
+    private static final DataFormatter formatter = new DataFormatter(new Locale("es", "ES"));
+    private static final Object EXCEL_LOCK = new Object();
 
     /**
      * Constantes para nombres de columnas en las hojas del Excel.
@@ -59,7 +61,7 @@ public class ExcelManager {
     public static File getExcelFile() {
         if (excelFile == null) {
             String userHome = System.getProperty("user.home");
-            File dataDir = new File(userHome, "InventarioAA");
+            File dataDir = new File(userHome, "Desktop");
             dataDir.mkdirs();
 
             excelFile = new File(dataDir, "Inventario AA V2.xlsx");
@@ -70,7 +72,7 @@ public class ExcelManager {
                      FileOutputStream fos = new FileOutputStream(excelFile)) {
                     if (is != null) {
                         is.transferTo(fos);
-                        System.out.println("Excel copiado a: " + excelFile.getAbsolutePath());
+                        //System.out.println("Excel copiado a: " + excelFile.getAbsolutePath());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -87,32 +89,34 @@ public class ExcelManager {
      * @return lista de filas, cada fila es una lista de valores en string.
      */
     public static List<List<String>> leerHoja(String nombreHoja) {
-        List<List<String>> datos = new ArrayList<>();
-        File file = getExcelFile();
-        try (FileInputStream fis = new FileInputStream(file)) {
-            Workbook workbook = new XSSFWorkbook(fis);
-            FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-            Sheet sheet = workbook.getSheet(nombreHoja);
-            if (sheet == null) {
-                return datos;
-            }
-            System.out.println("Hoja '" + nombreHoja + "' tiene " + sheet.getLastRowNum() + " filas.");
-            for (Row row : sheet) {
-                System.out.print("Fila " + row.getRowNum() + ": ");
-                List<String> fila = new ArrayList<>();
-                int lastCell = row.getLastCellNum();
-                for (int i = 0; i < Math.max(lastCell,1); i++) {
-                    Cell cell = row.getCell(i);
-                    String valor = getCellValueAsString(cell, evaluator);
-                    fila.add(valor);
+        synchronized (EXCEL_LOCK) {
+            List<List<String>> datos = new ArrayList<>();
+            File file = getExcelFile();
+            try (FileInputStream fis = new FileInputStream(file)) {
+                Workbook workbook = new XSSFWorkbook(fis);
+                FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+                Sheet sheet = workbook.getSheet(nombreHoja);
+                if (sheet == null) {
+                    return datos;
                 }
-                datos.add(fila);
+                //System.out.println("Hoja '" + nombreHoja + "' tiene " + sheet.getLastRowNum() + " filas.");
+                for (Row row : sheet) {
+                    //System.out.print("Fila " + row.getRowNum() + ": ");
+                    List<String> fila = new ArrayList<>();
+                    int lastCell = row.getLastCellNum();
+                    for (int i = 0; i < Math.max(lastCell, 1); i++) {
+                        Cell cell = row.getCell(i);
+                        String valor = getCellValueAsString(cell, evaluator);
+                        fila.add(valor);
+                    }
+                    datos.add(fila);
+                }
+                workbook.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            workbook.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+            return datos;
         }
-        return datos;
     }
 
     /**
@@ -122,29 +126,106 @@ public class ExcelManager {
      * @param valores valores de la nueva fila
      */
     public static void añadirFila(String hoja, String... valores) {
+        synchronized (EXCEL_LOCK) {
+            File file = getExcelFile();
+            try (FileInputStream fis = new FileInputStream(file)) {
+                Workbook workbook = new XSSFWorkbook(fis);
+                Sheet sheet = workbook.getSheet(hoja);
+                if (sheet == null) return;
 
+                /** Encontrar la última fila REAL con contenido (ignorar filas vacías con formato)*/
+                int ultimaFilaConDatos = -1;
+                for (int i = sheet.getLastRowNum(); i >= 0; i--) {
+                    Row row = sheet.getRow(i);
+                    if (row != null && tieneContenido(row)) {
+                        ultimaFilaConDatos = i;
+                        break;
+                    }
+                }
+
+                int nuevaFilaIndex = ultimaFilaConDatos + 1;
+                if (nuevaFilaIndex > 1048575) {
+                    throw new IllegalStateException("Límite de filas de Excel alcanzado.");
+                }
+
+                Row newRow = sheet.createRow(nuevaFilaIndex);
+
+                /** Estilo General */
+                CellStyle estiloCelda = workbook.createCellStyle();
+                estiloCelda.setAlignment(HorizontalAlignment.CENTER);
+                estiloCelda.setVerticalAlignment(VerticalAlignment.CENTER);
+                estiloCelda.setBorderBottom(BorderStyle.THIN);
+                estiloCelda.setBorderTop(BorderStyle.THIN);
+                estiloCelda.setBorderRight(BorderStyle.THIN);
+                estiloCelda.setBorderLeft(BorderStyle.THIN);
+                estiloCelda.setWrapText(true);
+
+                /** Estilo especial para NUM_AVERIA (columna 0): formato "0000"*/
+                CellStyle estiloNumAveria = workbook.createCellStyle();
+                estiloNumAveria.cloneStyleFrom(estiloCelda); // copiar bordes, centrado, etc.
+                DataFormat format = workbook.createDataFormat();
+                estiloNumAveria.setDataFormat(format.getFormat("0000"));
+
+                for (int i = 0; i < valores.length; i++) {
+                    Cell cell = newRow.createCell(i);
+                    String val = valores[i];
+                    if (val == null || val.trim().isEmpty()) {
+                        cell.setCellValue("");
+                    } else if (i == 0) {
+                        cell.setCellValue(val);
+                    } else if (isNumeric(val)) {
+                        cell.setCellValue(Double.parseDouble(val.replace(',', '.')));
+                    } else {
+                        cell.setCellValue(val);
+                    }
+                    if (i == 0) {
+                        cell.setCellStyle(estiloNumAveria);
+                    } else {
+                        cell.setCellStyle(estiloCelda);
+                    }
+                }
+
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    workbook.write(fos);
+                }
+                workbook.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Añade una nueva fila en la hoja especificada, manteniendo el orden alfabético por la primera columna.
+     * Si ya existen filas con el mismo valor en la primera columna, la nueva se inserta después de la última.
+     *
+     * @param hoja nombre de la hoja (ej. "Condensadoras")
+     * @param valores valores de la nueva fila
+     */
+    public static void añadirFilaOrdenada(String hoja, String... valores){
         File file = getExcelFile();
-        try (FileInputStream fis = new FileInputStream(file)) {
-            Workbook workbook = new XSSFWorkbook(fis);
+        try(FileInputStream fileInputStream = new FileInputStream(file)){
+            Workbook workbook = new XSSFWorkbook(fileInputStream);
             Sheet sheet = workbook.getSheet(hoja);
-            if (sheet == null) return;
+            if(sheet == null) return;
 
-            /** Encontrar la última fila REAL con contenido (ignorar filas vacías con formato)*/
-            int ultimaFilaConDatos = -1;
-            for (int i = sheet.getLastRowNum(); i >= 0; i--) {
+            String valorNuevo = valores[0].trim();
+            int posicionAInsertar = 1;
+            for(int i = 1; i <= sheet.getLastRowNum(); i++){
                 Row row = sheet.getRow(i);
-                if (row != null && tieneContenido(row)) {
-                    ultimaFilaConDatos = i;
-                    break;
+                if(row != null && row.getCell(0) != null){
+                    String valorExistente = formatter.formatCellValue(row.getCell(0)).trim();
+                    if(valorExistente.compareTo(valorNuevo) > 0){
+                        break;
+                    }
+                    posicionAInsertar = i + 1;
                 }
             }
-
-            int nuevaFilaIndex = ultimaFilaConDatos + 1;
-            if (nuevaFilaIndex > 1048575) {
-                throw new IllegalStateException("Límite de filas de Excel alcanzado.");
+            if(posicionAInsertar <= sheet.getLastRowNum()){
+                sheet.shiftRows(posicionAInsertar, sheet.getLastRowNum(),1);
             }
-
-            Row newRow = sheet.createRow(nuevaFilaIndex);
+            Row nuevaRow = sheet.createRow(posicionAInsertar);
 
             /** Estilo General */
             CellStyle estiloCelda = workbook.createCellStyle();
@@ -163,7 +244,7 @@ public class ExcelManager {
             estiloNumAveria.setDataFormat(format.getFormat("0000"));
 
             for (int i = 0; i < valores.length; i++) {
-                Cell cell = newRow.createCell(i);
+                Cell cell = nuevaRow.createCell(i);
                 String val = valores[i];
                 if (val == null || val.trim().isEmpty()) {
                     cell.setCellValue("");
@@ -185,11 +266,9 @@ public class ExcelManager {
                 workbook.write(fos);
             }
             workbook.close();
-
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -220,32 +299,34 @@ public class ExcelManager {
      * @param valoresNuevos nuevos valores para la fila
      */
     public static void modificarFila(String hoja, int index, String[] valoresNuevos){
-        File excelManager = getExcelFile();
-        try(FileInputStream fileInput = new FileInputStream(excelManager)){
-            Workbook workbook = new XSSFWorkbook(fileInput);
-            Sheet sheet = workbook.getSheet(hoja);
-            if(sheet == null || index > sheet.getLastRowNum()) {
-                return;
-            }
-            Row row = sheet.getRow(index);
-            if(row == null) {
-                row = sheet.createRow(index);
-            }
-
-            for(int i=0; i<valoresNuevos.length; i++){
-                Cell cell = row.getCell(i);
-                if (cell == null) {
-                    cell = row.createCell(i);
+        synchronized (EXCEL_LOCK) {
+            File excelManager = getExcelFile();
+            try (FileInputStream fileInput = new FileInputStream(excelManager)) {
+                Workbook workbook = new XSSFWorkbook(fileInput);
+                Sheet sheet = workbook.getSheet(hoja);
+                if (sheet == null || index > sheet.getLastRowNum()) {
+                    return;
                 }
-                setCellValue(cell, valoresNuevos[i]);
-            }
+                Row row = sheet.getRow(index);
+                if (row == null) {
+                    row = sheet.createRow(index);
+                }
 
-            try(FileOutputStream fileOutput = new FileOutputStream(excelManager)){
-                workbook.write(fileOutput);
+                for (int i = 0; i < valoresNuevos.length; i++) {
+                    Cell cell = row.getCell(i);
+                    if (cell == null) {
+                        cell = row.createCell(i);
+                    }
+                    setCellValue(cell, valoresNuevos[i]);
+                }
+
+                try (FileOutputStream fileOutput = new FileOutputStream(excelManager)) {
+                    workbook.write(fileOutput);
+                }
+                workbook.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            workbook.close();
-        }catch (IOException e){
-            e.printStackTrace();
         }
     }
 
@@ -460,10 +541,20 @@ public class ExcelManager {
      * @param hoja hoja del Excel a la que pertenece el equipo
      */
     public static void registrarAveriaAutomaticamente(String equipo, String codigo, String planta, String localizacion, String observaciones, String hoja, String numAveria ){
-        System.out.println("registrando avería: num=" + numAveria + ", equipo=" + equipo + ", codigo=" + codigo);
+        //System.out.println("registrando avería: num=" + numAveria + ", equipo=" + equipo + ", codigo=" + codigo);
         try{
             String fechaAveria = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            String mails = "qgil@euromadi.es";
+            //String mails = "qgil@euromadi.es";
+            List<List<String>> correos = leerHoja("PARAM_CORREOS_ELECTRONICOS");
+            StringBuilder destinos = new StringBuilder();
+            for(int i = 1; i < correos.size(); i++){
+                if(!correos.get(i).isEmpty() && !correos.get(i).get(0).trim().isEmpty()){
+                    if(destinos.length() > 0) {
+                        destinos.append("\n");
+                    }
+                    destinos.append(correos.get(i).get(0).trim());
+                }
+            }
 
             añadirFila("AVERIAS",
             numAveria,
@@ -473,7 +564,7 @@ public class ExcelManager {
                     planta != null ? planta : "",
                     localizacion != null ? localizacion : "",
                     fechaAveria,
-                    mails,
+                    destinos.toString(),
                     observaciones != null ? observaciones : "");
 
             List<List<String>> hojaOrigen = leerHoja(hoja);
@@ -493,7 +584,7 @@ public class ExcelManager {
             /** Enviar correo automático. */
             enviarCorreoAveria(equipo, codigo, observaciones);
 
-            System.out.println("Avería automática creada");
+            //System.out.println("Avería automática creada");
 
 
 
@@ -521,6 +612,23 @@ public class ExcelManager {
                     asunto = "AVERIA CASSETTE " + codigo;
                     cuerpo = "El cassette " + codigo + " se ha averiado por el motivo que sea.";
                 }
+
+                List<List<String>> correos = leerHoja("PARAM_CORREOS_ELECTRONICOS");
+                StringBuilder destinatarios = new StringBuilder();
+                for(int i = 1; i < correos.size(); i++){
+                    if(!correos.get(i).isEmpty() && !correos.get(i).get(0).trim().isEmpty()){
+                        if(destinatarios.length() > 0) destinatarios.append(", ");
+                        destinatarios.append(correos.get(i).get(0).trim());
+                    }
+                }
+                if(destinatarios.length() == 0){
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Advertencia");
+                    alert.setHeaderText(null);
+                    alert.setContentText("No existen destinatarios");
+                    alert.showAndWait();
+                }
+
                 Properties props = new Properties();
                 props.put("mail.smtp.host", "192.168.26.117");
                 props.put("mail.smtp.port", "25");
@@ -538,8 +646,8 @@ public class ExcelManager {
                 });
                 Message message = new MimeMessage(session);
                 message.setFrom(new InternetAddress(mailOrigenUsuario));
-                String mailUsuarioDestino = "qgil@euromadi.es";
-                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(mailUsuarioDestino));
+                //String mailUsuarioDestino = "qgil@euromadi.es";
+                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(destinatarios.toString()));
                 message.setSubject(asunto);
                 message.setText(cuerpo);
 
@@ -561,14 +669,14 @@ public class ExcelManager {
                             "Correo enviado correctamente desde:\n" +
                                     mailOrigenUsuario + "\n" +
                                     "A:\n" +
-                                    mailUsuarioDestino
+                                    destinatarios
                     );
                     exito.showAndWait();
                 });
             } catch (Exception e) {
                 //System.err.println(" Error al enviar correo: " + e.getMessage());
                 //e.printStackTrace();
-                String mensajeError = e.getMessage() != null ? e.getMessage() : "Error desconocido al enviar el correo.";
+                String mensajeError = e.getMessage() != null ? e.getMessage() : "Error desconocido al enviar el correo." ;
                 Platform.runLater(() -> {
                     Alert error = new Alert(Alert.AlertType.ERROR);
                     error.setTitle("Error al enviar correo");
@@ -685,7 +793,7 @@ public class ExcelManager {
                             break;
                         }
                     }
-                    System.out.println("Avería marcada como REPARADA: " + codigo);
+                    //System.out.println("Avería marcada como REPARADA: " + codigo);
                     return;
                 }
             }
@@ -739,6 +847,312 @@ public class ExcelManager {
         }
     }
 
+    /**
+     * Crea una revisión automática calculando las fechas a partir de la fecha de instalación.
+     *
+     * @param equipo tipo de equipo ("CASSETTE" o "CONDENSADORA")
+     * @param codigo identificador del equipo
+     * @param estado estado actual del equipo
+     * @param planta planta (solo para Cassette)
+     * @param localizacion ubicación del equipo
+     * @param fechaInstalacion fecha de instalación en formato dd/MM/yyyy
+     */
+    /**public static void programarRevision(String equipo, String codigo, String estado,
+                                         String planta, String localizacion, String fechaInstalacion) {
+        try {
+            if (fechaInstalacion == null || fechaInstalacion.trim().isEmpty()) return;
+
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            LocalDate fechaInst = LocalDate.parse(fechaInstalacion, fmt);
+            LocalDate fechaHasta = fechaInst.plusMonths(4);
+            LocalDate fechaDesde = fechaHasta.minusMonths(1); // Rango: 1 mes antes
+
+            LocalDate hoy = LocalDate.now();
+            if(!hoy.isAfter(fechaDesde)){
+                return;
+            }
+
+            // Verificar si ya existe
+            List<List<String>> revisiones = leerHoja("REVISIONES");
+            for (List<String> rev : revisiones) {
+                if (rev.size() > 2 && rev.get(1).equals(equipo) && rev.get(2).equals(codigo)) {
+                    return; // Ya existe
+                }
+            }
+
+            // Generar NUM_REVISION
+            int maxNum = 0;
+            for (int i = 1; i < revisiones.size(); i++) {
+                if (!revisiones.get(i).isEmpty() && !revisiones.get(i).get(0).trim().isEmpty()) {
+                    try {
+                        int n = Integer.parseInt(revisiones.get(i).get(0).trim());
+                        if (n > maxNum) maxNum = n;
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+            String numRevision = String.format("%04d", maxNum + 1);
+
+            // Formato de rango
+            String rangoFechas = "desde: " + fechaDesde.format(fmt) +
+                    "\n hasta: " + fechaHasta.format(fmt);
+
+            // Añadir a REVISIONES
+            añadirFila("REVISIONES",
+                    numRevision,
+                    equipo,
+                    codigo,
+                    estado,
+                    planta != null ? planta : "",
+                    localizacion != null ? localizacion : "",
+                    rangoFechas,
+                    "NO",
+                    ""
+            );
+            System.out.println("Revisión creada: " + numRevision + " (" + equipo + " " + codigo + ")");
+
+        } catch (Exception e) {
+            System.err.println("Error al crear revisión: " + e.getMessage());
+        }
+    }*/
+
+    /**
+     * Metodo para mostrar una alerta de advertencia con el mensaje especificado.
+     *
+     * @param message mensaje a mostrar en la alerta
+     */
+    public static void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Advertencia");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    /**
+     * Actualiza la columna FECHA_REVISION de un equipo en su hoja correspondiente.
+     *
+     * @param hoja nombre de la hoja ("Cassette" o "Condensadoras")
+     * @param codigo identificador del equipo (NUM_CASSETTE o CONDENSADORA)
+     * @param fechaRevision fecha de revisión en formato dd/MM/yyyy
+     */
+    public static void actualizarFechaRevision(String hoja, String codigo,Integer numSecuencia, String fechaRevision) {
+        try {
+            List<List<String>> datos = leerHoja(hoja);
+
+            int colFechaRev = "Cassette".equals(hoja) ? 14 : 10; // Índice de FECHA_REVISION
+            int colNumSecuencia = 1;
+
+            for (int i = 1; i < datos.size(); i++) {
+                List<String> fila = datos.get(i);
+                if (fila.size() > colNumSecuencia && codigo.equals(fila.get(0).trim()) && String.valueOf(numSecuencia).equals(fila.get(colNumSecuencia).trim())) {
+                    while (fila.size() <= colFechaRev) {
+                        fila.add("");
+                    }
+
+                    fila.set(colFechaRev, fechaRevision);
+                    modificarFila(hoja, i, fila.toArray(new String[0]));
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al actualizar");
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Obtiene el número de días entre revisiones desde la hoja PARAM_DIAS_REVISION.
+     */
+    public static int getDiasRevision(){
+        try {
+            List<List<String>> datos = leerHoja("PARAM_DIAS_REVISION");
+            if(datos.size() > 1 && !datos.get(1).isEmpty()){
+                String valor = datos.get(1).get(0).trim();
+                if(!valor.isEmpty()){
+                    return Integer.parseInt(valor);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al leer PARAM_DIAS_REVISION. Usando 365 días.");
+            e.printStackTrace();
+        }
+        return 365;
+    }
+
+    /**
+     * Calcula la primera fecha de revisión >= hoy.
+     */
+    public static LocalDate calcularProximaFechaRevision(LocalDate fechaInstalacion, int diasRevision){
+        LocalDate hoy = LocalDate.now();
+        if(!hoy.isAfter(fechaInstalacion)){
+            return fechaInstalacion.plusDays(diasRevision);
+        }
+        long diasDesdeInst = ChronoUnit.DAYS.between(fechaInstalacion, hoy);
+        long periodosCompletos = diasDesdeInst / diasRevision;
+        return fechaInstalacion.plusDays((periodosCompletos + 1) * diasRevision);
+    }
+
+    /**public static void calcularYActualizarTodasLasRevisiones(){
+        LocalDate hoy = LocalDate.now();
+        DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        int diasRevision = ExcelManager.getDiasRevision();
+
+        List<List<String>> cassettes = ExcelManager.leerHoja("Cassette");
+        for(int i = 1; i < cassettes.size(); i++){
+            List<String> filaCas = cassettes.get(i);
+            if(filaCas.size() < 13 || !"ACTIVA".equals(filaCas.get(2).trim()) || filaCas.get(12).trim().isEmpty()) continue;
+            try {
+                LocalDate fechaInst = parsearFechaRobusto(filaCas.get(12));//LocalDate.parse(filaCas.get(12).trim(), formato);
+                //LocalDate fechaHasta = fechaInst.plusMonths(4);
+                LocalDate fechaRevision = calcularProximaFechaRevision(fechaInst, diasRevision);
+                LocalDate fechaDesde = fechaRevision.minusDays(30);
+
+                String fechaRevisionStr = fechaRevision.format(formato);
+                int numSecuencia = filaCas.get(1).trim().isEmpty() ? 1 : Integer.parseInt(filaCas.get(1).trim());
+                actualizarFechaRevision("Cassette", filaCas.get(0).trim(), numSecuencia, fechaRevisionStr);
+
+                if (!hoy.isBefore(fechaDesde)) {
+                    crearEntradaRevision("CASSETTE", filaCas.get(0).trim(), filaCas.get(2).trim(), filaCas.get(3).trim(), filaCas.get(10).trim(),fechaRevision, fechaDesde);
+                }
+            }catch (Exception e) {
+                System.err.println("Error procesando cassette " + filaCas.get(0) + ": " + e.getMessage());
+            }
+        }
+
+        List<List<String>> condensadoras = ExcelManager.leerHoja("Condensadoras");
+        for(int i = 1; i < condensadoras.size(); i++){
+            List<String> filaCond = condensadoras.get(i);
+            if(filaCond.size() < 9 || !"ACTIVA".equals(filaCond.get(2).trim()) || filaCond.get(8).trim().isEmpty()) continue;
+            try {
+                LocalDate fechaInst = parsearFechaRobusto(filaCond.get(8)); //LocalDate.parse(filaCond.get(8).trim(), formato);
+                //LocalDate fechaHasta = fechaInst.plusMonths(4);
+                LocalDate fechaRevision = calcularProximaFechaRevision(fechaInst, diasRevision);
+
+                LocalDate fechaDesde = fechaRevision.minusDays(30);
+
+                String fechaRevisionStr = fechaRevision.format(formato);
+                int numSecuencia = filaCond.get(1).trim().isEmpty() ? 1 : Integer.parseInt(filaCond.get(1).trim());
+                actualizarFechaRevision("Condensadoras", filaCond.get(0).trim(), numSecuencia, fechaRevisionStr);
+
+                if (!hoy.isBefore(fechaDesde)) {
+                    crearEntradaRevision("CONDENSADORAS", filaCond.get(0).trim(), filaCond.get(2).trim(), "", filaCond.get(6).trim(),fechaRevision, fechaDesde);
+                }
+            }catch (Exception e) {
+                System.err.println("Error procesando condensadora " + filaCond.get(0) + ": " + e.getMessage());
+            }
+        }
+    }*/
+
+    /**
+     * Calcula y actualiza la fecha de revisión para un equipo específico.
+     */
+    public static void calcularYActualizarRevisionIndividual(String equipo, String codigo, String fechaInstalacion) {
+        try {
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            LocalDate fi = parsearFechaRobusto(fechaInstalacion);
+            if (fi == null) return;
+
+            int diasRevision = getDiasRevision();
+            LocalDate fr = calcularProximaFechaRevision(fi, diasRevision);
+            LocalDate fd = fr.minusDays(30);
+
+            // Leer la hoja para obtener numSecuencia
+            List<List<String>> hoja = leerHoja(equipo.equals("CONDENSADORA") ? "Condensadoras" : "Cassette");
+            Integer numSecuencia = 1;
+            for (int i = 1; i < hoja.size(); i++) {
+                List<String> f = hoja.get(i);
+                if (f.size() > 0 && codigo.equals(f.get(0).trim())) {
+                    numSecuencia = f.get(1).trim().isEmpty() ? 1 : Integer.parseInt(f.get(1).trim());
+                    break;
+                }
+            }
+
+            // Actualizar FECHA_REVISION en la hoja de origen
+            String frStr = fr.format(fmt);
+            actualizarFechaRevision(
+                    equipo.equals("CONDENSADORA") ? "Condensadoras" : "Cassette",
+                    codigo,
+                    numSecuencia,
+                    frStr
+            );
+
+            // Crear en REVISIONES si está en rango
+            if (!LocalDate.now().isBefore(fd)) {
+                String planta = "";
+                String localizacion = "";
+                String estado = "ACTIVA";
+
+                if ("CASSETTE".equals(equipo)) {
+                    for (List<String> f : hoja) {
+                        if (f.size() > 9 && codigo.equals(f.get(0).trim())) {
+                            planta = f.get(3).trim();
+                            localizacion = f.get(10).trim();
+                            estado = f.get(2).trim();
+                            break;
+                        }
+                    }
+                } else {
+                    for (List<String> f : hoja) {
+                        if (f.size() > 6 && codigo.equals(f.get(0).trim())) {
+                            localizacion = f.get(6).trim();
+                            estado = f.get(2).trim();
+                            break;
+                        }
+                    }
+                }
+
+                crearEntradaRevision(equipo, codigo, estado, planta, localizacion, fr, fd);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    private static void crearEntradaRevision(String equipo, String codigo, String estado, String planta, String localizacion, LocalDate fechaRevision, LocalDate fechaDesde){
+        try{
+            List<List<String>> revisiones = leerHoja("REVISIONES");
+            for (List<String> rev : revisiones) {
+                if (rev.size() > 2 && equipo.equals(rev.get(1)) && codigo.equals(rev.get(2))) {
+                    return;
+                }
+            }
+            int maxNum = 0;
+            for (int i = 1; i < revisiones.size(); i++) {
+                if (!revisiones.get(i).isEmpty() && !revisiones.get(i).get(0).trim().isEmpty()) {
+                    try {
+                        int n = Integer.parseInt(revisiones.get(i).get(0).trim());
+                        if (n > maxNum) maxNum = n;
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+            String numRev = String.format("%04d", maxNum + 1);
+            DateTimeFormatter f = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            String rango = "desde: " + fechaDesde.format(f) + "\n hasta: " + fechaRevision.format(f);
+            añadirFila("REVISIONES", numRev, equipo, codigo, estado, planta, localizacion, rango, "NO", "");
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static LocalDate parsearFechaRobusto(String fechaStr) {
+        if (fechaStr == null || fechaStr.trim().isEmpty()) return null;
+        String s = fechaStr.trim();
+        try {
+            return LocalDate.parse(s, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        } catch (Exception e1) {
+            try {
+                return LocalDate.parse(s, DateTimeFormatter.ofPattern("M/d/yy"));
+            } catch (Exception e2) {
+                try {
+                    return LocalDate.parse(s, DateTimeFormatter.ofPattern("dd/MM/yy"));
+                } catch (Exception e3) {
+                    return null;
+                }
+            }
+        }
+    }
     /**
      * Elimina una fila en una hoja Excel por su índice (1-based, como en getLastRowNum).
      */

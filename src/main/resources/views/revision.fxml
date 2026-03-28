@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.inventario.controllers.RevisionController"
+      stylesheets="@../css/parametros.css"
+      styleClass="vbox">
+
+    <HBox spacing="10" style="-fx-padding: 5 10 5 10;">
+        <Label fx:id="lblActualizado" text="Actualizado: "
+           style="-fx-font-size: 12px;" HBox.hgrow="NEVER" />
+        <Pane HBox.hgrow="ALWAYS"/>
+        <!--<HBox styleClass="box">
+            <Button text="Generar Revisiones Pendientes" onAction="#generarRevisionesPendientes" styleClass="action-button"/>
+            <Button text="Modificar" onAction="#onEditRevision" styleClass="action-button"/>
+            <Button text="Eliminar" onAction="#onDeleteRevision" styleClass="action-button"/>
+        </HBox>-->
+    </HBox>
+
+    <TableView fx:id="tablaRevisiones" styleClass="table-view">
+        <columns>
+            <TableColumn fx:id="colNumRevision" prefWidth="90">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="NUM_REVISION"/>
+                        <Button fx:id="btnFiltroNumRevision" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroNumRevision"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colEquipo" prefWidth="120">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="EQUIPO"/>
+                        <Button fx:id="btnFiltroEquipo" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroEquipo"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colCodigo" prefWidth="100">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="CODIGO"/>
+                        <Button fx:id="btnFiltroCodigo" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroCodigo"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colEstado" prefWidth="100">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="ESTADO"/>
+                        <Button fx:id="btnFiltroEstado" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroEstado"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colPlanta" prefWidth="100">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="PLANTA"/>
+                        <Button fx:id="btnFiltroPlanta" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroPlanta"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colLocalizacion" prefWidth="150">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="LOCALIZACION"/>
+                        <Button fx:id="btnFiltroLocalizacion" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroLocalizacion"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colFechaRevision" prefWidth="120">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="FECHA_REVISION"/>
+                        <Button fx:id="btnFiltroFechaRevision" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroFechaRevision"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colRevision" prefWidth="80">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="REVISION"/>
+                        <Button fx:id="btnFiltroRevision" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroRevision"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="colObservaciones" prefWidth="200" text="OBSERVACIONES"/>
+            <TableColumn fx:id="colAccion" prefWidth="80" text="ACCION"/>
+        </columns>
+    </TableView>
+
+</VBox>

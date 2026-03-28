@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.inventario.controllers.CorreoController"
+            stylesheets="@../css/parametros.css"
+            styleClass="vbox">
+
+    <HBox styleClass="box">
+        <Button text="Añadir" onAction="#onAddCorreo" styleClass="action-button"/>
+        <Button text="Modificar" onAction="#onEditCorreo" styleClass="action-button"/>
+        <Button text="Eliminar" onAction="#onDeleteCorreo" styleClass="action-button"/>
+    </HBox>
+
+    <TableView fx:id="tablaCorreos" styleClass="table-view">
+        <columns>
+            <TableColumn fx:id="colCorreoElectronico" prefWidth="190">
+                <graphic>
+                    <HBox spacing="5" alignment="CENTER">
+                        <Label text="CORREO_ELECTRONICO"/>
+                        <Button fx:id="btnFiltroCorreo" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroCorreo"/>
+                    </HBox>
+                </graphic>
+            </TableColumn>
+        </columns>
+    </TableView>
+</VBox>

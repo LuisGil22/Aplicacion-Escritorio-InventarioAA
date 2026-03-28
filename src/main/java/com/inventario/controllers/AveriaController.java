@@ -60,6 +60,11 @@ public class AveriaController {
     private MainAppController mainAppController;
     private ObservableList<Averia> allDatos;
 
+    /**
+     * Metodo para establecer la dependencia con el controlador principal de la aplicación.
+     *
+     * @param mainAppController instancia del controlador principal
+     */
     public void setMainAppController(MainAppController mainAppController){
         this.mainAppController = mainAppController;
     }

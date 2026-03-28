@@ -17,6 +17,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
+
 import java.io.IOException;
 
 /**
@@ -98,6 +99,7 @@ public class MainAppController {
                 }
             }
         });
+
     }
 
     /**
@@ -281,6 +283,45 @@ public class MainAppController {
                     Node view = loader.load();
                     AveriaController averiaController = loader.getController();
                     averiaController.setMainAppController(this);
+
+                    stackPaneContent.getChildren().setAll(view, SidebarButtonMostrar, VolverInicio);
+                    VolverInicio.setVisible(true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case "CORREOS-ELECTRONICOS":
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/correo.fxml"));
+                    Node view = loader.load();
+                    CorreoController correoController = loader.getController();
+                    correoController.setMainAppController(this);
+
+                    stackPaneContent.getChildren().setAll(view, SidebarButtonMostrar, VolverInicio);
+                    VolverInicio.setVisible(true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case "REVISIONES":
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/revision.fxml"));
+                    Node view = loader.load();
+                    RevisionController revisionController = loader.getController();
+                    revisionController.setMainAppController(this);
+
+                    stackPaneContent.getChildren().setAll(view, SidebarButtonMostrar, VolverInicio);
+                    VolverInicio.setVisible(true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case "DIAS-REVISION":
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/diaRevision.fxml"));
+                    Node view = loader.load();
+                    DiaRevisionController diaRevisionController = loader.getController();
+                    diaRevisionController.setMainAppController(this);
 
                     stackPaneContent.getChildren().setAll(view, SidebarButtonMostrar, VolverInicio);
                     VolverInicio.setVisible(true);

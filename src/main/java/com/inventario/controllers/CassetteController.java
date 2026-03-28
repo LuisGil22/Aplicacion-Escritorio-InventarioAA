@@ -16,6 +16,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import java.time.LocalDate;
@@ -37,6 +38,7 @@ import java.util.*;
  *
  * @author Luis Gil
  */
+@SuppressWarnings("ALL")
 public class CassetteController {
     /** Campos FXML */
     @FXML private TableView<Cassette>tablaCassette;
@@ -102,7 +104,7 @@ public class CassetteController {
         cargarDatosCondensadoras();
         configurarColumnasCas();
         cargarDatosCas();
-        noOrdenar();
+        //noOrdenar();
         actualizarFechaEncabezado();
     }
 
@@ -168,7 +170,7 @@ public class CassetteController {
         List<List<String>>datos = ExcelManager.leerHoja("Cassette");
         for(int i = 1;i<datos.size();i++){
             List<String>fila = datos.get(i);
-            System.out.println("Procesando fila " + i  + ": " + fila);
+            //System.out.println("Procesando fila " + i  + ": " + fila);
 
             if (fila.isEmpty()) continue;
 
@@ -321,7 +323,20 @@ public class CassetteController {
 
         /**Campos de formulario.*/
         TextField textoNumCassette = new TextField();
-        Spinner<Integer> spiNumSecuencia = new Spinner<>(1, 100, 1);
+        Label avisoRellenar = new Label("campo Obligarorio");
+        avisoRellenar.setTextFill(Color.RED);
+        avisoRellenar.setVisible(false);
+        if(editar!=null){
+            textoNumCassette.setText(editar.getNumCassette());
+            textoNumCassette.setEditable(false);
+        }else {
+            textoNumCassette.textProperty().addListener((obs, oldText, newText) -> {
+                if (!newText.equals(newText.toUpperCase())) {
+                    textoNumCassette.setText(newText.toUpperCase());
+                }
+            });
+        }
+        //Spinner<Integer> spiNumSecuencia = new Spinner<>(1, 100, 1);
         ComboBox<String> comboEstado = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_ESTADO")));
         ComboBox<String> comboPlanta = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_PLANTAS")));
         ComboBox<String> comboNombre = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_UBICACIONES_CASSETTES")));
@@ -358,8 +373,8 @@ public class CassetteController {
 
         /**Precargar datos para modificar.*/
         if(editar != null){
-            textoNumCassette.setText(editar.getNumCassette());
-            spiNumSecuencia.getValueFactory().setValue(editar.getNumSecuencia());
+            //textoNumCassette.setText(editar.getNumCassette());
+            //spiNumSecuencia.getValueFactory().setValue(editar.getNumSecuencia());
             if(comboEstado.getItems().contains(editar.getEstado())) {
                 comboEstado.setValue(editar.getEstado());
             }
@@ -403,9 +418,10 @@ public class CassetteController {
         int row = 0;
 
         grid.add(new Label("Nº Cassette: "), 0, row);
-        grid.add(textoNumCassette, 1, row++);
-        grid.add(new Label("Nº Secuencia: "), 0, row);
-        grid.add(spiNumSecuencia, 1, row++);
+        grid.add(textoNumCassette, 1, row);
+        grid.add(avisoRellenar, 2, row++);
+        //grid.add(new Label("Nº Secuencia: "), 0, row);
+        //grid.add(spiNumSecuencia, 1, row++);
         grid.add(new Label("Estado: "), 0, row);
         grid.add(comboEstado, 1, row++);
         grid.add(new Label("Planta: "), 0, row);
@@ -444,9 +460,10 @@ public class CassetteController {
         DateTimeFormatter format = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
         btnGuardar.setOnAction(e -> {
-            String numCassette = textoNumCassette.getText().trim();
+            String numCassette = textoNumCassette.getText().trim().toUpperCase();
             if(numCassette.isEmpty()){
-                mainAppController.showAlert("El campo 'Nº Cassette' es obligatorio.");
+                avisoRellenar.setVisible(true);
+                //mainAppController.showAlert("El campo 'Nº Cassette' es obligatorio.");
                 return;
             }
             Double potenciaCalor = parseDouble(textoPotenciaCalor.getText());
@@ -458,9 +475,23 @@ public class CassetteController {
             String estado = comboEstado.getValue() != null ? comboEstado.getValue() : "";
 
             try{
+                int numSecuencia = 1;
+                if (editar == null) {
+                    for (Cassette c : allDatos) {
+                        if (c.getNumCassette().equals(numCassette)) {
+                            if (c.getNumSecuencia() >= numSecuencia) {
+                                numSecuencia = c.getNumSecuencia() + 1;
+                            }
+                        }
+                    }
+                }else {
+                    numSecuencia = editar.getNumSecuencia();
+                }
+
                 List<String> filaNueva = Arrays.asList(
                   numCassette,
-                  String.valueOf(spiNumSecuencia.getValue()),
+                  //String.valueOf(spiNumSecuencia.getValue()),
+                  String.valueOf(numSecuencia),
                   estado,
                   comboPlanta.getValue() != null ? comboPlanta.getValue() : "",
                   comboNombre.getValue() != null ? comboNombre.getValue() : "",
@@ -482,24 +513,36 @@ public class CassetteController {
                 int indexExcel = -1;
 
                 if(esNuevo){
-                    if(existeDuplicada(numCassette, spiNumSecuencia.getValue())){
+                    /**if(existeDuplicada(numCassette, spiNumSecuencia.getValue())){
                         mainAppController.showAlert("El Nº Cassette y Nº Secuencia ya existen.");
                         return;
-                    }
-                    ExcelManager.añadirFila("Cassette", filaNueva.toArray(new String[0]));
-
+                    }**/
+                    ExcelManager.añadirFilaOrdenada("Cassette", filaNueva.toArray(new String[0]));
+                   //
+                    // cargarDatosCas();
 
                 }else {
                     List<List<String>> datos = ExcelManager.leerHoja("Cassette");
 
-                    for (int i = 1; i < datos.size(); i++) {
+                    /**for (int i = 1; i < datos.size(); i++) {
                         if (datos.get(i).size() > 0 && datos.get(i).get(0).trim().equals(editar.getNumCassette())) {
                             indexExcel = i;
                             break;
                         }
+                    }**/
+                    for (int i = 1; i < datos.size(); i++) {
+                        List<String> fila = datos.get(i);
+                        if (fila.size() > 1 &&
+                                fila.get(0).trim().equals(editar.getNumCassette()) &&
+                                fila.get(1).trim().equals(String.valueOf(editar.getNumSecuencia()))) {
+                            indexExcel = i;
+                            break;
+                        }
                     }
+
                     if (indexExcel != -1) {
                         ExcelManager.modificarFila("Cassette", indexExcel, filaNueva.toArray(new String[0]));
+                       // cargarDatosCas();
                     }
                 }
 
@@ -509,24 +552,24 @@ public class CassetteController {
                     List<List<String>> datosCond = ExcelManager.leerHoja("Cassette");
                     for (int i = 1; i < datosCond.size(); i++) {
                         List<String> fila = datosCond.get(i);
-                        System.out.println("Comparando: '" + fila.get(0) + "' vs '" + editar.getNumCassette() + "'");
+                        //System.out.println("Comparando: '" + fila.get(0) + "' vs '" + editar.getNumCassette() + "'");
                         if (fila.size() > 0 && fila.get(0).trim().equals(textoNumCassette)) {
                             estadoAnterior = fila.get(2).trim(); // columna ESTADO
                             break;
                         }
                     }
-                }
-                if (estadoAnterior == null || estadoAnterior.isEmpty()) {
-                    estadoAnterior = (editar != null) ? editar.getEstado() : "";
+                    if (estadoAnterior == null || estadoAnterior.isEmpty()) {
+                        estadoAnterior = (editar != null) ? editar.getEstado() : "";
+                    }
                 }
 
                 String numAveria = "";
                 String estadoActual = comboEstado.getValue() != null ? comboEstado.getValue() : "";
-                System.out.println("estadoAnterior: '" + estadoAnterior + "'");
-                System.out.println("estadoActual: '" + estadoActual + "'");
+                //System.out.println("estadoAnterior: '" + estadoAnterior + "'");
+                //System.out.println("estadoActual: '" + estadoActual + "'");
                 /** Si se cambia de ACTIVA a AVERIADO se crea una Averia.*/
                 if ("ACTIVA".equals(estadoAnterior) && "AVERIADO".equals(estadoActual)) {
-                    System.out.println("¡ENTRA EN EL IF!");
+                    //System.out.println("¡ENTRA EN EL IF!");
                     List<List<String>> averias = ExcelManager.leerHoja("AVERIAS");
                     int maxNum = 0;
                     for (int i = 1; i < averias.size(); i++) {
@@ -550,7 +593,8 @@ public class CassetteController {
                 }
                 Cassette actualizada = new Cassette(
                     numCassette,
-                    spiNumSecuencia.getValue(),
+                    //spiNumSecuencia.getValue(),
+                    numSecuencia,
                     comboEstado.getValue() != null ? comboEstado.getValue() : "",
                     comboPlanta.getValue() != null ? comboPlanta.getValue() : "",
                     comboNombre.getValue() != null ? comboNombre.getValue() : "",
@@ -569,19 +613,41 @@ public class CassetteController {
                     textoObservaciones.getText().trim()
                 );
                 if(esNuevo){
-                    allDatos.add(actualizada);
+                    //allDatos.add(actualizada);
                 }else{
                     int pos = allDatos.indexOf(editar);
                     if (pos != -1) {
                         allDatos.set(pos, actualizada);
                     }
                 }
+                stage.close();
+                new Thread(() -> {
+                    try {
+                        ExcelManager.calcularYActualizarRevisionIndividual("CASSETTE", numCassette,fechaInst); //  Primero escribe en Excel
+                        Platform.runLater(() -> {
+                            cargarDatosCas(); //  Luego recarga la tabla
+                            tablaCassette.refresh();
+                            actualizarFechaEncabezado();
 
-                Platform.runLater(() -> {
+                        });
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }).start();
+                /**Platform.runLater(() -> {
+                    cargarDatosCas();
+                    new Thread(() -> {
+                        try {
+                            ExcelManager.calcularYActualizarTodasLasRevisiones();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }).start();
                     tablaCassette.refresh();
                     actualizarFechaEncabezado();
+
                     stage.close();
-                });
+                })*/
             } catch (Exception ex) {
                 ex.printStackTrace();
                 mainAppController.showAlert("Error al guardar.");
@@ -639,6 +705,86 @@ public class CassetteController {
             if(response == ButtonType.OK){
                 tablaCassette.getItems().remove(seleccionado);
                 ExcelManager.eliminarFila("Cassette", seleccionado.getNumCassette());
+            }
+        });
+    }
+
+    /**
+     * Metodo para sustituir el cassette seleccionado tras confirmación,
+     * por otro creado con las mismas propiedades más significativas.
+     * El estado del sustituido será BAJA con la fecha actual en FECHA_BAJA.
+     * El estado del nuevo será ACTIVA con fecha actual en FECHA_INSTALACION.
+     */
+    @FXML
+    public void onSustituirCas(){
+        Cassette selected = tablaCassette.getSelectionModel().getSelectedItem();
+        if(selected == null){
+            mainAppController.showAlert("Selecciona un Cassette para poder sustituirlo");
+            return;
+        }
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirmar sustitución");
+        alert.setHeaderText("Estas seguro de querer sustituir este Cassette?");
+        alert.setContentText("se dara de baja este Cassette y se activara uno nuevo.");
+        alert.showAndWait().ifPresent(response -> {
+            try{
+                int secuenciaPorDefecto = 1;
+                for(Cassette cas : allDatos){
+                    if(cas.getNumCassette().equals(selected.getNumCassette())){
+                        if(cas.getNumSecuencia() > secuenciaPorDefecto){
+                            secuenciaPorDefecto = cas.getNumSecuencia();
+                        }
+                    }
+                }
+                int secuenciaNueva = secuenciaPorDefecto + 1;
+
+                /** Crear nuevo Cassette */
+                String fechaActual = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                List<String> filaNueva = Arrays.asList(
+                        selected.getNumCassette(),
+                        String.valueOf(secuenciaNueva),
+                        "ACTIVA",
+                        selected.getPlanta(),
+                        selected.getNombre(),
+                        "",
+                        "",
+                        selected.getMarcaModelo(),
+                        "",
+                        selected.getCondensadora(),
+                        "",
+                        "",
+                        fechaActual,
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                );
+                ExcelManager.añadirFila("Cassette", filaNueva.toArray(new String[0]));
+
+                /** Actualizar Cassette seleccionado */
+                List<List<String>> hojaCas = ExcelManager.leerHoja("Cassette");
+                for(int i = 1; i< hojaCas.size(); i++){
+                    List<String> filaCas = hojaCas.get(i);
+                    if(filaCas.size() > 0 && filaCas.get(0).trim().equals(selected.getNumCassette())){
+                        while (filaCas.size() < 14){
+                            filaCas.add("");
+                        }
+                        filaCas.set(2, "BAJA");
+                        filaCas.set(13, fechaActual);
+                        ExcelManager.modificarFila("Cassette", i, filaCas.toArray(new String[0]));
+                        break;
+                    }
+                }
+                cargarDatosCas();
+                Platform.runLater(()-> {
+                    tablaCassette.refresh();
+                });
+                mainAppController.showAlert("Cassette sustituido con exito");
+            } catch (Exception e) {
+                e.printStackTrace();
+                mainAppController.showAlert("Error al sustituir el Cassette");
             }
         });
     }
