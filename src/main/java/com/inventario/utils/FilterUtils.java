@@ -1,13 +1,16 @@
 package com.inventario.utils;
 
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -44,13 +47,15 @@ public class FilterUtils {
      * @param tableView     tabla donde se aplicará el filtro
      * @param originalItems lista original de elementos (sin filtrar)
      * @param <T>           tipo de los elementos en la tabla
+     * @param sortHandler    manejador de ordenamiento para la columna (permite ordenar asc/desc desde el filtro)
      */
     public static <T> void abrirFiltroGenerico(
             String titulo,
             Function<T, String> extractor,
             Button boton,
             TableView<T> tableView,
-            ObservableList<T> originalItems
+            ObservableList<T> originalItems,
+            SortHandler sortHandler
     ) {
         if (originalItems == null || originalItems.isEmpty()) {
             showAlert("No hay datos para filtrar.");
@@ -81,6 +86,32 @@ public class FilterUtils {
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(10));
         vbox.setMaxWidth(250);
+
+        HBox hbOrden = new HBox(5);
+        hbOrden.setPadding(new Insets(0, 0, 5, 0));
+
+        Button btnOrdenAsc = new Button("↑ Ascendente");
+        Button btnOrdenDesc = new Button("↓ Descendente");
+
+        btnOrdenAsc.setOnAction(e -> {
+            Platform.runLater(() -> {
+                sortHandler.sort(true);
+                stage.close();
+            });
+        });
+
+        btnOrdenDesc.setOnAction(e -> {
+            Platform.runLater(() -> {
+                sortHandler.sort(false);
+                stage.close();
+            });
+        });
+
+        hbOrden.getChildren().addAll(btnOrdenAsc, btnOrdenDesc);
+        HBox.setHgrow(btnOrdenAsc, Priority.ALWAYS);
+        HBox.setHgrow(btnOrdenDesc, Priority.ALWAYS);
+
+        vbox.getChildren().add(hbOrden);
 
         Map<String, CheckBox> checkBoxes = new HashMap<>();
         String clave = titulo;
@@ -137,7 +168,7 @@ public class FilterUtils {
 
         ScrollPane scrollPane = new ScrollPane(vbox);
         scrollPane.setFitToWidth(true);
-        scrollPane.setPrefWidth(220);
+        scrollPane.setPrefWidth(230);
         scrollPane.setPrefHeight(350);
         scrollPane.setMaxHeight(500);
         scrollPane.setMinHeight(350);

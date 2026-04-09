@@ -14,6 +14,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -104,7 +106,7 @@ public class AveriaController {
 
         for( int i = 1; i< datos.size(); i++){
             List<String> fila = datos.get(i);
-            System.out.println("Procesando fila " + i  + ": " + fila);
+            //System.out.println("Procesando fila " + i  + ": " + fila);
 
             if (fila.isEmpty()) continue;
 
@@ -154,35 +156,99 @@ public class AveriaController {
 
     @FXML
     private void configurarFiltroNumAveria(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Numero de Avería", Averia::getNumAveria,btnFiltroNumAveria,tablaAverias,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Numero de Avería", Averia::getNumAveria,btnFiltroNumAveria,tablaAverias,allDatos,(ascending) -> {
+            ObservableList<Averia> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Averia::getNumAveria,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaAverias.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroEquipoAveriado(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Equipo Averiado", Averia::getEquipoAveriado,btnFiltroEquipoAveriado,tablaAverias,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Equipo Averiado", Averia::getEquipoAveriado,btnFiltroEquipoAveriado,tablaAverias,allDatos,(ascending) -> {
+            ObservableList<Averia> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Averia::getEquipoAveriado,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaAverias.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroCodigo(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Código", Averia::getCodigo,btnFiltroCodigo,tablaAverias,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Código", Averia::getCodigo,btnFiltroCodigo,tablaAverias,allDatos,(ascending) -> {
+            ObservableList<Averia> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Averia::getCodigo,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaAverias.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroEstado(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Estado", Averia::getEstado,btnFiltroEstado,tablaAverias,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Estado", Averia::getEstado,btnFiltroEstado,tablaAverias,allDatos,(ascending) -> {
+            ObservableList<Averia> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Averia::getEstado,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaAverias.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroPlanta(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Planta", Averia::getPlanta,btnFiltroPlanta,tablaAverias,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Planta", Averia::getPlanta,btnFiltroPlanta,tablaAverias,allDatos,(ascending) -> {
+            ObservableList<Averia> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Averia::getPlanta,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaAverias.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroLocalizacion(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Localización", Averia::getLocalizacion,btnFiltroLocalizacion,tablaAverias,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Localización", Averia::getLocalizacion,btnFiltroLocalizacion,tablaAverias,allDatos,(ascending) -> {
+            ObservableList<Averia> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Averia::getLocalizacion,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaAverias.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroFechaAveria(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha", Averia::getFechaAveria,btnFiltroFechaAveria,tablaAverias,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha", Averia::getFechaAveria,btnFiltroFechaAveria,tablaAverias,allDatos,(ascending) -> {
+            ObservableList<Averia> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Averia::getFechaAveria,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaAverias.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroMail(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Mail Enviado", Averia::getMail,btnFiltroMail,tablaAverias,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Mail Enviado", Averia::getMail,btnFiltroMail,tablaAverias,allDatos,(ascending) -> {
+            ObservableList<Averia> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Averia::getMail,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaAverias.setItems(sorted);
+        });
     }
 
     /** Modulos para accionar los botones */
@@ -282,7 +348,7 @@ public class AveriaController {
     /** Metodos Auxiliares */
 
     /**
-     * Método para actualizar la etiqueta de fecha en el encabezado con la fecha actual.
+     * Metodo para actualizar la etiqueta de fecha en el encabezado con la fecha actual.
      */
     private void actualizarFechaEncabezado() {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -290,12 +356,13 @@ public class AveriaController {
     }
 
     /**
-     * Método para desactivar la ordenación en todas las columnas de la tabla.
+     * Metodo para desactivar la ordenación en todas las columnas de la tabla.
      */
     private void noOrdenar() {
         colNumAveria.setSortable(false);
         colEquipoAveriado.setSortable(false);
         colCodigo.setSortable(false);
+        colEstado.setSortable(false);
         colPlanta.setSortable(false);
         colLocalizacion.setSortable(false);
         colFechaAveria.setSortable(false);

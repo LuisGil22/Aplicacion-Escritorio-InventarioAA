@@ -14,7 +14,7 @@
 
     <HBox spacing="10" style="-fx-padding: 5 10 5 10;">
         <Label fx:id="lblActualizado" text="Actualizado: "
-               style="-fx-font-size: 12px;" HBox.hgrow="NEVER" />
+               style="-fx-font-size: 16px;" HBox.hgrow="NEVER" />
         <Pane HBox.hgrow="ALWAYS"/>
         <HBox spacing="10" alignment="CENTER">
             <!--<Button text="Añadir" onAction="#onAddAveria" styleClass="action-button"/>-->
@@ -26,7 +26,7 @@
 
     <TableView fx:id="tablaAverias" styleClass="table-view-cond">
         <columns>
-            <TableColumn fx:id="colNumAveria" prefWidth="120">
+            <TableColumn fx:id="colNumAveria" prefWidth="140">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="NUM_AVERIA"/>
@@ -34,7 +34,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colEquipoAveriado" prefWidth="160">
+            <TableColumn fx:id="colEquipoAveriado" prefWidth="180">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="EQUIPO_AVERIADO"/>
@@ -74,7 +74,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colFechaAveria" prefWidth="130">
+            <TableColumn fx:id="colFechaAveria" prefWidth="160">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="FECHA_AVERIA"/>
@@ -90,7 +90,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colObservaciones" prefWidth="150" text="OBSERVACIONES"/>
+            <TableColumn fx:id="colObservaciones" prefWidth="190" text="OBSERVACIONES"/>
         </columns>
     </TableView>
 

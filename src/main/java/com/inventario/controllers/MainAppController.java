@@ -1,5 +1,6 @@
 package com.inventario.controllers;
 
+import com.inventario.utils.ExcelManager;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -19,6 +20,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Controlador principal de la aplicación de inventario de aire acondicionado.
@@ -33,6 +35,7 @@ import java.io.IOException;
  *
  * @author Luis Gil
  */
+@SuppressWarnings("ALL")
 public class MainAppController {
 
     /**
@@ -78,6 +81,8 @@ public class MainAppController {
         }
 
         mostrarMensajeBienvenida();
+
+        verificarRevisionesPendientesAlIniciar();
 
         stackPaneContent.widthProperty().addListener((obs, oldW, newW) ->{
             double w = newW.doubleValue();
@@ -480,6 +485,70 @@ public class MainAppController {
                 fondoImageView.setVisible(false);
             }
         }
+    }
+
+    /**
+     * Verifica todas las condensadoras y cassettes activos al iniciar la aplicación.
+     * Si alguna entra hoy en el rango de revisión (fecha_revision - 30 días ≤ hoy),
+     * se crea una entrada en REVISIONES y se envía un correo de aviso.
+     */
+    private void verificarRevisionesPendientesAlIniciar() {
+        new Thread(() -> {
+            try {
+                // --- Condensadoras ---
+                List<List<String>> condensadoras = ExcelManager.leerHoja("Condensadoras");
+                for (int i = 1; i < condensadoras.size(); i++) {
+                    List<String> fila = condensadoras.get(i);
+                    if (fila.size() > 2 && "ACTIVA".equals(fila.get(2).trim())) {
+                        String condensadora = fila.get(0).trim();
+                        String fechaInst = fila.get(8).trim(); // FECHA_INSTALACION
+                        int numSecuencia = 1;
+                        try {
+                            numSecuencia = Integer.parseInt(fila.get(1).trim());
+                        } catch (NumberFormatException ignored) {}
+
+                        int diasRevision = 365;
+                        if (fila.size() > 13 && !fila.get(13).trim().isEmpty()) {
+                            try {
+                                diasRevision = Integer.parseInt(fila.get(13).trim());
+                            } catch (NumberFormatException ignored) {}
+                        }
+
+                        if (!fechaInst.isEmpty()) {
+                            ExcelManager.calcularYActualizarRevisionIndividual("CONDENSADORA", condensadora, fechaInst, numSecuencia, diasRevision);
+                        }
+                    }
+                }
+
+                // --- Cassettes ---
+                List<List<String>> cassettes = ExcelManager.leerHoja("Cassette");
+                for (int i = 1; i < cassettes.size(); i++) {
+                    List<String> fila = cassettes.get(i);
+                    if (fila.size() > 2 && "ACTIVA".equals(fila.get(2).trim())) {
+                        String cassette = fila.get(0).trim();
+                        String fechaInst = fila.get(12).trim(); // FECHA_INSTALACION
+                        int numSecuencia = 1;
+                        try {
+                            numSecuencia = Integer.parseInt(fila.get(1).trim());
+                        } catch (NumberFormatException ignored) {}
+
+                        int diasRevision = 365;
+                        if (fila.size() > 18 && !fila.get(15).trim().isEmpty()) {
+                            try {
+                                diasRevision = Integer.parseInt(fila.get(18).trim());
+                            } catch (NumberFormatException ignored) {}
+                        }
+
+                        if (!fechaInst.isEmpty()) {
+                            ExcelManager.calcularYActualizarRevisionIndividual("CASSETTE", cassette, fechaInst, numSecuencia, diasRevision);
+                        }
+                    }
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     /**

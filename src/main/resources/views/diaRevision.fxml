@@ -13,7 +13,9 @@
       styleClass="vbox">
 
     <HBox styleClass="box">
-        <Button text="Modificar" onAction="#onModificarDias" styleClass="action-button"/>
+        <Button text="Añadir" onAction="#onAddDias" styleClass="action-button"/>
+        <Button text="Modificar" onAction="#onEditDias" styleClass="action-button"/>
+        <Button text="Eliminar" onAction="#onDeleteDias" styleClass="action-button"/>
     </HBox>
 
     <TableView fx:id="tablaDiasRevision" styleClass="table-view">
@@ -22,6 +24,7 @@
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="DIAS"/>
+                        <Button fx:id="btnFiltroDias" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroDias"/>
                     </HBox>
                 </graphic>
             </TableColumn>

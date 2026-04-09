@@ -10,8 +10,12 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
+
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
+@SuppressWarnings("ALL")
 public class Loc_CondensadorasController {
 
     /** Campos FXML */
@@ -151,7 +155,15 @@ public class Loc_CondensadorasController {
      */
     @FXML
     private void configurarFiltroLocCondensadoras(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Localización Condensadoras", Loc_Condensadoras::getLocalizacionCondensadoras,btnFiltroLocCondensadoras,tablaLoc_Condensadoras,loc_condensadoras);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Localización Condensadoras", Loc_Condensadoras::getLocalizacionCondensadoras,btnFiltroLocCondensadoras,tablaLoc_Condensadoras,loc_condensadoras,(ascending) -> {
+            ObservableList<Loc_Condensadoras> sorted = FXCollections.observableArrayList(loc_condensadoras);
+            sorted.sort(Comparator.comparing(
+                    Loc_Condensadoras::getLocalizacionCondensadoras,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaLoc_Condensadoras.setItems(sorted);
+        });
     }
 
     /**

@@ -68,9 +68,13 @@ public class CondensadorasController {
     @FXML private Button btnFiltroFechaBaja;
     @FXML private Button btnFiltroFechaRev;
 
+
+    @FXML private Label lblActualizado;
+
     /** Dependencias  */
     private MainAppController mainAppController;
     private ObservableList<Condensadora> allDatos;
+
 
     /**
      * Establece la dependencia con el controlador principal de la aplicación.
@@ -82,7 +86,7 @@ public class CondensadorasController {
     }
 
     /**
-     * Método que inicializa el controlador al cargar la vista FXML.
+     * Metodo que inicializa el controlador al cargar la vista FXML.
      * Configura columnas, carga datos y desactiva ordenación.
      */
     @FXML
@@ -90,10 +94,11 @@ public class CondensadorasController {
         confColumnas();
         cargarDatos();
         noOrdenar();
+        actualizarFechaEncabezado();
     }
 
     /**
-     * Método que configura las columnas de la tabla Condensadoras.
+     * Metodo que configura las columnas de la tabla Condensadoras.
      */
     private void confColumnas(){
         colCondensadoras.setCellValueFactory(new PropertyValueFactory<>("condensadora"));
@@ -112,7 +117,7 @@ public class CondensadorasController {
     }
 
     /**
-     * Método para cargar los datos de la hoja Condensadoras del archivo Excel y los muestra en la tabla.
+     * Metodo para cargar los datos de la hoja Condensadoras del archivo Excel y los muestra en la tabla.
      * Omite filas vacías y valida el formato de los datos antes de crear objetos Condensadora.
      */
     private void cargarDatos() {
@@ -171,13 +176,13 @@ public class CondensadorasController {
                         observaciones
                 ));
             }catch (Exception e){
-                //System.err.println("Error fila " + i + ": " + e.getMessage());
+
                 e.printStackTrace();
             }
         }
 
         tablaCondensadoras.setItems(allDatos);
-        //System.out.println("Cargados " + allDatos.size() + " registros de Condensadoras");
+
 
         Platform.runLater(() -> {
             Node scrollNode = tablaCondensadoras.lookup(".scroll-pane");
@@ -192,57 +197,235 @@ public class CondensadorasController {
      */
     @FXML
     private void configurarFiltroCondensadora(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Condensadora", Condensadora::getCondensadora,btnFiltroCondensadora,tablaCondensadoras,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por CONDENSADORA", Condensadora::getCondensadora,btnFiltroCondensadora,tablaCondensadoras,allDatos,(ascending) -> {
+            ObservableList<Condensadora> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Condensadora::getCondensadora,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCondensadoras.setItems(sorted);
+        });
     }
 
     @FXML
     private void configurarFiltroNumSecuencia(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Numero de Secuencia", item -> String.valueOf(item.getNumSecuencia()),btnFiltroNumSecuencia,tablaCondensadoras,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Numero de Secuencia", item -> String.valueOf(item.getNumSecuencia()),btnFiltroNumSecuencia,tablaCondensadoras,allDatos,(ascending) -> {
+            ObservableList<Condensadora> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    item -> String.valueOf(item.getNumSecuencia()),
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCondensadoras.setItems(sorted);
+        });
     }
 
     @FXML
     private void configurarFiltroEstado(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Estado", Condensadora::getEstado,btnFiltroEstado,tablaCondensadoras,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Estado", Condensadora::getEstado,btnFiltroEstado,tablaCondensadoras,allDatos,(ascending) -> {
+            ObservableList<Condensadora> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Condensadora::getEstado,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCondensadoras.setItems(sorted);
+        });
     }
 
     @FXML
     private void configurarFiltroMarca(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Marca", Condensadora::getMarca,btnFiltroMarca,tablaCondensadoras,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Marca", Condensadora::getMarca,btnFiltroMarca,tablaCondensadoras,allDatos,(ascending) -> {
+            ObservableList<Condensadora> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Condensadora::getMarca,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCondensadoras.setItems(sorted);
+        });
     }
 
     @FXML
     private void configurarFiltroModelo(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Modelo", Condensadora::getModelo,btnFiltroModelo,tablaCondensadoras,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Modelo", Condensadora::getModelo,btnFiltroModelo,tablaCondensadoras,allDatos,(ascending) -> {
+            ObservableList<Condensadora> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Condensadora::getModelo,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCondensadoras.setItems(sorted);
+        });
     }
 
     @FXML
     private void configurarFiltroNumSerie(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Numero de Serie", item -> String.valueOf(item.getNumSerieCond()),btnFiltroNumSerie,tablaCondensadoras,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Numero de Serie", item -> String.valueOf(item.getNumSerieCond()),btnFiltroNumSerie,tablaCondensadoras,allDatos,(ascending) -> {
+            ObservableList<Condensadora> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    item -> String.valueOf(item.getNumSerieCond()),
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCondensadoras.setItems(sorted);
+        });
     }
 
     @FXML
     private void configurarFiltroLocCondensadoras(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Localización de Condensadora", Condensadora::getLoc_condensadora,btnFiltroLocCondensadoras,tablaCondensadoras,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Localización de Condensadora", Condensadora::getLoc_condensadora,btnFiltroLocCondensadoras,tablaCondensadoras,allDatos,(ascending) -> {
+            ObservableList<Condensadora> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Condensadora::getLoc_condensadora,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCondensadoras.setItems(sorted);
+        });
     }
 
     @FXML
     private void configurarFiltroGas(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Gas", Condensadora::getGas,btnFiltroGas,tablaCondensadoras,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Gas", Condensadora::getGas,btnFiltroGas,tablaCondensadoras,allDatos,(ascending) -> {
+            ObservableList<Condensadora> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Condensadora::getGas,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCondensadoras.setItems(sorted);
+        });
     }
 
     @FXML
     private void configurarFiltroFechaInst(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Instalación", Condensadora::getFechaInstalacion,btnFiltroFechaInst,tablaCondensadoras,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Instalación", Condensadora::getFechaInstalacion,btnFiltroFechaInst,tablaCondensadoras,allDatos,(ascending) -> {
+            ObservableList<Condensadora> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Condensadora::getFechaInstalacion,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCondensadoras.setItems(sorted);
+        });
     }
 
     @FXML
     private void configurarFiltroFechaBaja(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Baja", Condensadora::getFechaBaja,btnFiltroFechaBaja,tablaCondensadoras,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Baja", Condensadora::getFechaBaja,btnFiltroFechaBaja,tablaCondensadoras,allDatos,(ascending) -> {
+            ObservableList<Condensadora> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Condensadora::getFechaBaja,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCondensadoras.setItems(sorted);
+        });
     }
 
     @FXML
     private void configurarFiltroFechaRev(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Revisión", Condensadora::getFechaRevision,btnFiltroFechaRev,tablaCondensadoras,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Revisión", Condensadora::getFechaRevision,btnFiltroFechaRev,tablaCondensadoras,allDatos,(ascending) -> {
+            ObservableList<Condensadora> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Condensadora::getFechaRevision,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCondensadoras.setItems(sorted);
+        });
+    }
+
+    @FXML
+    private void abrirFiltroRevision() {
+        // Cargar opciones desde PARAM_DIAS_REVISION
+
+        List<String> opciones = ExcelManager.getOpcionesDiasRevision();
+
+
+        // Crear ComboBox en un diálogo
+        ComboBox<String> combo = new ComboBox<>(FXCollections.observableArrayList(opciones));
+        combo.setPromptText("Selecciona días");
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Filtro de Revisión Personalizado");
+        alert.setHeaderText("Elige el periodo de revisión (días)");
+        alert.getDialogPane().setContent(combo);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            String seleccion = combo.getValue();
+            if (seleccion == null || seleccion.trim().isEmpty()) {
+                mainAppController.showAlert("Debes seleccionar un valor válido.");
+                return;
+            }
+
+            int diasRevision;
+            try {
+                diasRevision = Integer.parseInt(seleccion.trim());
+            } catch (NumberFormatException e) {
+                mainAppController.showAlert("Valor no numérico: " + seleccion);
+                return;
+            }
+
+            Condensadora selected = tablaCondensadoras.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                mainAppController.showAlert("Selecciona una condensadora para aplicar el filtro de dias para la próxima revision.");
+                return;
+            }
+
+            new Thread(() -> {
+                try {
+
+                    if ("ACTIVA".equals(selected.getEstado()) && !selected.getFechaInstalacion().isEmpty()) {
+                        LocalDate fi = LocalDate.parse(selected.getFechaInstalacion(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                        LocalDate fr = ExcelManager.calcularProximaFechaRevision(fi, diasRevision);
+                        LocalDate fd = fr.minusDays(30);
+
+
+                        List<List<String>> datosCond = ExcelManager.leerHoja("Condensadoras");
+                        for (int i = 1; i < datosCond.size(); i++) {
+                            List<String> fila = datosCond.get(i);
+                            if (fila.size() > 1 && selected.getCondensadora().equals(fila.get(0).trim()) && String.valueOf(selected.getNumSecuencia()).equals(fila.get(1).trim())){
+                                while (fila.size() <= 13) {
+                                    fila.add("");
+                                }
+                                fila.set(10, fr.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                                fila.set(13, String.valueOf(diasRevision));
+
+                                ExcelManager.modificarFila("Condensadoras", i, fila.toArray(new String[0]));
+                                break;
+                            }
+                        }
+
+
+                        if (!LocalDate.now().isBefore(fd)) {
+                            ExcelManager.crearEntradaRevision(
+                                    "CONDENSADORA",
+                                    selected.getCondensadora(),
+                                    selected.getEstado(),
+                                    "",
+                                    selected.getLoc_condensadora(),
+                                    fr,
+                                    fd
+                            );
+                        }
+                    }
+
+
+                    Platform.runLater(() -> {
+                        cargarDatos();
+                        tablaCondensadoras.refresh();
+                        mainAppController.showAlert("Revisión personalizada aplicada con éxito (" + diasRevision + " días).");
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Platform.runLater(() -> mainAppController.showAlert("Error al aplicar revisión personalizada."));
+                }
+            }).start();
+        }
     }
 
     /**
@@ -326,6 +509,14 @@ public class CondensadorasController {
         TextField textObservacion = new TextField();
         textObservacion.setPrefHeight(60);
 
+        Label lblDiasRev = new Label("Dias próxima revisión: ");
+        ComboBox<String>comboDiasRev = new ComboBox<>(FXCollections.observableArrayList(ExcelManager.getOpcionesDiasRevision()));
+
+        comboDiasRev.setPromptText("Selecciona días");
+        if (!comboDiasRev.getItems().isEmpty()) {
+            comboDiasRev.setValue(comboDiasRev.getItems().get(0));
+        }
+
         /** precargar los datos para modificar.*/
 
         if(editar != null){
@@ -380,6 +571,8 @@ public class CondensadorasController {
         gridPane.add(comboGas, 1, row++);
         gridPane.add(new Label("Fecha Instalación: "), 0 , row);
         gridPane.add(dateFechaInst, 1, row++);
+        gridPane.add(lblDiasRev,0,row);
+        gridPane.add(comboDiasRev,1,row++);
         gridPane.add(new Label("Fecha Baja: "), 0 , row);
         gridPane.add(dateFechaBaja, 1, row++);
         gridPane.add(new Label("Fecha Revisión: "), 0 , row);
@@ -414,8 +607,23 @@ public class CondensadorasController {
             /** Formatear fecha o texto.*/
             String fechaInst = dateFechaInst.getValue() != null? dateFechaInst.getValue().format(formatter) : "";
             String fechaBaja = dateFechaBaja.getValue() != null? dateFechaBaja.getValue().format(formatter) : "";
-            String fechaRev = dateFechaRev.getValue() != null? dateFechaRev.getValue().format(formatter) : "";
+            //String fechaRev = dateFechaRev.getValue() != null? dateFechaRev.getValue().format(formatter) : "";
             String estado = comboEstado.getValue() != null? comboEstado.getValue() : "";
+
+            int diasSeleccionados = 365;
+            String diasSelStr = comboDiasRev.getValue();
+            if (diasSelStr != null && !diasSelStr.trim().isEmpty()) {
+                try {
+                    diasSeleccionados = Integer.parseInt(diasSelStr.trim());
+                } catch (NumberFormatException ex) {
+                    mainAppController.showAlert("Valor de días no válido. Usando 365.");
+                }
+            }
+
+            if (fechaInst.isEmpty()) {
+                mainAppController.showAlert("Fecha de instalación requerida.");
+                return;
+            }
 
             try {
                 int numSecuencia = 1;
@@ -424,14 +632,16 @@ public class CondensadorasController {
                         if(cond.getCondensadora().equals(condensadora)){
                             mainAppController.showAlert("La condensadora " + condensadora + " ya existe, Pero puedes sustituirla \n clicando en el boton Sustituir");
                             return;
-                            /**if(cond.getNumSecuencia() >= numSecuencia){
-                                numSecuencia = cond.getNumSecuencia() + 1;
-                            }*/
                         }
                     }
                 }else{
                     numSecuencia = editar.getNumSecuencia();
                 }
+
+                LocalDate fi = LocalDate.parse(fechaInst, formatter);
+                LocalDate fr = ExcelManager.calcularProximaFechaRevision(fi, diasSeleccionados);
+                String frStr = fr.format(formatter);
+
                 String numSerieExcel = numSerie != null ? String.valueOf(numSerie) : "";
 
                 List<String>filaNueva = Arrays.asList(
@@ -445,12 +655,13 @@ public class CondensadorasController {
                         comboGas.getValue() != null? comboGas.getValue() : "",
                         fechaInst,
                         fechaBaja,
-                        fechaRev,
+                        frStr,
                         "",
-                        textObservacion.getText().trim()
+                        textObservacion.getText().trim(),
+                        String.valueOf(diasSeleccionados)
                 );
                 boolean esNuevo = (editar == null);
-                int indexExcel = -1;
+
 
                 if(esNuevo){
                     ExcelManager.añadirFilaOrdenada("Condensadoras", filaNueva.toArray(new String[0]));
@@ -461,14 +672,28 @@ public class CondensadorasController {
                     for (int i = 1; i < datos.size(); i++) {
                         List<String> fila = datos.get(i);
                         if (fila.size() > 1 && fila.get(0).trim().equals(editar.getCondensadora()) && fila.get(1).trim().equals(String.valueOf(editar.getNumSecuencia()))){
-                            indexExcel = i;
+                            while (fila.size() <= 13) fila.add("");
+                            fila.set(10, frStr);
+                            fila.set(13, String.valueOf(diasSeleccionados));
+                            ExcelManager.modificarFila("Condensadoras", i, filaNueva.toArray(new String[0]));
                             break;
                         }
                     }
-                    if (indexExcel != -1){
-                        ExcelManager.modificarFila("Condensadoras", indexExcel, filaNueva.toArray(new String[0]));
-                        //cargarDatos();
-                    }
+                }
+
+                LocalDate fd = fr.minusDays(30);
+                if (!LocalDate.now().isBefore(fd)) {
+                    String localizacion = comLocCondensadora.getValue() != null ? comLocCondensadora.getValue() : "";
+                    ExcelManager.crearEntradaRevision(
+                            "CONDENSADORA",
+                            condensadora,
+                            estado,
+                            "",
+                            localizacion,
+                            fr,
+                            fd
+                    );
+
                 }
 
                 /** Gestión Automática de Averias.*/
@@ -531,7 +756,7 @@ public class CondensadorasController {
                         comboGas.getValue() != null ? comboGas.getValue() : "",
                         fechaInst,
                         fechaBaja,
-                        fechaRev,
+                        frStr,
                         numAveria,
                         textObservacion.getText().trim()
                 );
@@ -544,32 +769,12 @@ public class CondensadorasController {
                     }
                 }
                 stage.close();
-
-                new Thread(() -> {
-                    try {
-                        ExcelManager.calcularYActualizarRevisionIndividual("CONDENSADORA", condensadora, fechaInst); //  Primero escribe en Excel
-                        Platform.runLater(() -> {
-                            cargarDatos(); //  Luego recarga la tabla
-                            tablaCondensadoras.refresh();
-
-                        });
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                }).start();
-
-               /** Platform.runLater(() -> {
+                Platform.runLater(() -> {
                     cargarDatos();
-                    new Thread(() -> {
-                        try {
-                            ExcelManager.calcularYActualizarTodasLasRevisiones();
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                    }).start();
                     tablaCondensadoras.refresh();
-                    stage.close();
-                });*/
+                });
+
+
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -602,21 +807,7 @@ public class CondensadorasController {
         } catch (Exception ignored) {}
     }
 
-    /**
-     * Metodo para verificar si existe una condensadora duplicada con la misma clave compuesta (CONDENSADORA + NUM_SECUENCIA).
-     *
-     * @param condensadora código de la condensadora
-     * @param numSecuencia número de secuencia
-     * @return true si existe duplicado, false en caso contrario
-     */
-    private boolean existeCondensadoraDuplicada(String condensadora, int numSecuencia) {
-        for (Condensadora c : allDatos) {
-            if (c.getCondensadora().equals(condensadora) && c.getNumSecuencia() == numSecuencia) {
-                return true;
-            }
-        }
-        return false;
-    }
+
 
     /**
      * Metodo para abrir el formulario y modificar la condensadora seleccionada.
@@ -658,6 +849,7 @@ public class CondensadorasController {
             if (response == ButtonType.OK) {
                 tablaCondensadoras.getItems().remove(selected);
                 ExcelManager.eliminarFila("Condensadoras", selected.getCondensadora());
+                tablaCondensadoras.refresh();
             }
         });
     }
@@ -693,6 +885,22 @@ public class CondensadorasController {
                     }
                     int secuenciaNueva = secuenciaPorDefecto + 1;
 
+                    int diasRevisionOriginal = 365;
+                    List<List<String>> hojaCondOriginal = ExcelManager.leerHoja("Condensadoras");
+                    for (List<String> fila : hojaCondOriginal) {
+                        if (fila.size() > 1 &&
+                                selected.getCondensadora().equals(fila.get(0).trim()) &&
+                                String.valueOf(secuenciaPorDefecto).equals(fila.get(1).trim())) {
+
+                            if (fila.size() > 13 && !fila.get(13).trim().isEmpty()) {
+                                try {
+                                    diasRevisionOriginal = Integer.parseInt(fila.get(13).trim());
+                                } catch (NumberFormatException ignored) {}
+                            }
+                            break;
+                        }
+                    }
+                    int nuevoDiasRevision = diasRevisionOriginal;
                     /** Crear nueva Condensadora */
                     String fechaActual = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
                     List<String> filaNueva = Arrays.asList(
@@ -708,16 +916,17 @@ public class CondensadorasController {
                         "",
                         "",
                         "",
-                        ""
+                        "",
+                        String.valueOf(diasRevisionOriginal)
                     );
-                    ExcelManager.añadirFilaOrdenada("Condensadoras", filaNueva.toArray(new String[0]));
+                    ExcelManager.añadirFilaOrdenada("Condensadoras", filaNueva.toArray(new String[0]) );
 
                     /** Actualizar Condensadora seleccionada */
-                    List<List<String>> hojaCond = ExcelManager.leerHoja("Condensadoras");
-                    for(int i = 1; i < hojaCond.size(); i++){
-                        List<String> filaCond = hojaCond.get(i);
-                        if(filaCond.size() > 0 && filaCond.get(0).trim().equals(selected.getCondensadora())){
-                            while(filaCond.size() < 10){
+
+                    for(int i = 1; i < hojaCondOriginal.size(); i++){
+                        List<String> filaCond = hojaCondOriginal.get(i);
+                        if(filaCond.size() > 0 && filaCond.get(0).trim().equals(selected.getCondensadora()) && String.valueOf(secuenciaPorDefecto).equals(filaCond.get(1).trim()) ){
+                            while(filaCond.size() <=9){
                                 filaCond.add("");
                             }
                             filaCond.set(2, "BAJA");
@@ -726,10 +935,20 @@ public class CondensadorasController {
                             break;
                         }
                     }
-                    cargarDatos();
-                    Platform.runLater(() -> {
-                        tablaCondensadoras.refresh();
-                    });
+                    //cargarDatos();
+                    new Thread(() -> {
+                        try {
+                            ExcelManager.calcularYActualizarRevisionIndividual("CONDENSADORA", selected.getCondensadora(), fechaActual, secuenciaNueva, nuevoDiasRevision); //  Primero escribe en Excel
+                            Platform.runLater(() -> {
+                                cargarDatos(); //  Luego recarga la tabla
+                                tablaCondensadoras.refresh();
+
+                            });
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }).start();
+
                     mainAppController.showAlert("Condensadora sustituida con éxito");
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -762,7 +981,7 @@ public class CondensadorasController {
             }
 
         } catch (Exception e) {
-            System.err.println("⚠️ Error al cargar: " + hoja);
+            //System.err.println("⚠️ Error al cargar: " + hoja);
             e.printStackTrace();
         }
         return lista;
@@ -773,7 +992,7 @@ public class CondensadorasController {
      * Mejora la estabilidad visual al trabajar con datos no ordenados.
      */
     private void noOrdenar(){
-        //colCondensadoras.setSortable(false);
+        colCondensadoras.setSortable(false);
         colNumSecuencia.setSortable(false);
         colEstado.setSortable(false);
         colMarca.setSortable(false);
@@ -786,5 +1005,14 @@ public class CondensadorasController {
         colFechaRev.setSortable(false);
         colAveria.setSortable(false);
         colObservaciones.setSortable(false);
+    }
+
+    /**
+     * Metodo para actualizar la etiqueta de fecha en el encabezado con la fecha actual.
+     */
+    private void actualizarFechaEncabezado() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String fechaHoy = LocalDate.now().format(formatter);
+        lblActualizado.setText("Actualizado: " + fechaHoy);
     }
 }

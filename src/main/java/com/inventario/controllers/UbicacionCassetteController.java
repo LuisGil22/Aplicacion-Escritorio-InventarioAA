@@ -8,6 +8,9 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -170,7 +173,15 @@ public class UbicacionCassetteController {
      */
     @FXML
     private void configurarFiltroUbicacionCas(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Nombre", Ubicacion_Cassette::getNombre,btnFiltroUbicacionCas,tablaUbicacionCassettes,ubicacionCassettes);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Nombre", Ubicacion_Cassette::getNombre,btnFiltroUbicacionCas,tablaUbicacionCassettes,ubicacionCassettes,(ascending) -> {
+            ObservableList<Ubicacion_Cassette> sorted = FXCollections.observableArrayList(ubicacionCassettes);
+            sorted.sort(Comparator.comparing(
+                    Ubicacion_Cassette::getNombre,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaUbicacionCassettes.setItems(sorted);
+        });
     }
 
     /**

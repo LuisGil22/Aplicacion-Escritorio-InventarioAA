@@ -14,20 +14,21 @@
 
     <HBox spacing="10" style="-fx-padding: 5 10 5 10;">
         <Label fx:id="lblActualizado" text="Actualizado: "
-               style="-fx-font-size: 12px;" HBox.hgrow="NEVER" />
+               style="-fx-font-size: 16px;" HBox.hgrow="NEVER" />
         <Pane HBox.hgrow="ALWAYS"/>
         <HBox spacing="10" alignment="CENTER">
             <Button text="Añadir" onAction="#onAddCas" styleClass="action-button"/>
             <Button text="Modificar" onAction="#onEditCas" styleClass="action-button"/>
             <Button text="Eliminar" onAction="#onDeleteCas" styleClass="action-button"/>
             <Button text="Sustituir" onAction="#onSustituirCas" styleClass="action-button"/>
+            <Button text="Filtro Revision" onAction="#abrirFiltroRevision" styleClass="action-button"/>
         </HBox>
         <Pane HBox.hgrow="ALWAYS"/>
     </HBox>
 
     <TableView fx:id="tablaCassette" styleClass="table-view-cas">
         <columns>
-            <TableColumn fx:id="colNumCassette" prefWidth="120">
+            <TableColumn fx:id="colNumCassette" prefWidth="150">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="NUM_CASSETTE"/>
@@ -35,7 +36,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colNumSecuencia" prefWidth="120">
+            <TableColumn fx:id="colNumSecuencia" prefWidth="160">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="NUM_SECUENCIA"/>
@@ -67,7 +68,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colPotenciaCalor" prefWidth="150">
+            <TableColumn fx:id="colPotenciaCalor" prefWidth="160">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="POTENCIA_CALOR"/>
@@ -99,7 +100,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colCondensadora" prefWidth="100">
+            <TableColumn fx:id="colCondensadora" prefWidth="150">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="CONDENSADORA"/>
@@ -107,7 +108,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colLocalizacionCondensadora" prefWidth="160">
+            <TableColumn fx:id="colLocalizacionCondensadora" prefWidth="200">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="LOCALIZACIÓN_CONDENSADORA"/>
@@ -123,7 +124,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colFechaInst" prefWidth="150">
+            <TableColumn fx:id="colFechaInst" prefWidth="180">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="FECHA_INSTALACION"/>
@@ -163,12 +164,8 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colObservaciones" prefWidth="150" text="OBSERVACIONES"/>
+            <TableColumn fx:id="colObservaciones" prefWidth="190" text="OBSERVACIONES"/>
         </columns>
     </TableView>
-    <!--<VBox spacing="4" style="-fx-padding: 8 0 0 0;">
-        <Label text="Condensadora F - Línea Azul" styleClass="footer-label"/>
-        <Label text="Condensadora E - Línea Roja" styleClass="footer-label"/>
-        <Label text="Condensadora D - Línea Amarilla" styleClass="footer-label"/>
-    </VBox>-->
+
 </VBox>

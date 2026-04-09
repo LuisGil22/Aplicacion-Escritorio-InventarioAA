@@ -9,6 +9,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -164,7 +166,15 @@ public class CorreoController {
      */
     @FXML
     private void configurarFiltroCorreo(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por correo", Correo_Electronico::getCorreoElectronico, btnFiltroCorreo, tablaCorreos, correos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por correo", Correo_Electronico::getCorreoElectronico, btnFiltroCorreo, tablaCorreos, correos,(ascending) -> {
+            ObservableList<Correo_Electronico> sorted = FXCollections.observableArrayList(correos);
+            sorted.sort(Comparator.comparing(
+                    Correo_Electronico::getCorreoElectronico,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCorreos.setItems(sorted);
+        });
     }
 
     /**

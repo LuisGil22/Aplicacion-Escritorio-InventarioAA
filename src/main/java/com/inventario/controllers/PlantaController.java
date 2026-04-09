@@ -11,6 +11,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -28,6 +30,7 @@ import java.util.List;
  *
  * @author Luis Gil
  */
+@SuppressWarnings("ALL")
 public class PlantaController {
 
     /** Campos FXML */
@@ -208,7 +211,15 @@ public class PlantaController {
      */
     @FXML
     private void configurarFiltroPlanta(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Planta", Planta::getPlanta,btnFiltroPlanta,tablaPlantas,plantas);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Planta", Planta::getPlanta,btnFiltroPlanta,tablaPlantas,plantas,(ascending) -> {
+            ObservableList<Planta> sorted = FXCollections.observableArrayList(plantas);
+            sorted.sort(Comparator.comparing(
+                    Planta::getPlanta,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaPlantas.setItems(sorted);
+        });
     }
 
     /**

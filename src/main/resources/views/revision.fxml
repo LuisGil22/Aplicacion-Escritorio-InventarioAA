@@ -14,18 +14,17 @@
 
     <HBox spacing="10" style="-fx-padding: 5 10 5 10;">
         <Label fx:id="lblActualizado" text="Actualizado: "
-           style="-fx-font-size: 12px;" HBox.hgrow="NEVER" />
+           style="-fx-font-size: 16px;" HBox.hgrow="NEVER" />
         <Pane HBox.hgrow="ALWAYS"/>
-        <!--<HBox styleClass="box">
-            <Button text="Generar Revisiones Pendientes" onAction="#generarRevisionesPendientes" styleClass="action-button"/>
-            <Button text="Modificar" onAction="#onEditRevision" styleClass="action-button"/>
-            <Button text="Eliminar" onAction="#onDeleteRevision" styleClass="action-button"/>
-        </HBox>-->
+        <HBox spacing="10" alignment="CENTER">
+             <Button text="Eliminar" onAction="#onDeleteRevision" styleClass="action-button"/>
+         </HBox>
+        <Pane HBox.hgrow="ALWAYS"/>
     </HBox>
 
     <TableView fx:id="tablaRevisiones" styleClass="table-view">
         <columns>
-            <TableColumn fx:id="colNumRevision" prefWidth="90">
+            <TableColumn fx:id="colNumRevision" prefWidth="150">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="NUM_REVISION"/>
@@ -73,7 +72,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colFechaRevision" prefWidth="120">
+            <TableColumn fx:id="colFechaRevision" prefWidth="150">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="FECHA_REVISION"/>
@@ -81,16 +80,18 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colRevision" prefWidth="80">
+            <TableColumn fx:id="colRevision" prefWidth="110">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
-                        <Label text="REVISION"/>
+                        <Label text="REVISADO"/>
                         <Button fx:id="btnFiltroRevision" text="▼" style="-fx-background-color: transparent; -fx-font-size: 10px;" onAction="#configurarFiltroRevision"/>
                     </HBox>
                 </graphic>
             </TableColumn>
             <TableColumn fx:id="colObservaciones" prefWidth="200" text="OBSERVACIONES"/>
-            <TableColumn fx:id="colAccion" prefWidth="80" text="ACCION"/>
+            <TableColumn fx:id="colEnviarMail" prefWidth="150" text="ENVIAR_MAIL"/>
+            <TableColumn fx:id="colDiasRestantes" prefWidth="200" text="DIAS_RESTANTES_REV."/>
+            <TableColumn fx:id="colAccion" prefWidth="170" text="ACCION_DE_REVISAR"/>
         </columns>
     </TableView>
 

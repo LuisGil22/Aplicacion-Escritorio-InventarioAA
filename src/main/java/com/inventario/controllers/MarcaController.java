@@ -10,6 +10,9 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
+
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -27,6 +30,7 @@ import java.util.List;
  *
  * @author Luis Gil
  */
+@SuppressWarnings("ALL")
 public class MarcaController {
 
     /** Campos FXML */
@@ -163,7 +167,13 @@ public class MarcaController {
         });
     }
 
-
+    /**
+     * Metodo para crear un diálogo de entrada para añadir o modificar una Marca.
+     * Configura los campos de texto y el botón de acción según el contexto (añadir o modificar).
+     *
+     * @param marca la Marca a modificar, o null para añadir una nueva
+     * @return el diálogo configurado para la acción correspondiente
+     */
     private Dialog<Marca>crearDialogo(Marca marca){
         Dialog<Marca>dialog = new Dialog<>();
         dialog.setTitle(marca == null ? "Añadir Marca" : "Modificar Marca");
@@ -201,7 +211,15 @@ public class MarcaController {
      */
     @FXML
     private void configurarFiltroMarca(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Marca", Marca::getMarca,btnFiltroMarca,tablaMarca,marcas);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Marca", Marca::getMarca,btnFiltroMarca,tablaMarca,marcas,(ascending) -> {
+            ObservableList<Marca> sorted = FXCollections.observableArrayList(marcas);
+            sorted.sort(Comparator.comparing(
+                    Marca::getMarca,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaMarca.setItems(sorted);
+        });
     }
 
     /**

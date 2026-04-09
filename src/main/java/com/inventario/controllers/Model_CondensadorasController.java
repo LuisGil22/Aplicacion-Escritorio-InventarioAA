@@ -10,6 +10,9 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
+
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -27,6 +30,7 @@ import java.util.List;
  *
  * @author Luis Gil
  */
+@SuppressWarnings("ALL")
 public class Model_CondensadorasController {
 
     /** Campos FXML */
@@ -207,7 +211,15 @@ public class Model_CondensadorasController {
      */
     @FXML
     private void configurarFiltroModelo(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Modelo", Model_Condensadora::getModelo,btnFiltroModelo,tablaModel_Cond,modelCondensadoras);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Modelo", Model_Condensadora::getModelo,btnFiltroModelo,tablaModel_Cond,modelCondensadoras,(ascending) -> {
+            ObservableList<Model_Condensadora> sorted = FXCollections.observableArrayList(modelCondensadoras);
+            sorted.sort(Comparator.comparing(
+                    Model_Condensadora::getModelo,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaModel_Cond.setItems(sorted);
+        });
     }
 
     /**

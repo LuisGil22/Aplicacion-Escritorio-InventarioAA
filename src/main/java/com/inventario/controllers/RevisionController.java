@@ -3,19 +3,19 @@ package com.inventario.controllers;
 import com.inventario.models.Revision;
 import com.inventario.utils.ExcelManager;
 import com.inventario.utils.FilterUtils;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.CheckBoxTableCell;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -27,9 +27,10 @@ import java.util.List;
  *
  * @author Luis Gil
  */
+@SuppressWarnings("ALL")
 public class RevisionController {
     /** Campos FXML */
-    @FXML private TableView<Revision> tablaRevisiones;
+    @FXML public TableView<Revision> tablaRevisiones;
     @FXML private TableColumn<Revision,String> colNumRevision;
     @FXML private TableColumn<Revision,String> colEquipo;
     @FXML private TableColumn<Revision,String> colCodigo;
@@ -39,7 +40,11 @@ public class RevisionController {
     @FXML private TableColumn<Revision,String> colFechaRevision;
     @FXML private TableColumn<Revision,String> colRevision;
     @FXML private TableColumn<Revision,String> colObservaciones;
+    @FXML private TableColumn<Revision,String> colEnviarMail;
+    @FXML private TableColumn<Revision,String> colDiasRestantes;
     @FXML private TableColumn<Revision,Boolean> colAccion;
+
+    @FXML private Button btnEliminarRevision;
 
     @FXML private Button btnFiltroNumRevision;
     @FXML private Button btnFiltroEquipo;
@@ -73,26 +78,14 @@ public class RevisionController {
         configurarTabla();
         actualizarFechaEncabezado();
         cargarDatosRevisiones();
-        //crearYVerificarRevisionesPendientes();
-        /**Platform.runLater(() -> {
-            new Thread(() -> {
-                try {
-                    Thread.sleep(100); // pequeño delay para que la UI se muestre primero
-                    crearYVerificarRevisionesPendientes();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }).start();
-        });*/
         noOrdenar();
-        /**new Thread(() -> {
-            try {
-                Thread.sleep(300);
-                ExcelManager.calcularYActualizarRevisionIndividual();
-            } catch (Exception e) {
-                e.printStackTrace();
+
+        ExcelManager.revisionActualizada.addListener((obs, oldVal, newVal) -> {
+            if (newVal) {
+                cargarDatosRevisiones(); // recargar desde Excel
+                tablaRevisiones.refresh();
             }
-        }).start();*/
+        });
     }
 
     /**
@@ -109,38 +102,71 @@ public class RevisionController {
         colFechaRevision.setCellValueFactory(new PropertyValueFactory<>("fechaRevision"));
         colRevision.setCellValueFactory(new PropertyValueFactory<>("revision"));
         colObservaciones.setCellValueFactory(new PropertyValueFactory<>("observaciones"));
+        colEnviarMail.setCellValueFactory(new PropertyValueFactory<>("enviarMail"));
+        colDiasRestantes.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getDiasRestantes() ));
+
+        colAccion.setCellFactory(param -> new TableCell<Revision, Boolean>() {
+            private final CheckBox checkBox = new CheckBox();
+            private final Tooltip tooltip = new Tooltip("Si lo marcas, se actualizara a Revisado (SI) y no se podrá deshacer.");
+
+            {
+                checkBox.setTooltip(tooltip);
+                checkBox.setOnAction(e -> {
+                    Revision rev = getTableRow() != null ? getTableRow().getItem() : null;
+                    if (rev == null) return;
+
+                    if ("NO".equals(rev.getRevision())) {
+                        rev.setRevision("SI");
+                        actualizarRevisionEnExcel(rev);
+                        checkBox.setDisable(true);
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Boolean item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    checkBox.setSelected(item);
+
+                    Revision rev = getTableRow() != null ? getTableRow().getItem() : null;
+                    if (rev != null && "SI".equals(rev.getRevision())) {
+                        checkBox.setDisable(true);
+                    } else {
+                        checkBox.setDisable(false);
+                    }
+                    setGraphic(checkBox);
+                }
+            }
+        });
 
         colAccion.setCellValueFactory(param -> {
-            Revision rev = param.getValue();
-            boolean checked = "SI".equals(rev.getRevision());
-            return new SimpleObjectProperty<>(checked);
+            String revStr = param.getValue().getRevision();
+            boolean isChecked = "SI".equals(revStr);
+            return new SimpleObjectProperty<>(isChecked);
         });
-        colAccion.setCellFactory(CheckBoxTableCell.forTableColumn(colAccion));
-        colAccion.setEditable(true);
-
-        colAccion.setOnEditCommit(event -> {
-            Revision rev = event.getRowValue();
-            boolean valorNuevo = event.getNewValue();
-            rev.setRevision(valorNuevo ? "SI" : "NO");
-            actualizarRevisionEnExcel(rev);
-        });
+        tablaRevisiones.setEditable(false);
     }
 
     /**
      * Carga las revisiones existentes desde la hoja REVISIONES del archivo Excel.
      */
-    private void cargarDatosRevisiones(){
+    public void cargarDatosRevisiones(){
         revisiones= FXCollections.observableArrayList();
         List<List<String>>datosRev = ExcelManager.leerHoja("REVISIONES");
 
         for(int i = 1; i < datosRev.size(); i++){
             List<String> filaRev = datosRev.get(i);
             if(filaRev.isEmpty() || filaRev.size() < 9) continue;
-            while (filaRev.size() < 9){
+            while (filaRev.size() < 11){
                 filaRev.add("");
             }
 
-            String numRevision = filaRev.get(0).trim();
+            String numRevision = String.format("%04d",
+                    Integer.parseInt(filaRev.get(0).trim())
+            );
             String equipo = filaRev.get(1).trim();
             String codigo = filaRev.get(2).trim();
             String estado = filaRev.get(3).trim();
@@ -149,172 +175,16 @@ public class RevisionController {
             String fechaRevision = filaRev.get(6).trim();
             String revision = filaRev.get(7).trim();
             String observaciones = filaRev.get(8).trim();
+            String enviarMail = filaRev.size() > 9 ? filaRev.get(9).trim() : "NO ENVIADO";
 
             if(numRevision.isEmpty() && equipo.isEmpty()) continue;
 
-            revisiones.add(new Revision(
-                    numRevision,equipo,codigo,estado,planta,localizacion,fechaRevision,revision,observaciones
-            ));
+            Revision rev = new Revision(numRevision,equipo,codigo,estado,planta,localizacion,fechaRevision,revision,observaciones,enviarMail);
+            rev.calcularDiasRestantesRevision();
+            revisiones.add(rev);
+
         }
         tablaRevisiones.setItems(revisiones);
-    }
-
-    /**
-     * Verifica equipos (Cassette y Condensadora) y crea revisiones pendientes
-     * si la fecha desde ya ha sido alcanzada.
-     */
-    /**public void crearYVerificarRevisionesPendientes(){
-        //cargarDatosRevisiones();
-
-        LocalDate hoy = LocalDate.now();
-        DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        int diasRevision = ExcelManager.getDiasRevision();
-        //List<List<String>> revisionExcel = ExcelManager.leerHoja("REVISIONES");
-
-
-        List<List<String>> cassettes = ExcelManager.leerHoja("Cassette");
-        for(int i = 1; i < cassettes.size(); i++){
-            List<String> filaCas = cassettes.get(i);
-            if(filaCas.size() < 13 || filaCas.get(0).trim().isEmpty()) continue;
-
-            String numCassette = filaCas.get(0).trim();
-            //String numSecuenciaStr = filaCas.get(1).trim();
-            //Integer numSecuencia = numSecuenciaStr.isEmpty() ? 1 : Integer.parseInt(numSecuenciaStr);
-            String estado = filaCas.get(2).trim();
-            String planta = filaCas.get(3).trim();
-            String localizacion = filaCas.get(10).trim();
-            String fechaInstStr = filaCas.get(12).trim();
-
-            if(!"ACTIVA".equals(estado) || fechaInstStr.isEmpty()) continue;
-
-            try{
-                //LocalDate limite = LocalDate.now().minusMonths(6);
-                LocalDate fechaInst = LocalDate.parse(fechaInstStr, formato);
-                //LocalDate fechaHasta = fechaInst.plusMonths(4);
-                LocalDate fechaRevision = ExcelManager.calcularProximaFechaRevision(fechaInst,diasRevision);
-                LocalDate fechaDesde = fechaRevision.minusDays(30);
-
-
-                 String fechaRevisionStr = fechaRevision.format(formato);
-                 ExcelManager.actualizarFechaRevision("Cassette", numCassette, Integer.parseInt(filaCas.get(1).trim()), fechaRevisionStr);
-
-                if(!hoy.isBefore(fechaDesde) && !existeRevision("CASSETTE", numCassette)){
-                    String numSecuenciaStr = filaCas.get(1).trim();
-                    Integer numSecuencia = numSecuenciaStr.isEmpty() ? 1 : Integer.parseInt(numSecuenciaStr);
-                    crearRevisionAutomaticamente("CASSETTE", numCassette, estado, planta, localizacion, fechaInst,numSecuencia);
-                }
-
-            } catch (Exception e) {
-                System.err.println("Error procesando cassette " + numCassette + ": " + e.getMessage());
-            }
-
-        }
-
-
-        List<List<String>> condensadoras = ExcelManager.leerHoja("Condensadoras");
-        for(int i = 1; i < condensadoras.size(); i++){
-            List<String> filaCond = condensadoras.get(i);
-            if(filaCond.size() < 9 || filaCond.get(0).trim().isEmpty()) continue;
-
-            String condensadora = filaCond.get(0).trim();
-            //String numSecuenciaStr = filaCond.get(1).trim();
-            //Integer numSecuencia = numSecuenciaStr.isEmpty() ? 1 : Integer.parseInt(numSecuenciaStr);
-            String estado = filaCond.get(2).trim();
-            String estadoLimpio = estado.isEmpty() ? "" : estado;
-            String localizacion = filaCond.get(6).trim();
-            String fechaInstStr = filaCond.get(8).trim();
-
-            if(!"ACTIVA".equals(estadoLimpio) || fechaInstStr.isEmpty()) continue;
-
-            try{
-                //LocalDate limite = LocalDate.now().minusMonths(6);
-                LocalDate fechaInst = LocalDate.parse(fechaInstStr, formato);
-                //LocalDate fechaHasta = fechaInst.plusMonths(4);
-                LocalDate fechaRevision = ExcelManager.calcularProximaFechaRevision(fechaInst,diasRevision);
-                LocalDate fechaDesde = fechaRevision.minusDays(30);
-
-
-                String fechaRevisionStr = fechaRevision.format(formato);
-                ExcelManager.actualizarFechaRevision("Condensadoras", condensadora, Integer.parseInt(filaCond.get(1).trim()), fechaRevisionStr);
-
-                if(!hoy.isBefore(fechaDesde) && !existeRevision("CONDENSADORA", condensadora)){
-                    String numSecuenciaStr = filaCond.get(1).trim();
-                    Integer numSecuencia = numSecuenciaStr.isEmpty() ? 1 : Integer.parseInt(numSecuenciaStr);
-                    crearRevisionAutomaticamente("CONDENSADORA", condensadora, estado, "", localizacion, fechaInst,numSecuencia);
-                }
-
-            } catch (Exception e) {
-                System.err.println("Error procesando condensadora " + condensadora + ": " + e.getMessage());
-            }
-
-        }
-        Platform.runLater(this::cargarDatosRevisiones);
-    }*/
-
-    /**
-     * Verifica si ya existe una revisión para un equipo específico.
-     */
-    private boolean existeRevision(String equipo, String codigo){
-        for(Revision rev : revisiones){
-            if(rev.getEquipo().trim().equals(equipo.trim()) && rev.getCodigo().trim().equals(codigo.trim())){
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Crea una nueva revisión en la hoja REVISIONES con el formato de rango de fechas.
-     */
-    private void crearRevisionAutomaticamente(String equipo, String codigo, String estado, String planta, String localizacion, LocalDate fechaInstalacion,Integer numSecuencia){
-        try{
-            int numMax = 0;
-            for(Revision rev : revisiones){
-                try{
-                    int num = Integer.parseInt(rev.getNumRevision());
-                    if(num > numMax){
-                        numMax = num;
-                    }
-                } catch (NumberFormatException ignored){}
-            }
-            String numRevision = String.format("%04d", numMax + 1);
-            int diasRevision = ExcelManager.getDiasRevision();
-            LocalDate fechaRevision = ExcelManager.calcularProximaFechaRevision(fechaInstalacion,diasRevision);
-            LocalDate fechaDesde = fechaRevision.minusDays(30);
-
-            DateTimeFormatter form = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            String fechas = "desde: " + fechaDesde.format(form) + "\n hasta: " + fechaRevision.format(form);
-            String fechaRevisionStr = fechaRevision.format(form);
-
-            ExcelManager.añadirFila(
-                    "REVISIONES",
-                    numRevision,
-                    equipo,
-                    codigo,
-                    estado,
-                    planta,
-                    localizacion,
-                    fechas,
-                    "NO",
-                    ""
-            );
-
-            // ACTUALIZAR FECHA_REVISION EN LA HOJA DE ORIGEN
-            //String fechaHastaStr = fechaHasta.format(form);
-
-            /**if ("CASSETTE".equals(equipo)) {
-                ExcelManager.actualizarFechaRevision("Cassette", codigo,numSecuencia, fechaRevisionStr);
-            } else if ("CONDENSADORA".equals(equipo)) {
-                ExcelManager.actualizarFechaRevision("Condensadoras", codigo,numSecuencia, fechaRevisionStr);
-            }*/
-
-            Revision nuevaRevision = new Revision(numRevision,equipo,codigo,estado,planta,localizacion,fechas,"NO","");
-            revisiones.add(nuevaRevision);
-            //System.out.println("Revision creada: "+ numRevision + "(" + equipo + " " + codigo + ")");
-        } catch (Exception e) {
-            System.err.println("Error al crear revisión automática: " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -323,56 +193,248 @@ public class RevisionController {
      * @param revision revisión modificada
      */
     private void actualizarRevisionEnExcel(Revision revision){
+        System.out.println(" actualizarRevisionEnExcel llamado. NumRev: " + revision.getNumRevision() + ", Revision: " + revision.getRevision());
         try {
             List<List<String>> datos = ExcelManager.leerHoja("REVISIONES");
             for (int i = 1; i < datos.size(); i++) {
                 List<String> fila = datos.get(i);
-                if (fila.size() > 0 &&
-                        fila.get(0).trim().equals(revision.getNumRevision())) {
-                    // Actualizar columna REVISION (índice 7)
+                if (fila.size() > 0 && revision.getNumRevision().equals(fila.get(0).trim())) {
                     while (fila.size() <= 7) fila.add("");
-                    fila.set(7, revision.getRevision());
+                    fila.set(7, "SI");
                     ExcelManager.modificarFila("REVISIONES", i, fila.toArray(new String[0]));
+
+                    ExcelManager.enviarCorreoConfirmacionRevision(revision.getEquipo(), revision.getCodigo());
                     break;
                 }
             }
+
+            for (Revision r : revisiones) {
+                if (r.getNumRevision().equals(revision.getNumRevision())) {
+                    r.setRevision("SI");
+                    break;
+                }
+            }
+            tablaRevisiones.refresh();
+
+            String equipo = revision.getEquipo();
+            String codigo = revision.getCodigo();
+            String hojaOrigen = "CONDENSADORA".equals(equipo) ? "Condensadoras" : "Cassette";
+            List<List<String>> datosOrigen = ExcelManager.leerHoja(hojaOrigen);
+
+            for (int i = 1; i < datosOrigen.size(); i++){
+                List<String> fila = datosOrigen.get(i);
+                if (fila.size() > 1 && codigo.equals(fila.get(0).trim()) && "ACTIVA".equals(fila.get(2).trim())){
+                    int diasRevision = 365;
+                    int indiceDias = "Condensadoras".equals(hojaOrigen) ? 13 : 18;
+                    if (fila.size() > indiceDias && !fila.get(indiceDias).trim().isEmpty()) {
+                        try {
+                            diasRevision = Integer.parseInt(fila.get(indiceDias).trim());
+                        } catch (Exception ignored) {}
+                    }
+
+                    int colFechaRev = "Condensadoras".equals(hojaOrigen) ? 10 : 14;
+                    String fechaRevActualStr = "";
+                    if (fila.size() > colFechaRev) {
+                        fechaRevActualStr = fila.get(colFechaRev).trim();
+                    }
+
+                    if (!fechaRevActualStr.isEmpty()) {
+                        LocalDate fechaRevActual = LocalDate.parse(fechaRevActualStr, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                        LocalDate nuevaFechaRev = fechaRevActual.plusDays(diasRevision);
+                        String frStr = nuevaFechaRev.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+                        while (fila.size() <= colFechaRev) fila.add("");
+                        fila.set(colFechaRev, frStr);
+
+                        ExcelManager.modificarFila(hojaOrigen, i, fila.toArray(new String[0]));
+
+                        LocalDate fechaDesde = nuevaFechaRev.minusDays(30);
+                        if (!LocalDate.now().isBefore(fechaDesde)) {
+                            String planta = "CONDENSADORA".equals(equipo) ? "" : fila.get(3).trim();
+                            String localizacion = "CONDENSADORA".equals(equipo) ?  (fila.size() > 6 ? fila.get(6).trim() : "") : (fila.size() > 10 ? fila.get(10).trim() : "");
+                            String estado = "ACTIVA";
+
+                            ExcelManager.crearEntradaRevision(equipo, codigo, estado, planta, localizacion, nuevaFechaRev, fechaDesde);
+
+
+                        }
+                    }
+                    break;
+                }
+            }
+
+                Platform.runLater(() -> {
+                for (Revision r : revisiones) {
+                    if (r.getNumRevision().equals(revision.getNumRevision())) {
+                        r.setRevision(revision.getRevision()); // actualiza el objeto en memoria
+                        break;
+                    }
+                }
+                tablaRevisiones.refresh();
+
+            });
+
         } catch (Exception e) {
-            System.err.println("Error al actualizar revisión en Excel: " + e.getMessage());
-            //e.printStackTrace();
+
+            e.printStackTrace();
         }
     }
 
+    /**
+     * metodo para obtener los dias de revision desde la fila del equipo en su hoja correspondiente,
+     * dependiendo si es condensadora o cassette, con un valor por defecto de 365 dias si no se encuentra
+     * el valor o hay algun error. Se asume que el indice de la columna de dias de revision es fijo (13 para condensadoras y 18 para cassette),
+     * pero se verifica que exista antes de intentar leerlo.
+     */
+    private int obtenerDiasRevisionDeFila(List<String> fila, String hoja) {
+        //int indiceDias = "Condensadoras".equals(hoja) ? 13 : 15; // Cassette tiene más columnas
+        if ("Condensadoras".equals(hoja) && fila.size() > 13) {
+            String valor = fila.get(13).trim();
+            if(!valor.isEmpty()) {
+                try {
+                    return Integer.parseInt(valor);
+                } catch (NumberFormatException e) {
+                    // fallback
+                }
+            }
+        }
+        return 365;
+    }
+
+    /** Metodos para configurar los filtros de cada columna. Se utiliza la clase FilterUtils para mostrar un menú de selección de valores únicos en la columna, con opciones de ordenación ascendente/descendente. Al aplicar un filtro, se ordena la tabla según el valor seleccionado y el orden indicado.
+     * Cada metodo corresponde a una columna específica y llama a FilterUtils.abrirFiltroGenerico con los parámetros adecuados.
+     */
     @FXML
     private void configurarFiltroNumRevision(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por NumRevision", Revision::getNumRevision, btnFiltroNumRevision, tablaRevisiones,revisiones);
+        FilterUtils.abrirFiltroGenerico("Filtrar por NumRevision", Revision::getNumRevision, btnFiltroNumRevision, tablaRevisiones,revisiones,(ascending) -> {
+            ObservableList<Revision> sorted = FXCollections.observableArrayList(revisiones);
+            sorted.sort(Comparator.comparing(
+                    Revision::getNumRevision,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaRevisiones.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroEquipo(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Equipo", Revision::getEquipo, btnFiltroEquipo, tablaRevisiones,revisiones);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Equipo", Revision::getEquipo, btnFiltroEquipo, tablaRevisiones,revisiones,(ascending) -> {
+            ObservableList<Revision> sorted = FXCollections.observableArrayList(revisiones);
+            sorted.sort(Comparator.comparing(
+                    Revision::getEquipo,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaRevisiones.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroCodigo(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Codigo", Revision::getCodigo, btnFiltroCodigo, tablaRevisiones,revisiones);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Codigo", Revision::getCodigo, btnFiltroCodigo, tablaRevisiones,revisiones,(ascending) -> {
+            ObservableList<Revision> sorted = FXCollections.observableArrayList(revisiones);
+            sorted.sort(Comparator.comparing(
+                    Revision::getCodigo,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaRevisiones.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroEstado(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Estado", Revision::getEstado, btnFiltroEstado, tablaRevisiones,revisiones);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Estado", Revision::getEstado, btnFiltroEstado, tablaRevisiones,revisiones,(ascending) -> {
+            ObservableList<Revision> sorted = FXCollections.observableArrayList(revisiones);
+            sorted.sort(Comparator.comparing(
+                    Revision::getEstado,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaRevisiones.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroPlanta(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Planta", Revision::getPlanta, btnFiltroPlanta, tablaRevisiones,revisiones);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Planta", Revision::getPlanta, btnFiltroPlanta, tablaRevisiones,revisiones,(ascending) -> {
+            ObservableList<Revision> sorted = FXCollections.observableArrayList(revisiones);
+            sorted.sort(Comparator.comparing(
+                    Revision::getPlanta,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaRevisiones.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroLocalizacion(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Localización", Revision::getLocalizacion, btnFiltroLocalizacion, tablaRevisiones,revisiones);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Localización", Revision::getLocalizacion, btnFiltroLocalizacion, tablaRevisiones,revisiones,(ascending) -> {
+            ObservableList<Revision> sorted = FXCollections.observableArrayList(revisiones);
+            sorted.sort(Comparator.comparing(
+                    Revision::getLocalizacion,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaRevisiones.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroFechaRevision(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha Revision", Revision::getFechaRevision, btnFiltroFechaRevision, tablaRevisiones,revisiones);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha Revision", Revision::getFechaRevision, btnFiltroFechaRevision, tablaRevisiones,revisiones,(ascending) -> {
+            ObservableList<Revision> sorted = FXCollections.observableArrayList(revisiones);
+            sorted.sort(Comparator.comparing(
+                    Revision::getFechaRevision,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaRevisiones.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroRevision(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Revision", Revision::getRevision, btnFiltroRevision, tablaRevisiones,revisiones);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Revision", Revision::getRevision, btnFiltroRevision, tablaRevisiones,revisiones,(ascending) -> {
+            ObservableList<Revision> sorted = FXCollections.observableArrayList(revisiones);
+            sorted.sort(Comparator.comparing(
+                    Revision::getRevision,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaRevisiones.setItems(sorted);
+        });
+    }
+
+    /**
+     *  Metodo para eliminar una revisión seleccionada de la tabla y de la hoja REVISIONES del archivo Excel.
+     *  Se muestra una confirmación antes de eliminar, indicando el número de revisión.
+     *  Si se confirma, se elimina la revisión de la tabla y se llama a ExcelManager.eliminarFila para eliminarla del Excel.
+     *  Luego se muestra un mensaje de éxito.
+     */
+    @FXML
+    private void onDeleteRevision() {
+        Revision selected = tablaRevisiones.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            mainAppController.showAlert("Selecciona una revisión para eliminar.");
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirmar eliminación");
+        confirm.setHeaderText("¿Eliminar esta revisión?");
+        confirm.setContentText("Esta acción no se puede deshacer.\nNúmero de revisión: " + selected.getNumRevision());
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+
+                    tablaRevisiones.getItems().remove(selected);
+                    ExcelManager.eliminarFila("REVISIONES", selected.getNumRevision());
+
+                    // Eliminar de la lista en memoria
+                    //revisiones.remove(selected);
+
+                    // Refrescar tabla
+                    //tablaRevisiones.refresh();
+
+                    mainAppController.showAlert("Revisión eliminada correctamente.");
+
+            }
+        });
     }
 
     /** Metodos Auxiliares */
@@ -400,21 +462,4 @@ public class RevisionController {
         colObservaciones.setSortable(false);
         colAccion.setSortable(false);
     }
-
-   /** @FXML
-    private void generarRevisionesPendientes() {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Generar revisiones");
-        confirm.setHeaderText("¿Crear revisiones para equipos cuya fecha 'desde' ya ha llegado?");
-        confirm.setContentText("Se crearán revisiones para equipos ACTIVOS con fecha_instalacion + 3 meses ≤ hoy.");
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                crearYVerificarRevisionesPendientes();
-                Platform.runLater(() -> {
-                    cargarDatosRevisiones();
-                    mainAppController.showAlert("Revisión generada: " + revisiones.size() + " entradas.");
-                });
-            }
-        });
-    }*/
 }

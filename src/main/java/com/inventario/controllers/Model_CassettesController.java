@@ -10,6 +10,9 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
+
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -27,6 +30,7 @@ import java.util.List;
  *
  * @author Luis Gil
  */
+@SuppressWarnings("ALL")
 public class Model_CassettesController {
 
     /** Campos FXML */
@@ -206,7 +210,15 @@ public class Model_CassettesController {
      */
     @FXML
     private void configurarFiltroModeloCas(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Modelo", Model_Cassette::getModeloCas,btnFiltroModeloCas,tablaModel_Cas,modelCassettes);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Modelo", Model_Cassette::getModeloCas,btnFiltroModeloCas,tablaModel_Cas,modelCassettes,(ascending) -> {
+            ObservableList<Model_Cassette> sorted = FXCollections.observableArrayList(modelCassettes);
+            sorted.sort(Comparator.comparing(
+                    Model_Cassette::getModeloCas,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaModel_Cas.setItems(sorted);
+        });
     }
 
     /**

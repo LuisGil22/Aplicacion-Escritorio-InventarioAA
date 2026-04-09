@@ -15,9 +15,12 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -340,22 +343,54 @@ public class GasesController {
     /** Metodos para configurar los filtros de las columnas en la tabla Gas.*/
     @FXML
     private void configurarFiltroGas(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Gas", Gas::getGas,btnFiltroGas,tablaGases,gases);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Gas", Gas::getGas,btnFiltroGas,tablaGases,gases,(ascending) -> {
+            ObservableList<Gas> sorted = FXCollections.observableArrayList(gases);
+            sorted.sort(Comparator.comparing(
+                    Gas::getGas,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaGases.setItems(sorted);
+        });
     }
 
     @FXML
     private void configurarFiltroPcg_Pca(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por PCG/PCA", gas -> gas.getPcg_pca() != null ? String.valueOf(gas.getPcg_pca()): "", btnFiltroPcg_Pca,tablaGases,gases);
+        FilterUtils.abrirFiltroGenerico("Filtrar por PCG/PCA", gas -> gas.getPcg_pca() != null ? String.valueOf(gas.getPcg_pca()): "", btnFiltroPcg_Pca,tablaGases,gases,(ascending) -> {
+            ObservableList<Gas> sorted = FXCollections.observableArrayList(gases);
+            sorted.sort(Comparator.comparing(
+                    item -> String.valueOf(item.getPcg_pca()),
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaGases.setItems(sorted);
+        });
     }
 
     @FXML
     private void configurarFiltroFechaCad(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Caducidad", Gas::getFechaCaducidad, btnFiltroFechaCad,tablaGases,gases);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Caducidad", Gas::getFechaCaducidad, btnFiltroFechaCad,tablaGases,gases,(ascending) -> {
+            ObservableList<Gas> sorted = FXCollections.observableArrayList(gases);
+            sorted.sort(Comparator.comparing(
+                    Gas::getFechaCaducidad,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaGases.setItems(sorted);
+        });
     }
 
     @FXML
     private void configurarFiltroFechaRev(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Revision", Gas::getFechaRevision, btnFiltroFechaRev,tablaGases,gases);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha de Revision", Gas::getFechaRevision, btnFiltroFechaRev,tablaGases,gases,(ascending) -> {
+            ObservableList<Gas> sorted = FXCollections.observableArrayList(gases);
+            sorted.sort(Comparator.comparing(
+                    Gas::getFechaRevision,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaGases.setItems(sorted);
+        });
     }
 
     /**

@@ -12,16 +12,23 @@
             stylesheets="@../css/parametros.css"
             styleClass="vbox">
 
-    <HBox styleClass="box">
-        <Button text="Añadir" onAction="#onAddCond" styleClass="action-button"/>
-        <Button text="Modificar" onAction="#onEditCond" styleClass="action-button"/>
-        <Button text="Eliminar" onAction="#onDeleteCond" styleClass="action-button"/>
-        <Button text="Sustituir" onAction="#onSustituirCond" styleClass="action-button"/>
+    <HBox spacing="10" style="-fx-padding: 5 10 5 10;">
+        <Label fx:id="lblActualizado" text="Actualizado: "
+               style="-fx-font-size: 16px;" HBox.hgrow="NEVER" />
+        <Pane HBox.hgrow="ALWAYS"/>
+        <HBox spacing="10" alignment="CENTER">
+            <Button text="Añadir" onAction="#onAddCond" styleClass="action-button"/>
+            <Button text="Modificar" onAction="#onEditCond" styleClass="action-button"/>
+            <Button text="Eliminar" onAction="#onDeleteCond" styleClass="action-button"/>
+            <Button text="Sustituir" onAction="#onSustituirCond" styleClass="action-button"/>
+            <Button text="Filtro Revision" onAction="#abrirFiltroRevision" styleClass="action-button"/>
+        </HBox>
+        <Pane HBox.hgrow="ALWAYS"/>
     </HBox>
 
     <TableView fx:id="tablaCondensadoras" styleClass="table-view-cond">
         <columns>
-            <TableColumn fx:id="colCondensadoras" prefWidth="150">
+            <TableColumn fx:id="colCondensadoras" prefWidth="170">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="CONDENSADORA"/>
@@ -69,7 +76,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colLocCondensadoras" prefWidth="150">
+            <TableColumn fx:id="colLocCondensadoras" prefWidth="200">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="LOC_CONDENSADORAS"/>
@@ -85,7 +92,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colFechaInstal" prefWidth="150">
+            <TableColumn fx:id="colFechaInstal" prefWidth="180">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="FECHA INSTALACION"/>
@@ -110,7 +117,7 @@
                 </graphic>
             </TableColumn>
             <TableColumn text="AVERIA" fx:id="colAveria" prefWidth="100"/>
-            <TableColumn text="OBSERVACIONES" fx:id="colObservaciones" prefWidth="150"/>
+            <TableColumn text="OBSERVACIONES" fx:id="colObservaciones" prefWidth="190"/>
         </columns>
     </TableView>
 </VBox>

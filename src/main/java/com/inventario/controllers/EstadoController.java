@@ -8,6 +8,9 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -171,7 +174,15 @@ public class EstadoController {
      */
     @FXML
     private void configurarFiltroEstado(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Estado", Estado::getEstado,btnFiltroEstado,tablaEstados,estados);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Estado", Estado::getEstado,btnFiltroEstado,tablaEstados,estados,(ascending) -> {
+            ObservableList<Estado> sorted = FXCollections.observableArrayList(estados);
+            sorted.sort(Comparator.comparing(
+                    Estado::getEstado,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaEstados.setItems(sorted);
+        });
     }
 
     /**

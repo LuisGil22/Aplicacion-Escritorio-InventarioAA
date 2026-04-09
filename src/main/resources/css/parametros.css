@@ -24,7 +24,8 @@
     -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-padding: 8px 16px;
-
+    -fx-border-color: #3498db;
+    -fx-border-radius: 4px;
 }
 
 .action-button:hover {
@@ -75,6 +76,8 @@ table-view-cas {
     -fx-text-fill: black;
     -fx-font-weight: bold;
 }
+
+
 
 .footer-label {
     -fx-font-size: 14px;

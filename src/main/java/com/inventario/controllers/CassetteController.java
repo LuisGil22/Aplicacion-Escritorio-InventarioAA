@@ -19,6 +19,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -78,6 +79,7 @@ public class CassetteController {
     @FXML private Button btnFiltroFechaRev;
     @FXML private Button btnFiltroAveria;
     @FXML private Button btnFiltroFoto;
+    //@FXML private Button btnFiltroRevision;
 
     @FXML private Label lblActualizado;
 
@@ -104,7 +106,7 @@ public class CassetteController {
         cargarDatosCondensadoras();
         configurarColumnasCas();
         cargarDatosCas();
-        //noOrdenar();
+        noOrdenar();
         actualizarFechaEncabezado();
     }
 
@@ -222,7 +224,7 @@ public class CassetteController {
                 ));
 
             } catch (Exception e) {
-                System.err.println("Error fila " + i + ": " + e.getMessage());
+                //System.err.println("Error fila " + i + ": " + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -240,71 +242,300 @@ public class CassetteController {
     /** Metodos para configurar el filtro de las columnas de la tabla cassette.*/
     @FXML
     private void configurarFiltroNumCassette(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Num_Cassette",item -> String.valueOf(item.getNumCassette()),btnFiltroNumCassette,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Num_Cassette",item -> String.valueOf(item.getNumCassette()),btnFiltroNumCassette,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    item -> String.valueOf(item.getNumCassette()),
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroNumSecuencia(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Num_Secuencia",item -> String.valueOf(item.getNumSecuencia()),btnFiltroNumSecuencia,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Num_Secuencia",item -> String.valueOf(item.getNumSecuencia()),btnFiltroNumSecuencia,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    item -> String.valueOf(item.getNumSecuencia()),
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroEstado(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Estado",Cassette::getEstado,btnFiltroEstado,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Estado",Cassette::getEstado,btnFiltroEstado,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Cassette::getEstado,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroPlanta(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Planta",Cassette::getPlanta,btnFiltroPlanta,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Planta",Cassette::getPlanta,btnFiltroPlanta,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Cassette::getPlanta,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroNombre(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Nombre",Cassette::getNombre,btnFiltroNombre,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Nombre",Cassette::getNombre,btnFiltroNombre,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Cassette::getNombre,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroPotenciaCalor(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Potencia_Calor",item -> String.valueOf(item.getPotenciaCalor()),btnFiltroPotenciaCalor,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Potencia_Calor",item -> String.valueOf(item.getPotenciaCalor()),btnFiltroPotenciaCalor,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    item -> String.valueOf(item.getPotenciaCalor()),
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroPotenciaFrio(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Potencia_Frio",item -> String.valueOf(item.getPotenciaFrio()),btnFiltroPotenciaFrio,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Potencia_Frio",item -> String.valueOf(item.getPotenciaFrio()),btnFiltroPotenciaFrio,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    item -> String.valueOf(item.getPotenciaFrio()),
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroMarcaModelo(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por MarcaModelo",Cassette::getMarcaModelo,btnFiltroMarcaModelo,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por MarcaModelo",Cassette::getMarcaModelo,btnFiltroMarcaModelo,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Cassette::getMarcaModelo,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroNumSerieCas(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Num_Serie_Cas",Cassette::getNumSerieCas,btnFiltroNumSerieCas,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Num_Serie_Cas",Cassette::getNumSerieCas,btnFiltroNumSerieCas,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Cassette::getNumSerieCas,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroCondensadora(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Condensadora",Cassette::getCondensadora,btnFiltroCondensadora,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Condensadora",Cassette::getCondensadora,btnFiltroCondensadora,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Cassette::getCondensadora,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroLocalizacionCondensadora(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Localizacion_Condensadora",Cassette::getLocalizacionCondensadora,btnFiltroLocalizacionCondensadora,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Localizacion_Condensadora",Cassette::getLocalizacionCondensadora,btnFiltroLocalizacionCondensadora,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Cassette::getLocalizacionCondensadora,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroGas(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Gas",Cassette::getGas,btnFiltroGas,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Gas",Cassette::getGas,btnFiltroGas,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Cassette::getGas,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroFechaInst(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha_Instalacion",Cassette::getFechaInstalacion,btnFiltroFechaInst,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha_Instalacion",Cassette::getFechaInstalacion,btnFiltroFechaInst,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Cassette::getFechaInstalacion,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroFechaBaja(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha_Baja",Cassette::getFechaBaja,btnFiltroFechaBaja,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha_Baja",Cassette::getFechaBaja,btnFiltroFechaBaja,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Cassette::getFechaBaja,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroFechaRev(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha_Revision",Cassette::getFechaRevision,btnFiltroFechaRev,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Fecha_Revision",Cassette::getFechaRevision,btnFiltroFechaRev,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Cassette::getFechaRevision,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroAveria(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Averia",Cassette::getAveria,btnFiltroAveria,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Averia",Cassette::getAveria,btnFiltroAveria,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Cassette::getAveria,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
     }
     @FXML
     private void configurarFiltroFoto(){
-        FilterUtils.abrirFiltroGenerico("Filtrar por Foto",Cassette::getFoto,btnFiltroFoto,tablaCassette,allDatos);
+        FilterUtils.abrirFiltroGenerico("Filtrar por Foto",Cassette::getFoto,btnFiltroFoto,tablaCassette,allDatos,(ascending) -> {
+            ObservableList<Cassette> sorted = FXCollections.observableArrayList(allDatos);
+            sorted.sort(Comparator.comparing(
+                    Cassette::getFoto,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ));
+            if (!ascending) Collections.reverse(sorted);
+            tablaCassette.setItems(sorted);
+        });
+    }
+
+    @FXML
+    private void abrirFiltroRevision() {
+        // Cargar opciones desde PARAM_DIAS_REVISION
+
+        List<String> opciones = ExcelManager.getOpcionesDiasRevision();
+
+
+        // Crear ComboBox en un diálogo
+        ComboBox<String> combo = new ComboBox<>(FXCollections.observableArrayList(opciones));
+        combo.setPromptText("Selecciona días");
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Filtro de Revisión Personalizado");
+        alert.setHeaderText("Elige el periodo de revisión (días)");
+        alert.getDialogPane().setContent(combo);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            String seleccion = combo.getValue();
+            if (seleccion == null || seleccion.trim().isEmpty()) {
+                mainAppController.showAlert("Debes seleccionar un valor válido.");
+                return;
+            }
+
+            int diasRevision;
+            try {
+                diasRevision = Integer.parseInt(seleccion.trim());
+            } catch (NumberFormatException e) {
+                mainAppController.showAlert("Valor no numérico: " + seleccion);
+                return;
+            }
+
+            // Obtener equipos seleccionados o todos
+
+            Cassette selected = tablaCassette.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                mainAppController.showAlert("Selecciona una cassette para aplicar el filtro de dias para la próxima revision.");
+                return;
+            }
+
+            // Aplicar cálculo personalizado
+            new Thread(() -> {
+                try {
+
+                    if ("ACTIVA".equals(selected.getEstado()) && !selected.getFechaInstalacion().isEmpty()) {
+                        LocalDate fi = LocalDate.parse(selected.getFechaInstalacion(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                        LocalDate fr = ExcelManager.calcularProximaFechaRevision(fi, diasRevision);
+                        LocalDate fd = fr.minusDays(30);
+
+                        // Actualizar FECHA_REVISION en Excel
+                        List<List<String>> datosCas = ExcelManager.leerHoja("Cassette");
+                        for (int i = 1; i < datosCas.size(); i++) {
+                            List<String> fila = datosCas.get(i);
+                            if (fila.size() > 1 && selected.getNumCassette().equals(fila.get(0).trim()) && String.valueOf(selected.getNumSecuencia()).equals(fila.get(1).trim())){
+                                while (fila.size() <= 18) {
+                                    fila.add("");
+                                }
+                                fila.set(14, fr.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                                fila.set(18, String.valueOf(diasRevision));
+
+                                ExcelManager.modificarFila("Cassette", i, fila.toArray(new String[0]));
+                                break;
+                            }
+                        }
+
+                        // Crear en REVISIONES si está en rango
+                        if (!LocalDate.now().isBefore(fd)) {
+                            ExcelManager.crearEntradaRevision(
+                                    "CASSETTE",
+                                    selected.getNumCassette(),
+                                    selected.getEstado(),
+                                    selected.getPlanta(),
+                                    selected.getLocalizacionCondensadora(),
+                                    fr,
+                                    fd
+                            );
+                        }
+                    }
+
+
+                    Platform.runLater(() -> {
+                        cargarDatosCas();
+                        tablaCassette.refresh();
+                        mainAppController.showAlert("Revisión personalizada aplicada con éxito (" + diasRevision + " días).");
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Platform.runLater(() -> mainAppController.showAlert("Error al aplicar revisión personalizada."));
+                }
+            }).start();
+        }
     }
 
     /**
@@ -336,7 +567,7 @@ public class CassetteController {
                 }
             });
         }
-        //Spinner<Integer> spiNumSecuencia = new Spinner<>(1, 100, 1);
+
         ComboBox<String> comboEstado = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_ESTADO")));
         ComboBox<String> comboPlanta = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_PLANTAS")));
         ComboBox<String> comboNombre = new ComboBox<>(FXCollections.observableArrayList(cargarParametrosExcel("PARAM_UBICACIONES_CASSETTES")));
@@ -371,10 +602,17 @@ public class CassetteController {
         TextField textoObservaciones= new TextField();
         textoObservaciones.setPrefHeight(60);
 
+        Label lblDiasRev = new Label("Dias próxima revisión: ");
+        ComboBox<String>comboDiasRev = new ComboBox<>(FXCollections.observableArrayList(ExcelManager.getOpcionesDiasRevision()));
+
+        comboDiasRev.setPromptText("Selecciona días");
+        if (!comboDiasRev.getItems().isEmpty()) {
+            comboDiasRev.setValue(comboDiasRev.getItems().get(0));
+        }
+
         /**Precargar datos para modificar.*/
         if(editar != null){
-            //textoNumCassette.setText(editar.getNumCassette());
-            //spiNumSecuencia.getValueFactory().setValue(editar.getNumSecuencia());
+
             if(comboEstado.getItems().contains(editar.getEstado())) {
                 comboEstado.setValue(editar.getEstado());
             }
@@ -420,8 +658,6 @@ public class CassetteController {
         grid.add(new Label("Nº Cassette: "), 0, row);
         grid.add(textoNumCassette, 1, row);
         grid.add(avisoRellenar, 2, row++);
-        //grid.add(new Label("Nº Secuencia: "), 0, row);
-        //grid.add(spiNumSecuencia, 1, row++);
         grid.add(new Label("Estado: "), 0, row);
         grid.add(comboEstado, 1, row++);
         grid.add(new Label("Planta: "), 0, row);
@@ -444,6 +680,8 @@ public class CassetteController {
         grid.add(textoGas, 1, row++);
         grid.add(new Label("Fecha Instalacion: "), 0, row);
         grid.add(dateInst, 1, row++);
+        grid.add(lblDiasRev,0,row);
+        grid.add(comboDiasRev,1,row++);
         grid.add(new Label("Fecha Baja: "), 0, row);
         grid.add(dateBaja, 1, row++);
         grid.add(new Label("Fecha Revision: "), 0, row);
@@ -474,6 +712,21 @@ public class CassetteController {
             String fechaRev = dateRev.getValue() != null ? dateRev.getValue().format(format) : "";
             String estado = comboEstado.getValue() != null ? comboEstado.getValue() : "";
 
+            int diasSeleccionados = 365;
+            String diasSelStr = comboDiasRev.getValue();
+            if (diasSelStr != null && !diasSelStr.trim().isEmpty()) {
+                try {
+                    diasSeleccionados = Integer.parseInt(diasSelStr.trim());
+                } catch (NumberFormatException ex) {
+                    mainAppController.showAlert("Valor de días no válido. Usando 365.");
+                }
+            }
+
+            if (fechaInst.isEmpty()) {
+                mainAppController.showAlert("Fecha de instalación requerida.");
+                return;
+            }
+
             try{
                 int numSecuencia = 1;
                 if (editar == null) {
@@ -488,9 +741,12 @@ public class CassetteController {
                     numSecuencia = editar.getNumSecuencia();
                 }
 
+                LocalDate fi = LocalDate.parse(fechaInst, format);
+                LocalDate fr = ExcelManager.calcularProximaFechaRevision(fi, diasSeleccionados);
+                String frStr = fr.format(format);
+
                 List<String> filaNueva = Arrays.asList(
                   numCassette,
-                  //String.valueOf(spiNumSecuencia.getValue()),
                   String.valueOf(numSecuencia),
                   estado,
                   comboPlanta.getValue() != null ? comboPlanta.getValue() : "",
@@ -504,48 +760,50 @@ public class CassetteController {
                   textoGas.getText().trim(),
                   fechaInst,
                   fechaBaja,
-                  fechaRev,
+                  frStr,
                   "",
                   textoFoto.getText().trim(),
-                  textoObservaciones.getText().trim()
+                  textoObservaciones.getText().trim(),
+                  String.valueOf(diasSeleccionados)
                 );
                 boolean esNuevo = (editar == null);
                 int indexExcel = -1;
 
                 if(esNuevo){
-                    /**if(existeDuplicada(numCassette, spiNumSecuencia.getValue())){
-                        mainAppController.showAlert("El Nº Cassette y Nº Secuencia ya existen.");
-                        return;
-                    }**/
+
                     ExcelManager.añadirFilaOrdenada("Cassette", filaNueva.toArray(new String[0]));
-                   //
-                    // cargarDatosCas();
+
+                    cargarDatosCas();
 
                 }else {
                     List<List<String>> datos = ExcelManager.leerHoja("Cassette");
 
-                    /**for (int i = 1; i < datos.size(); i++) {
-                        if (datos.get(i).size() > 0 && datos.get(i).get(0).trim().equals(editar.getNumCassette())) {
-                            indexExcel = i;
-                            break;
-                        }
-                    }**/
                     for (int i = 1; i < datos.size(); i++) {
                         List<String> fila = datos.get(i);
                         if (fila.size() > 1 &&
                                 fila.get(0).trim().equals(editar.getNumCassette()) &&
                                 fila.get(1).trim().equals(String.valueOf(editar.getNumSecuencia()))) {
-                            indexExcel = i;
+                            while (fila.size() <= 18) fila.add("");
+                            fila.set(14, frStr);
+                            fila.set(18, String.valueOf(diasSeleccionados));
+                            ExcelManager.modificarFila("Cassette", i, filaNueva.toArray(new String[0]));
                             break;
                         }
                     }
-
-                    if (indexExcel != -1) {
-                        ExcelManager.modificarFila("Cassette", indexExcel, filaNueva.toArray(new String[0]));
-                       // cargarDatosCas();
-                    }
                 }
-
+                LocalDate fd = fr.minusDays(30);
+                if (!LocalDate.now().isBefore(fd)) {
+                    String localizacion = textoLocalizacionCond.getText() != null ? textoLocalizacionCond.getText() : "";
+                    ExcelManager.crearEntradaRevision(
+                            "CASSETTE",
+                            numCassette,
+                            estado,
+                            comboPlanta.getValue() != null ? comboPlanta.getValue() : "",
+                            localizacion,
+                            fr,
+                            fd
+                    );
+                }
                 /** Gestion de Averias Automaticamente.*/
                 String estadoAnterior = null;
                 if (!esNuevo) {
@@ -593,7 +851,6 @@ public class CassetteController {
                 }
                 Cassette actualizada = new Cassette(
                     numCassette,
-                    //spiNumSecuencia.getValue(),
                     numSecuencia,
                     comboEstado.getValue() != null ? comboEstado.getValue() : "",
                     comboPlanta.getValue() != null ? comboPlanta.getValue() : "",
@@ -613,7 +870,6 @@ public class CassetteController {
                     textoObservaciones.getText().trim()
                 );
                 if(esNuevo){
-                    //allDatos.add(actualizada);
                 }else{
                     int pos = allDatos.indexOf(editar);
                     if (pos != -1) {
@@ -621,9 +877,26 @@ public class CassetteController {
                     }
                 }
                 stage.close();
+
+                final int numSecuenciaFinal = numSecuencia;
                 new Thread(() -> {
                     try {
-                        ExcelManager.calcularYActualizarRevisionIndividual("CASSETTE", numCassette,fechaInst); //  Primero escribe en Excel
+                        int diasRevision = 365;
+                        List<List<String>> hojaOrigen = ExcelManager.leerHoja("Cassette");
+                        for (List<String> fila : hojaOrigen) {
+                            if (fila.size() > 1 &&
+                                    numCassette.equals(fila.get(0).trim()) &&
+                                    String.valueOf(numSecuenciaFinal).equals(fila.get(1).trim())) {
+
+                                if (fila.size() > 18 && !fila.get(18).trim().isEmpty()) {
+                                    try {
+                                        diasRevision = Integer.parseInt(fila.get(18).trim());
+                                    } catch (NumberFormatException ignored) {}
+                                }
+                                break;
+                            }
+                        }
+                        ExcelManager.calcularYActualizarRevisionIndividual("CASSETTE", numCassette,fechaInst,numSecuenciaFinal,diasRevision); //  Primero escribe en Excel
                         Platform.runLater(() -> {
                             cargarDatosCas(); //  Luego recarga la tabla
                             tablaCassette.refresh();
@@ -634,20 +907,7 @@ public class CassetteController {
                         ex.printStackTrace();
                     }
                 }).start();
-                /**Platform.runLater(() -> {
-                    cargarDatosCas();
-                    new Thread(() -> {
-                        try {
-                            ExcelManager.calcularYActualizarTodasLasRevisiones();
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                    }).start();
-                    tablaCassette.refresh();
-                    actualizarFechaEncabezado();
 
-                    stage.close();
-                })*/
             } catch (Exception ex) {
                 ex.printStackTrace();
                 mainAppController.showAlert("Error al guardar.");
@@ -739,6 +999,22 @@ public class CassetteController {
                 }
                 int secuenciaNueva = secuenciaPorDefecto + 1;
 
+                int diasRevisionOriginal = 365;
+                List<List<String>> hojaCasOriginal = ExcelManager.leerHoja("Cassette");
+                for (List<String> fila : hojaCasOriginal) {
+                    if (fila.size() > 1 &&
+                            selected.getNumCassette().equals(fila.get(0).trim()) &&
+                            String.valueOf(secuenciaPorDefecto).equals(fila.get(1).trim())) {
+
+                        if (fila.size() > 18 && !fila.get(18).trim().isEmpty()) {
+                            try {
+                                diasRevisionOriginal = Integer.parseInt(fila.get(18).trim());
+                            } catch (NumberFormatException ignored) {}
+                        }
+                        break;
+                    }
+                }
+                int nuevoDiasRevision = diasRevisionOriginal;
                 /** Crear nuevo Cassette */
                 String fechaActual = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
                 List<String> filaNueva = Arrays.asList(
@@ -759,16 +1035,18 @@ public class CassetteController {
                         "",
                         "",
                         "",
-                        ""
+                        "",
+                        String.valueOf(diasRevisionOriginal)
                 );
-                ExcelManager.añadirFila("Cassette", filaNueva.toArray(new String[0]));
+                ExcelManager.añadirFilaOrdenada("Cassette", filaNueva.toArray(new String[0]));
 
                 /** Actualizar Cassette seleccionado */
-                List<List<String>> hojaCas = ExcelManager.leerHoja("Cassette");
-                for(int i = 1; i< hojaCas.size(); i++){
-                    List<String> filaCas = hojaCas.get(i);
-                    if(filaCas.size() > 0 && filaCas.get(0).trim().equals(selected.getNumCassette())){
-                        while (filaCas.size() < 14){
+
+                List<List<String>> hojaCasNueva = ExcelManager.leerHoja("Cassette");
+                for(int i = 1; i< hojaCasNueva.size(); i++){
+                    List<String> filaCas = hojaCasNueva.get(i);
+                    if(filaCas.size() > 0 && filaCas.get(0).trim().equals(selected.getNumCassette()) && String.valueOf(secuenciaPorDefecto).equals(filaCas.get(1).trim())){
+                        while (filaCas.size() <= 13){
                             filaCas.add("");
                         }
                         filaCas.set(2, "BAJA");
@@ -777,10 +1055,19 @@ public class CassetteController {
                         break;
                     }
                 }
-                cargarDatosCas();
-                Platform.runLater(()-> {
-                    tablaCassette.refresh();
-                });
+                new Thread(() -> {
+                    try {
+
+                        ExcelManager.calcularYActualizarRevisionIndividual("CASSETTE", selected.getNumCassette(), fechaActual, secuenciaNueva,nuevoDiasRevision); //  Primero escribe en Excel
+                        Platform.runLater(() -> {
+                            cargarDatosCas(); //  Luego recarga la tabla
+                            tablaCassette.refresh();
+
+                        });
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }).start();
                 mainAppController.showAlert("Cassette sustituido con exito");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -842,7 +1129,7 @@ public class CassetteController {
                 }
             }
         } catch (Exception e) {
-            System.err.println(" Error al cargar: " + hoja);
+            //System.err.println(" Error al cargar: " + hoja);
             e.printStackTrace();
         }
         return lista;

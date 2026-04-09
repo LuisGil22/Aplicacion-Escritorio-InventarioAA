@@ -1,5 +1,8 @@
 package com.inventario.models;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 /**
@@ -21,6 +24,8 @@ public class Revision {
     private String fechaRevision;
     private String revision;
     private String observaciones;
+    private String enviarMail;
+    private long diasRestantes;
 
     /**
      * Constructor por defecto (requerido por JavaFX y frameworks de serialización).
@@ -40,8 +45,9 @@ public class Revision {
      * @param fechaRevision fecha programada de revisión (instalación + 4 meses)
      * @param revision estado de la revisión ("NO" o "SI")
      * @param observaciones notas adicionales
+     * @param enviarMail estado de envío de correo ("ENVIADO" o "NO ENVIADO")
      */
-    public Revision(String numRevision, String equipo, String codigo, String estado, String planta, String localizacion, String fechaRevision, String revision, String observaciones) {
+    public Revision(String numRevision, String equipo, String codigo, String estado, String planta, String localizacion, String fechaRevision, String revision, String observaciones, String enviarMail) {
         this.numRevision = numRevision;
         this.equipo = equipo;
         this.codigo = codigo;
@@ -51,6 +57,9 @@ public class Revision {
         this.fechaRevision = fechaRevision;
         this.revision = revision;
         this.observaciones = observaciones;
+        this.enviarMail = enviarMail != null ? enviarMail : "NO ENVIADO";
+        this.diasRestantes = -999;
+        calcularDiasRestantesRevision();
     }
 
     /** Getters y Setters */
@@ -116,6 +125,7 @@ public class Revision {
 
     public void setRevision(String revision) {
         this.revision = revision;
+        calcularDiasRestantesRevision();
     }
 
     public String getObservaciones() {
@@ -125,6 +135,33 @@ public class Revision {
     public void setObservaciones(String observaciones) {
         this.observaciones = observaciones;
     }
+
+    public String getEnviarMail() {
+        return enviarMail;
+    }
+
+    public void setEnviarMail(String enviarMail) {
+        this.enviarMail = enviarMail;
+    }
+
+    /**
+     * Metodo para obtener una representación legible de los días restantes para la revisión.
+     */
+    public String getDiasRestantes(){
+        if(diasRestantes == -999){
+            return "";
+        }
+        if(diasRestantes == 0){
+            return "HOY";
+        }else if (diasRestantes == 1){
+            return (diasRestantes + " Dia");
+        }else if(diasRestantes > 1){
+            return (diasRestantes + " Dias");
+        }else{
+            return ("REVISION CADUCADA");
+        }
+    }
+
 
     /** Equals, HashCode y ToString */
     @Override
@@ -152,5 +189,41 @@ public class Revision {
                 ", revision='" + revision + '\'' +
                 ", observaciones='" + observaciones + '\'' +
                 '}';
+    }
+
+    /**
+     * Calcula los días restantes para la revisión basándose en la fecha de revisión programada.
+     * Si la revisión ya se ha completado (revision = "SI"), se establece diasRestantes a -999 para indicar que no es relevante.
+     * Si la fecha de revisión no es válida o no se puede parsear, también se establece diasRestantes a -999.
+     */
+    public void calcularDiasRestantesRevision(){
+        if("SI".equals(this.revision)){
+            this.diasRestantes = -999;
+            return;
+        }
+        try{
+            if(this.fechaRevision == null || this.fechaRevision.trim().isEmpty()){
+                this.diasRestantes = -999;
+                return;
+            }
+
+            String [] partesFecha = this.fechaRevision.split("\n");
+            if(partesFecha.length < 2){
+                this.diasRestantes = -999;
+                return;
+            }
+
+            String hastaParte = partesFecha[1].trim();
+            if(!hastaParte.startsWith("hasta: ")){
+                this.diasRestantes = -999;
+                return;
+            }
+
+            String fechaStr = hastaParte.substring("hasta: ".length()).trim();
+            LocalDate fechaHasta = LocalDate.parse(fechaStr, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            this.diasRestantes = ChronoUnit.DAYS.between(LocalDate.now(), fechaHasta);
+        } catch (Exception e) {
+            this.diasRestantes = -999;
+        }
     }
 }
