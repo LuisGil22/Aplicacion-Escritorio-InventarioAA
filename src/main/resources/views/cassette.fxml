@@ -22,6 +22,7 @@
             <Button text="Eliminar" onAction="#onDeleteCas" styleClass="action-button"/>
             <Button text="Sustituir" onAction="#onSustituirCas" styleClass="action-button"/>
             <Button text="Filtro Revision" onAction="#abrirFiltroRevision" styleClass="action-button"/>
+            <Button text="Observaciones" onAction="#abrirObservacionesCassette" styleClass="action-button"/>
         </HBox>
         <Pane HBox.hgrow="ALWAYS"/>
     </HBox>
@@ -164,7 +165,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colObservaciones" prefWidth="190" text="OBSERVACIONES"/>
+            <TableColumn fx:id="colObservaciones" prefWidth="190" text="OBSERVACIONES" styleClass="col-observaciones"/>
         </columns>
     </TableView>
 

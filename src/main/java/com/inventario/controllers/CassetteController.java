@@ -10,6 +10,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -17,6 +18,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -108,6 +110,35 @@ public class CassetteController {
         cargarDatosCas();
         noOrdenar();
         actualizarFechaEncabezado();
+
+        /** Configura el estilo y comportamiento de la columna
+         *  de observaciones para permitir texto multilínea
+         */
+        if(colObservaciones != null) {
+            colObservaciones.getStyleClass().add("col-observaciones");
+            colObservaciones.setCellFactory(column -> new TableCell<Cassette, String>() {
+                private final Text text = new Text();
+                {text.wrappingWidthProperty().bind(colObservaciones.widthProperty().subtract(10)); // Restar padding
+                    text.setTextOrigin(VPos.TOP);}
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    //System.out.println("Actualizando celda observaciones: " + item);
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        text.setText(item);
+                        setGraphic(text);
+                        setText(null);
+                    }
+
+                }
+            });
+            if (!colObservaciones.getStyleClass().contains("col-observaciones")) {
+                colObservaciones.getStyleClass().add("col-observaciones");
+            }
+        }
     }
 
     /**
@@ -445,6 +476,10 @@ public class CassetteController {
         });
     }
 
+    /** Metodo para abrir el filtro de revisión personalizada, que permite calcular la próxima fecha de revisión
+     *  en función de la fecha de instalación y los días seleccionados por el usuario.
+     *  Actualiza la fecha de revisión en Excel y crea una entrada en la hoja Revisiones si corresponde.
+     */
     @FXML
     private void abrirFiltroRevision() {
         // Cargar opciones desde PARAM_DIAS_REVISION
@@ -506,6 +541,7 @@ public class CassetteController {
                                 fila.set(18, String.valueOf(diasRevision));
 
                                 ExcelManager.modificarFila("Cassette", i, fila.toArray(new String[0]));
+                                ExcelManager.ocultarColumna("Cassette", 18);
                                 break;
                             }
                         }
@@ -745,6 +781,7 @@ public class CassetteController {
                 LocalDate fr = ExcelManager.calcularProximaFechaRevision(fi, diasSeleccionados);
                 String frStr = fr.format(format);
 
+                //System.out.println("🔍 DEBUG CASSSETTE -> Fecha Inst: " + fechaInst + " | Dias: " + diasSeleccionados + " | Fecha Rev Calc: " + frStr);
                 List<String> filaNueva = Arrays.asList(
                   numCassette,
                   String.valueOf(numSecuencia),
@@ -766,30 +803,48 @@ public class CassetteController {
                   textoObservaciones.getText().trim(),
                   String.valueOf(diasSeleccionados)
                 );
+
+                //System.out.println("🔍 DEBUG CASSSETTE -> Tamaño lista filaNueva: " + filaNueva.size());
+                //System.out.println("🔍 DEBUG CASSSETTE -> Valor en índice 14 (Fecha Rev): [" + filaNueva.get(14) + "]");
                 boolean esNuevo = (editar == null);
-                int indexExcel = -1;
+                //int indexExcel = -1;
 
                 if(esNuevo){
 
                     ExcelManager.añadirFilaOrdenada("Cassette", filaNueva.toArray(new String[0]));
-
+                    int newIndex = ExcelManager.obtenerIndiceFilaExcel("Cassette", numCassette, numSecuencia);
+                    if (newIndex != -1) {
+                        ExcelManager.actualizarCeldaObservacionConEstilo("Cassette", newIndex, 17, textoObservaciones.getText().trim());
+                    }
+                    ExcelManager.ocultarColumna("Cassette", 18);
                     cargarDatosCas();
 
                 }else {
                     List<List<String>> datos = ExcelManager.leerHoja("Cassette");
+                    boolean guardado = false;
 
                     for (int i = 1; i < datos.size(); i++) {
                         List<String> fila = datos.get(i);
                         if (fila.size() > 1 &&
                                 fila.get(0).trim().equals(editar.getNumCassette()) &&
                                 fila.get(1).trim().equals(String.valueOf(editar.getNumSecuencia()))) {
+                            //indexExcel = i;
                             while (fila.size() <= 18) fila.add("");
                             fila.set(14, frStr);
                             fila.set(18, String.valueOf(diasSeleccionados));
-                            ExcelManager.modificarFila("Cassette", i, filaNueva.toArray(new String[0]));
+                            ExcelManager.modificarFila("Cassette", i, fila.toArray(new String[0]));
+                            ExcelManager.actualizarCeldaObservacionConEstilo("Cassette", i, 17, textoObservaciones.getText().trim());
+                            ExcelManager.ocultarColumna("Cassette", 18);
+                            guardado = true;
                             break;
                         }
                     }
+                    if (!guardado) {
+                        //System.err.println("❌ ERROR: No se encontró la fila para modificar en Excel.");
+                        mainAppController.showAlert("Error interno: No se pudo guardar en Excel.");
+                        return;
+                        }
+
                 }
                 LocalDate fd = fr.minusDays(30);
                 if (!LocalDate.now().isBefore(fd)) {
@@ -804,6 +859,8 @@ public class CassetteController {
                             fd
                     );
                 }
+
+
                 /** Gestion de Averias Automaticamente.*/
                 String estadoAnterior = null;
                 if (!esNuevo) {
@@ -877,36 +934,10 @@ public class CassetteController {
                     }
                 }
                 stage.close();
-
-                final int numSecuenciaFinal = numSecuencia;
-                new Thread(() -> {
-                    try {
-                        int diasRevision = 365;
-                        List<List<String>> hojaOrigen = ExcelManager.leerHoja("Cassette");
-                        for (List<String> fila : hojaOrigen) {
-                            if (fila.size() > 1 &&
-                                    numCassette.equals(fila.get(0).trim()) &&
-                                    String.valueOf(numSecuenciaFinal).equals(fila.get(1).trim())) {
-
-                                if (fila.size() > 18 && !fila.get(18).trim().isEmpty()) {
-                                    try {
-                                        diasRevision = Integer.parseInt(fila.get(18).trim());
-                                    } catch (NumberFormatException ignored) {}
-                                }
-                                break;
-                            }
-                        }
-                        ExcelManager.calcularYActualizarRevisionIndividual("CASSETTE", numCassette,fechaInst,numSecuenciaFinal,diasRevision); //  Primero escribe en Excel
-                        Platform.runLater(() -> {
-                            cargarDatosCas(); //  Luego recarga la tabla
-                            tablaCassette.refresh();
-                            actualizarFechaEncabezado();
-
-                        });
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                }).start();
+                Platform.runLater(() -> {
+                    cargarDatosCas(); // Recarga desde el Excel que acabas de modificar
+                    tablaCassette.refresh();
+                });
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -1039,6 +1070,7 @@ public class CassetteController {
                         String.valueOf(diasRevisionOriginal)
                 );
                 ExcelManager.añadirFilaOrdenada("Cassette", filaNueva.toArray(new String[0]));
+                ExcelManager.ocultarColumna("Cassette", 18);
 
                 /** Actualizar Cassette seleccionado */
 
@@ -1052,6 +1084,7 @@ public class CassetteController {
                         filaCas.set(2, "BAJA");
                         filaCas.set(13, fechaActual);
                         ExcelManager.modificarFila("Cassette", i, filaCas.toArray(new String[0]));
+                        ExcelManager.ocultarColumna("Cassette", 18);
                         break;
                     }
                 }
@@ -1204,6 +1237,40 @@ public class CassetteController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String fechaHoy = LocalDate.now().format(formatter);
         lblActualizado.setText("Actualizado: " + fechaHoy);
+    }
+
+    /**
+     * Metodo para abrir el diálogo de observaciones al hacer clic en una celda de la columna de observaciones.
+     * Permite editar las observaciones y guarda los cambios tanto en memoria como en el archivo Excel.
+     */
+    @FXML
+    private void abrirObservacionesCassette() {
+        Cassette selected = tablaCassette.getSelectionModel().getSelectedItem();
+        if (selected == null){
+            mainAppController.showAlert("Selecciona una cassette para crear las observaciones");
+            return;
+        }
+        //System.out.println("Buscando en Excel -> Hoja: Cassette, Codigo: " + selected.getNumCassette() + ", Sec: " + selected.getNumSecuencia());
+        mainAppController.abrirDialogoObservaciones(
+                "Observaciones - Cassette " + selected.getNumCassette(),
+                selected.getObservaciones(),
+                nuevaObs -> {
+                    selected.setObservaciones(nuevaObs);
+
+                    int indiceFila = ExcelManager.obtenerIndiceFilaExcel(
+                            "Cassette",
+                            selected.getNumCassette(),
+                            selected.getNumSecuencia()
+                    );
+
+                    if (indiceFila != -1) {
+                        ExcelManager.actualizarCeldaObservacionConEstilo("Cassette", indiceFila, 17, nuevaObs);
+                    }else{
+                        System.err.println("Error: No se encontró la fila en Excel para " + selected.getNumCassette() + " Sec: " + selected.getNumSecuencia());
+                    }
+                    tablaCassette.refresh();
+                }
+        );
     }
 }
 

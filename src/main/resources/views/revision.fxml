@@ -18,6 +18,7 @@
         <Pane HBox.hgrow="ALWAYS"/>
         <HBox spacing="10" alignment="CENTER">
              <Button text="Eliminar" onAction="#onDeleteRevision" styleClass="action-button"/>
+            <Button text="Observaciones" onAction="#abrirObservacionesRevision" styleClass="action-button"/>
          </HBox>
         <Pane HBox.hgrow="ALWAYS"/>
     </HBox>
@@ -88,7 +89,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colObservaciones" prefWidth="200" text="OBSERVACIONES"/>
+            <TableColumn fx:id="colObservaciones" prefWidth="200" text="OBSERVACIONES" styleClass="col-observaciones"/>
             <TableColumn fx:id="colEnviarMail" prefWidth="150" text="ENVIAR_MAIL"/>
             <TableColumn fx:id="colDiasRestantes" prefWidth="200" text="DIAS_RESTANTES_REV."/>
             <TableColumn fx:id="colAccion" prefWidth="170" text="ACCION_DE_REVISAR"/>

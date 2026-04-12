@@ -9,6 +9,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -16,8 +17,10 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -67,7 +70,7 @@ public class CondensadorasController {
     @FXML private Button btnFiltroFechaInst;
     @FXML private Button btnFiltroFechaBaja;
     @FXML private Button btnFiltroFechaRev;
-
+    @FXML private Button btnObservaciones;
 
     @FXML private Label lblActualizado;
 
@@ -95,6 +98,35 @@ public class CondensadorasController {
         cargarDatos();
         noOrdenar();
         actualizarFechaEncabezado();
+
+        /** Configura el estilo y comportamiento de la columna
+         *  de observaciones para permitir texto multilínea
+         */
+        if(colObservaciones != null) {
+            colObservaciones.getStyleClass().add("col-observaciones");
+            colObservaciones.setCellFactory(column -> new TableCell<Condensadora, String>() {
+                private final Text text = new Text();
+                {text.wrappingWidthProperty().bind(colObservaciones.widthProperty().subtract(10)); // Restar padding
+                    text.setTextOrigin(VPos.TOP);}
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    //System.out.println("Actualizando celda observaciones: " + item);
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        text.setText(item);
+                        setGraphic(text);
+                        setText(null);
+                    }
+
+                }
+            });
+            if (!colObservaciones.getStyleClass().contains("col-observaciones")) {
+                colObservaciones.getStyleClass().add("col-observaciones");
+            }
+        }
     }
 
     /**
@@ -338,6 +370,10 @@ public class CondensadorasController {
         });
     }
 
+    /** Metodo para abrir el filtro de revisión personalizada, que permite calcular la próxima fecha de revisión
+     *  en función de la fecha de instalación y los días seleccionados por el usuario.
+     *  Actualiza la fecha de revisión en Excel y crea una entrada en la hoja Revisiones si corresponde.
+     */
     @FXML
     private void abrirFiltroRevision() {
         // Cargar opciones desde PARAM_DIAS_REVISION
@@ -393,9 +429,10 @@ public class CondensadorasController {
                                     fila.add("");
                                 }
                                 fila.set(10, fr.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-                                fila.set(13, String.valueOf(diasRevision));
+                                //fila.set(13, String.valueOf(diasRevision));
 
                                 ExcelManager.modificarFila("Condensadoras", i, fila.toArray(new String[0]));
+                                ExcelManager.ocultarColumna("Condensadoras", 13);
                                 break;
                             }
                         }
@@ -665,6 +702,11 @@ public class CondensadorasController {
 
                 if(esNuevo){
                     ExcelManager.añadirFilaOrdenada("Condensadoras", filaNueva.toArray(new String[0]));
+                    int newIndex = ExcelManager.obtenerIndiceFilaExcel("Condensadoras", condensadora, numSecuencia);
+                    if (newIndex != -1) {
+                        ExcelManager.actualizarCeldaObservacionConEstilo("Condensadoras", newIndex, 12, textObservacion.getText().trim());
+                    }
+                    ExcelManager.ocultarColumna("Condensadoras", 13);
                     //cargarDatos();
                 }else{
                     List<List<String>> datos = ExcelManager.leerHoja("Condensadoras");
@@ -676,6 +718,8 @@ public class CondensadorasController {
                             fila.set(10, frStr);
                             fila.set(13, String.valueOf(diasSeleccionados));
                             ExcelManager.modificarFila("Condensadoras", i, filaNueva.toArray(new String[0]));
+                            ExcelManager.actualizarCeldaObservacionConEstilo("Condensadoras", i, 12, textObservacion.getText().trim());
+                            ExcelManager.ocultarColumna("Condensadoras", 13);
                             break;
                         }
                     }
@@ -920,6 +964,7 @@ public class CondensadorasController {
                         String.valueOf(diasRevisionOriginal)
                     );
                     ExcelManager.añadirFilaOrdenada("Condensadoras", filaNueva.toArray(new String[0]) );
+                    ExcelManager.ocultarColumna("Condensadoras", 13);
 
                     /** Actualizar Condensadora seleccionada */
 
@@ -932,6 +977,7 @@ public class CondensadorasController {
                             filaCond.set(2, "BAJA");
                             filaCond.set(9, fechaActual);
                             ExcelManager.modificarFila("Condensadoras", i, filaCond.toArray(new String[0]));
+                            ExcelManager.ocultarColumna("Condensadoras", 13);
                             break;
                         }
                     }
@@ -1014,5 +1060,39 @@ public class CondensadorasController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String fechaHoy = LocalDate.now().format(formatter);
         lblActualizado.setText("Actualizado: " + fechaHoy);
+    }
+
+    /**
+     * Metodo para abrir el diálogo de observaciones al hacer clic en una celda de la columna de observaciones.
+     * Permite editar las observaciones y guarda los cambios tanto en memoria como en el archivo Excel.
+     */
+    @FXML
+    private void abrirObservacionesCondensadora() {
+        Condensadora selected = tablaCondensadoras.getSelectionModel().getSelectedItem();
+        if (selected == null){
+            mainAppController.showAlert("Selecciona una condensadora para crear las observaciones");
+            return;
+        }
+        //System.out.println("Buscando en Excel -> Hoja: Condensadoras, Codigo: " + selected.getCondensadora() + ", Sec: " + selected.getNumSecuencia());
+        mainAppController.abrirDialogoObservaciones(
+                "Observaciones - Condensadora " + selected.getCondensadora(),
+                selected.getObservaciones(),
+                nuevaObs -> {
+                    selected.setObservaciones(nuevaObs);
+
+                    int indiceFila = ExcelManager.obtenerIndiceFilaExcel(
+                            "Condensadoras",
+                            selected.getCondensadora(),
+                            selected.getNumSecuencia()
+                    );
+
+                    if (indiceFila != -1) {
+                        ExcelManager.actualizarCeldaObservacionConEstilo("Condensadoras", indiceFila, 12, nuevaObs);
+                    }else{
+                        System.err.println("Error: No se encontró la fila en Excel para " + selected.getCondensadora() + " Sec: " + selected.getNumSecuencia());
+                    }
+                    tablaCondensadoras.refresh();
+                }
+        );
     }
 }

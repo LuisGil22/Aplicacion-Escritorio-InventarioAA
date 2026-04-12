@@ -8,11 +8,13 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.VPos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -74,6 +76,35 @@ public class GasesController {
         confColumnas();
         cargarDatos();
         noOrdenar();
+
+        /** Configura el estilo y comportamiento de la columna
+         *  de observaciones para permitir texto multilínea
+         */
+        if(colObservaciones != null) {
+            colObservaciones.getStyleClass().add("col-observaciones");
+            colObservaciones.setCellFactory(column -> new TableCell<Gas, String>() {
+                private final Text text = new Text();
+                {text.wrappingWidthProperty().bind(colObservaciones.widthProperty().subtract(10)); // Restar padding
+                    text.setTextOrigin(VPos.TOP);}
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    System.out.println("Actualizando celda observaciones: " + item);
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        text.setText(item);
+                        setGraphic(text);
+                        setText(null);
+                    }
+
+                }
+            });
+            if (!colObservaciones.getStyleClass().contains("col-observaciones")) {
+                colObservaciones.getStyleClass().add("col-observaciones");
+            }
+        }
     }
 
     /**
@@ -171,6 +202,10 @@ public class GasesController {
                         obs
                 );
                 ExcelManager.añadirFila("PARAM_GASES", filaNueva.toArray(new String[0]));
+                int newIndex = ExcelManager.obtenerIndiceFilaPorCodigo("PARAM_GASES", gas);
+                if (newIndex != -1) {
+                    ExcelManager.actualizarCeldaObservacionConEstilo("PARAM_GASES", newIndex, 4, obs);
+                }
                 cargarDatos();
                 stage.close();
             } catch (Exception ex) {
@@ -258,6 +293,10 @@ public class GasesController {
                         obs
                 );
                 ExcelManager.modificarFila("PARAM_GASES", index , filaNueva.toArray(new String[0]));
+                int newIndex = ExcelManager.obtenerIndiceFilaPorCodigo("PARAM_GASES", gas);
+                if (newIndex != -1) {
+                    ExcelManager.actualizarCeldaObservacionConEstilo("PARAM_GASES", newIndex, 4, obs);
+                }
                 cargarDatos();
                 tablaGases.refresh();
                 stage.close();
@@ -403,5 +442,38 @@ public class GasesController {
         colFechaCaducidad.setSortable(false);
         colFechaRevision.setSortable(false);
         colObservaciones.setSortable(false);
+    }
+
+    /**
+     * Metodo para abrir el diálogo de observaciones al hacer clic en una celda de la columna de observaciones.
+     * Permite editar las observaciones y guarda los cambios tanto en memoria como en el archivo Excel.
+     */
+    @FXML
+    private void abrirObservacionesGas() {
+        Gas selected = tablaGases.getSelectionModel().getSelectedItem();
+        if (selected == null){
+            mainAppController.showAlert("Selecciona un Gas para crear las observaciones");
+            return;
+        }
+        //System.out.println("Buscando en Excel -> Hoja: PARAM_GASES, Codigo: " + selected.getGas());
+        mainAppController.abrirDialogoObservaciones(
+                "Observaciones - GAS " + selected.getGas(),
+                selected.getObservaciones(),
+                nuevaObs -> {
+                    selected.setObservaciones(nuevaObs);
+
+                    int indiceFila = ExcelManager.obtenerIndiceFilaPorCodigo(
+                            "PARAM_GASES",
+                            selected.getGas()
+                    );
+
+                    if (indiceFila != -1) {
+                        ExcelManager.actualizarCeldaObservacionConEstilo("PARAM_GASES", indiceFila, 4, nuevaObs);
+                    }else{
+                        System.err.println("Error: No se encontró la fila en Excel para " + selected.getGas());
+                    }
+                    tablaGases.refresh();
+                }
+        );
     }
 }

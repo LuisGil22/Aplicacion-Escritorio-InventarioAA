@@ -22,6 +22,7 @@
             <Button text="Eliminar" onAction="#onDeleteCond" styleClass="action-button"/>
             <Button text="Sustituir" onAction="#onSustituirCond" styleClass="action-button"/>
             <Button text="Filtro Revision" onAction="#abrirFiltroRevision" styleClass="action-button"/>
+            <Button text="Observaciones" onAction="#abrirObservacionesCondensadora" styleClass="action-button"/>
         </HBox>
         <Pane HBox.hgrow="ALWAYS"/>
     </HBox>
@@ -117,7 +118,7 @@
                 </graphic>
             </TableColumn>
             <TableColumn text="AVERIA" fx:id="colAveria" prefWidth="100"/>
-            <TableColumn text="OBSERVACIONES" fx:id="colObservaciones" prefWidth="190"/>
+            <TableColumn text="OBSERVACIONES" fx:id="colObservaciones" prefWidth="190" styleClass="col-observaciones"/>
         </columns>
     </TableView>
 </VBox>

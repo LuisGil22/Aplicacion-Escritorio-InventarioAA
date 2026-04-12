@@ -7,9 +7,11 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.text.Text;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -80,6 +82,35 @@ public class AveriaController {
         cargarDatos();
         noOrdenar();
         actualizarFechaEncabezado();
+
+        /** Configura el estilo y comportamiento de la columna
+         *  de observaciones para permitir texto multilínea
+         */
+        if(colObservaciones != null) {
+            colObservaciones.getStyleClass().add("col-observaciones");
+            colObservaciones.setCellFactory(column -> new TableCell<Averia, String>() {
+                private final Text text = new Text();
+                {text.wrappingWidthProperty().bind(colObservaciones.widthProperty().subtract(10)); // Restar padding
+                    text.setTextOrigin(VPos.TOP);}
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    //System.out.println("Actualizando celda observaciones: " + item);
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        text.setText(item);
+                        setGraphic(text);
+                        setText(null);
+                    }
+
+                }
+            });
+            if (!colObservaciones.getStyleClass().contains("col-observaciones")) {
+                colObservaciones.getStyleClass().add("col-observaciones");
+            }
+        }
     }
 
     /**
@@ -368,5 +399,39 @@ public class AveriaController {
         colFechaAveria.setSortable(false);
         colMail.setSortable(false);
         colObservaciones.setSortable(false);
+    }
+
+    /**
+     * Metodo para abrir el diálogo de observaciones al hacer clic en una celda de la columna de observaciones.
+     * Permite editar las observaciones y guarda los cambios tanto en memoria como en el archivo Excel.
+     */
+    @FXML
+    private void abrirObservacionesAverias() {
+        Averia selected = tablaAverias.getSelectionModel().getSelectedItem();
+        if (selected == null){
+            mainAppController.showAlert("Selecciona una Averia para crear las observaciones");
+            return;
+        }
+        //System.out.println("Buscando en Excel -> Hoja: Averias, Codigo: " + selected.getCodigo());
+        mainAppController.abrirDialogoObservaciones(
+                "Observaciones - Averia " + selected.getNumAveria(),
+                selected.getObservaciones(),
+                nuevaObs -> {
+                    selected.setObservaciones(nuevaObs);
+
+                    int indiceFila = ExcelManager.obtenerIndiceFilaPorCodigo(
+                            "AVERIAS",
+                            selected.getNumAveria()
+
+                    );
+
+                    if (indiceFila != -1) {
+                        ExcelManager.actualizarCeldaObservacionConEstilo("AVERIAS", indiceFila, 8, nuevaObs);
+                    }else{
+                        System.err.println("Error: No se encontró la fila en Excel para " + selected.getNumAveria());
+                    }
+                    tablaAverias.refresh();
+                }
+        );
     }
 }

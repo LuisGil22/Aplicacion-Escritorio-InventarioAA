@@ -17,9 +17,9 @@
                style="-fx-font-size: 16px;" HBox.hgrow="NEVER" />
         <Pane HBox.hgrow="ALWAYS"/>
         <HBox spacing="10" alignment="CENTER">
-            <!--<Button text="Añadir" onAction="#onAddAveria" styleClass="action-button"/>-->
             <Button text="Modificar" onAction="#onEditAveria" styleClass="action-button"/>
             <Button text="Eliminar" onAction="#onDeleteAveria" styleClass="action-button"/>
+            <Button text="Observaciones" onAction="#abrirObservacionesAverias" styleClass="action-button"/>
         </HBox>
         <Pane HBox.hgrow="ALWAYS"/>
     </HBox>
@@ -90,7 +90,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colObservaciones" prefWidth="190" text="OBSERVACIONES"/>
+            <TableColumn fx:id="colObservaciones" prefWidth="190" text="OBSERVACIONES" styleClass="col-observaciones"/>
         </columns>
     </TableView>
 

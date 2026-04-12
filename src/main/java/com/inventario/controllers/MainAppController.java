@@ -7,16 +7,22 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.IOException;
@@ -549,6 +555,45 @@ public class MainAppController {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    /**
+     * Metodo para abrir un diálogo modal que permite editar las observaciones de una condensadora o cassette.
+     *
+     * @param titulo título del diálogo (ej. "Editar Observaciones - Condensadora X")
+     * @param observacionActual texto actual de las observaciones que se mostrará en el área de texto
+     * @param onGuardar función callback que se ejecutará al hacer clic en "Guardar", recibiendo el nuevo texto de observaciones
+     */
+    public void abrirDialogoObservaciones(
+            String titulo,
+            String observacionActual,
+            java.util.function.Consumer<String> onGuardar
+    ) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.WINDOW_MODAL);
+        dialog.initOwner(stackPaneContent.getScene().getWindow());
+        dialog.setTitle(titulo);
+
+        TextArea textArea = new TextArea(observacionActual);
+        textArea.setPrefRowCount(8);
+        textArea.setPrefColumnCount(40);
+
+        Button btnGuardar = new Button("Guardar");
+        Button btnCancelar = new Button("Cancelar");
+
+        btnGuardar.setOnAction(e -> {
+            onGuardar.accept(textArea.getText());
+            dialog.close();
+        });
+        btnCancelar.setOnAction(e -> dialog.close());
+
+        HBox botones = new HBox(10, btnGuardar, btnCancelar);
+        botones.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox vbox = new VBox(10, new Label("Observaciones:"), textArea, botones);
+        vbox.setPadding(new Insets(15));
+        dialog.setScene(new Scene(vbox));
+        dialog.showAndWait();
     }
 
     /**

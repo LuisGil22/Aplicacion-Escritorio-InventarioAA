@@ -710,12 +710,12 @@ public class ExcelManager {
                 message.setSubject(asunto);
                 message.setText(cuerpo);
 
-                System.out.println("    [PRUEBA] Correo simulado:");
+                /**System.out.println("    [PRUEBA] Correo simulado:");
                 System.out.println("   De: " + mailOrigenUsuario);
                 System.out.println("   Para: qgil@euromadi.es");
                 System.out.println("   Asunto: " + asunto);
                 System.out.println("   Cuerpo: " + cuerpo);
-                System.out.println("--------------------------------------------------");
+                System.out.println("--------------------------------------------------");*/
 
                 Transport.send(message);
                 //System.out.println(" [" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) + "] Correo enviado desde " + mailOrigenUsuario + " a lugilla2269@gmail.com" );
@@ -866,7 +866,7 @@ public class ExcelManager {
     /**
      * Modifica una fila en una hoja Excel por su índice.
      * <p>
-     * Este método es más eficiente que {@link #modificarFila(String, int, String[])}
+     * Este metodo es más eficiente que {@link #modificarFila(String, int, String[])}
      * cuando ya se conoce el índice exacto de la fila.
      * </p>
      *
@@ -989,6 +989,13 @@ public class ExcelManager {
 
     /**
      * Calcula y actualiza la fecha de revisión para un equipo específico.
+     * Si la próxima fecha de revisión está dentro de los próximos 30 días, también crea una entrada en la hoja REVISIONES.
+     *
+     * @param equipo tipo de equipo ("CASSETTE" o "CONDENSADORA")
+     * @param codigo identificador del equipo
+     * @param fechaInstalacion fecha de instalación del equipo en formato dd/MM/yyyy
+     * @param numSecuencia número de secuencia del equipo (solo para cassette)
+     * @param diasRevision número de días entre revisiones (obtenido de PARAM_DIAS_REVISION)
      */
     public static void calcularYActualizarRevisionIndividual(String equipo, String codigo, String fechaInstalacion, int numSecuencia, int diasRevision) {
         try {
@@ -1100,7 +1107,7 @@ public class ExcelManager {
     public static void enviarCorreoAvisoRevision(String equipo, String codigo, String numRevision) {
         //System.out.println("📤 Intentando enviar correo para revisión: " + equipo);
         new Thread(() -> {
-            boolean exito = false;
+            boolean exitos = false;
             try {
                 String asunto = "Revisión de la " + equipo + " " + codigo;
                 String cuerpo = "Tienes 30 días para pasar la revisión de la " + equipo + " " + codigo + ".";
@@ -1117,14 +1124,13 @@ public class ExcelManager {
                 if (destinos.length() == 0) return;
 
                 Properties props = new Properties();
-                props.put("mail.smtp.host", "smtp.gmail.com");
-                props.put("mail.smtp.port", "587");
+                props.put("mail.smtp.host", "192.168.26.117");
+                props.put("mail.smtp.port", "25");
                 props.put("mail.smtp.auth", "true");
-                props.put("mail.smtp.starttls.enable", "true");
+                props.put("mail.smtp.starttls.enable", "false");
 
-
-                String mailOrigenUsuario = "javilopez2269@gmail.com";
-                String mailOrigenPassword = "akeq sedl dydi kfwu";
+                String mailOrigenUsuario = "no-reply@euromadi.es";
+                String mailOrigenPassword = "n0n0n0";
 
                 Session session = Session.getInstance(props, new Authenticator() {
                     @Override
@@ -1139,24 +1145,43 @@ public class ExcelManager {
                 message.setSubject(asunto);
                 message.setText(cuerpo);
 
-                System.out.println("    [PRUEBA] Correo simulado:");
+                /**System.out.println("    [PRUEBA] Correo simulado:");
                 System.out.println("   De: " + mailOrigenUsuario);
                 System.out.println("   Para: " + destinos);
                 System.out.println("   Asunto: " + asunto);
                 System.out.println("   Cuerpo: " + cuerpo);
-                System.out.println("--------------------------------------------------");
+                System.out.println("--------------------------------------------------");*/
 
                 Transport.send(message);
-                exito = true;
+                exitos = true;
                 //System.out.println("✅ Correo enviado para: " + equipo);
-
+                Platform.runLater(() -> {
+                    Alert exito = new Alert(Alert.AlertType.INFORMATION);
+                    exito.setTitle("Correo enviado");
+                    exito.setHeaderText(null);
+                    exito.setContentText(
+                            "Correo enviado correctamente desde:\n" +
+                                    mailOrigenUsuario + "\n" +
+                                    "A:\n" +
+                                    destinos
+                    );
+                    exito.showAndWait();
+                });
             } catch (Exception e) {
-                e.printStackTrace();
-                exito = false;
+                //e.printStackTrace();
+                exitos = false;
                 //System.err.println("❌ Error al enviar correo: " + e.getMessage());
+                String mensajeError = e.getMessage() != null ? e.getMessage() : "Error desconocido al enviar el correo." ;
+                Platform.runLater(() -> {
+                    Alert error = new Alert(Alert.AlertType.ERROR);
+                    error.setTitle("Error al enviar correo");
+                    error.setHeaderText("No se pudo enviar la notificación de revision");
+                    error.setContentText("Detalles:\n" + mensajeError);
+                    error.showAndWait();
+                });
             }
 
-            if (exito) {
+            if (exitos) {
                 Platform.runLater(() -> {
                     try {
                         List<List<String>> datos = leerHoja("REVISIONES");
@@ -1205,14 +1230,13 @@ public class ExcelManager {
                 if (destinos.length() == 0) return;
 
                 Properties props = new Properties();
-                props.put("mail.smtp.host", "smtp.gmail.com");
-                props.put("mail.smtp.port", "587");
+                props.put("mail.smtp.host", "192.168.26.117");
+                props.put("mail.smtp.port", "25");
                 props.put("mail.smtp.auth", "true");
-                props.put("mail.smtp.starttls.enable", "true");
+                props.put("mail.smtp.starttls.enable", "false");
 
-
-                String mailOrigenUsuario = "javilopez2269@gmail.com";
-                String mailOrigenPassword = "akeq sedl dydi kfwu";
+                String mailOrigenUsuario = "no-reply@euromadi.es";
+                String mailOrigenPassword = "n0n0n0";
 
                 Session session = Session.getInstance(props, new Authenticator() {
                     @Override
@@ -1227,17 +1251,37 @@ public class ExcelManager {
                 message.setSubject(asunto);
                 message.setText(cuerpo);
 
-                System.out.println("    [PRUEBA] Correo simulado:");
+                /**System.out.println("    [PRUEBA] Correo simulado:");
                 System.out.println("   De: " + mailOrigenUsuario);
                 System.out.println("   Para: " + destinos);
                 System.out.println("   Asunto: " + asunto);
                 System.out.println("   Cuerpo: " + cuerpo);
-                System.out.println("--------------------------------------------------");
+                System.out.println("--------------------------------------------------");*/
 
                 Transport.send(message);
                 //System.out.println("✅ Correo enviado para: " + equipo);
+                Platform.runLater(() -> {
+                    Alert exito = new Alert(Alert.AlertType.INFORMATION);
+                    exito.setTitle("Correo enviado");
+                    exito.setHeaderText(null);
+                    exito.setContentText(
+                            "Correo enviado correctamente desde:\n" +
+                                    mailOrigenUsuario + "\n" +
+                                    "A:\n" +
+                                    destinos
+                    );
+                    exito.showAndWait();
+                });
             } catch (Exception e) {
-                e.printStackTrace();
+                //e.printStackTrace();
+                String mensajeError = e.getMessage() != null ? e.getMessage() : "Error desconocido al enviar el correo." ;
+                Platform.runLater(() -> {
+                    Alert error = new Alert(Alert.AlertType.ERROR);
+                    error.setTitle("Error al enviar correo");
+                    error.setHeaderText("No se pudo enviar la confirmacion de la revision");
+                    error.setContentText("Detalles:\n" + mensajeError);
+                    error.showAndWait();
+                });
             }
         }).start();
     }
@@ -1273,7 +1317,7 @@ public class ExcelManager {
     }
 
     /**
-     * Método robusto para parsear fechas desde cadenas con formatos comunes.
+     * Metodo robusto para parsear fechas desde cadenas con formatos comunes.
      * Intenta varios formatos antes de devolver null si no se puede parsear.
      *
      * @param fechaStr cadena de fecha a parsear
@@ -1342,5 +1386,253 @@ public class ExcelManager {
         return opciones;
     }
 
+    /**
+     * Guarda las observaciones de una avería en la hoja correspondiente (Cassette o Condensadoras).
+     *
+     * @param hojaNombre nombre de la hoja ("Cassette" o "Condensadoras")
+     * @param codigo identificador del equipo
+     * @param numSecuencia número de secuencia del equipo (solo para cassette)
+     * @param observaciones texto de las observaciones a guardar
+     * @param indiceColumnaObs índice de la columna donde se guardarán las observaciones
+     */
+    public static void guardarObservacionesEnExcel(
+            String hojaNombre,
+            String codigo,
+            int numSecuencia,
+            String observaciones,
+            int indiceColumnaObs
+    ) {
+        try {
+            List<List<String>> datos = leerHoja(hojaNombre);
+            for (int i = 1; i < datos.size(); i++) {
+                List<String> fila = datos.get(i);
+                if (fila.size() > 1 &&
+                        codigo.equals(fila.get(0).trim()) &&
+                        String.valueOf(numSecuencia).equals(fila.get(1).trim())) {
 
+                    while (fila.size() <= indiceColumnaObs) {
+                        fila.add("");
+                    }
+                    fila.set(indiceColumnaObs, observaciones);
+                    modificarFila(hojaNombre, i, fila.toArray(new String[0]));
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Actualiza el texto de una celda específica en una hoja de Excel.
+     * Si la celda no existe, se crea. No se aplica ningún estilo especial.
+     *
+     * @param nombreHoja nombre de la hoja (ej. "Cassette")
+     * @param filaIndex índice de la fila (0-based)
+     * @param colIndex índice de la columna (0-based)
+     * @param texto nuevo texto a colocar en la celda
+     */
+    public static void actualizarCeldaObservacion(String nombreHoja, int filaIndex, int colIndex, String texto) {
+        try {
+            File file = getExcelFile();
+            FileInputStream fis = new FileInputStream(file);
+            Workbook workbook = new XSSFWorkbook(fis);
+            fis.close();
+
+            Sheet sheet = workbook.getSheet(nombreHoja);
+            Row row = sheet.getRow(filaIndex);
+            if (row == null) row = sheet.createRow(filaIndex);
+
+            Cell cell = row.getCell(colIndex);
+            if (cell == null) cell = row.createCell(colIndex);
+
+            cell.setCellValue(texto);
+
+
+            CellStyle style = workbook.createCellStyle();
+            style.setWrapText(true);
+            style.setVerticalAlignment(org.apache.poi.ss.usermodel.VerticalAlignment.TOP);
+            cell.setCellStyle(style);
+
+
+            row.setHeight((short) -1);
+
+            FileOutputStream fos = new FileOutputStream(file);
+            workbook.write(fos);
+            fos.close();
+            workbook.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Obtiene el índice de la fila en una hoja de Excel que coincide con un código y número de secuencia específicos.
+     *
+     * @param nombreHoja nombre de la hoja (ej. "Cassette")
+     * @param codigo valor del código a buscar (columna A)
+     * @param numSecuencia valor del número de secuencia a buscar (columna B)
+     * @return índice de la fila encontrada (0-based), o -1 si no se encuentra
+     */
+    public static int obtenerIndiceFilaExcel(String nombreHoja, String codigo, int numSecuencia) {
+        try {
+            File file = getExcelFile();
+            FileInputStream fis = new FileInputStream(file);
+            Workbook workbook = new XSSFWorkbook(fis);
+            Sheet sheet = workbook.getSheet(nombreHoja);
+
+            if (sheet == null) {
+                workbook.close();
+                fis.close();
+                return -1;
+            }
+
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+
+                Cell cellCodigo = row.getCell(0);
+                Cell cellSecuencia = row.getCell(1);
+
+                String valCodigo = "";
+                String valSecuencia = "";
+
+                if (cellCodigo != null) {
+                    valCodigo = formatter.formatCellValue(cellCodigo).trim();
+                }
+
+                if (cellSecuencia != null) {
+                    valSecuencia = formatter.formatCellValue(cellSecuencia).trim();
+                }
+
+
+                if (valCodigo.equals(codigo) && valSecuencia.equals(String.valueOf(numSecuencia))) {
+                workbook.close();
+                fis.close();
+                return i;
+                }
+            }
+
+            workbook.close();
+            fis.close();
+
+            //System.err.println("❌ No se encontró la fila para: [" + codigo + "] Sec: [" + numSecuencia + "] en hoja: " + nombreHoja);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    /**
+     * Guarda una observación en una celda específica aplicando estilo de "Ajuste de Texto" (Wrap Text).
+     * Esto permite que el texto baje de línea automáticamente en Excel.
+     *
+     * @param nombreHoja nombre de la hoja (ej. "Cassette")
+     * @param filaIndex índice de la fila (0-based)
+     * @param colIndex índice de la columna (0-based)
+     * @param texto texto de la observación a guardar
+     */
+    public static void actualizarCeldaObservacionConEstilo(String nombreHoja, int filaIndex, int colIndex, String texto) {
+        try{
+            File file = getExcelFile();
+            FileInputStream fis = new FileInputStream(file);
+            Workbook workbook = new XSSFWorkbook(fis);
+            fis.close();
+
+            Sheet sheet = workbook.getSheet(nombreHoja);
+            if (sheet == null) {
+                workbook.close();
+                return;
+            }
+
+            Row row = sheet.getRow(filaIndex);
+            if (row == null) {
+                row = sheet.createRow(filaIndex);
+            }
+
+            Cell cell = row.getCell(colIndex);
+            if (cell == null) {
+                cell = row.createCell(colIndex);
+            }
+
+            cell.setCellValue(texto);
+
+            CellStyle style = workbook.createCellStyle();
+            style.setWrapText(true);
+            style.setVerticalAlignment(VerticalAlignment.TOP);
+
+            style.setBorderTop(BorderStyle.THIN);
+            style.setBorderBottom(BorderStyle.THIN);
+            style.setBorderLeft(BorderStyle.THIN);
+            style.setBorderRight(BorderStyle.THIN);
+
+            cell.setCellStyle(style);
+
+            row.setHeight((short) -1);
+
+            FileOutputStream fos = new FileOutputStream(file);
+            workbook.write(fos);
+            fos.close();
+            workbook.close();
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Obtiene el índice de la fila en una hoja de Excel que coincide con un código específico en la columna A.
+     *
+     * @param nombreHoja nombre de la hoja (ej. "Condensadoras")
+     * @param codigo valor del código a buscar (columna A)
+     * @return índice de la fila encontrada (0-based), o -1 si no se encuentra
+     */
+    public static int obtenerIndiceFilaPorCodigo(String nombreHoja, String codigo) {
+        try {
+            File file = getExcelFile();
+            FileInputStream fis = new FileInputStream(file);
+            Workbook workbook = new XSSFWorkbook(fis);
+            Sheet sheet = workbook.getSheet(nombreHoja);
+            if (sheet == null) { workbook.close(); fis.close(); return -1; }
+
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                Cell cellCodigo = row.getCell(0);
+                String valCodigo = (cellCodigo != null) ? formatter.formatCellValue(cellCodigo).trim() : "";
+                if (valCodigo.equals(codigo)) {
+                    workbook.close(); fis.close(); return i;
+                }
+            }
+            workbook.close(); fis.close();
+        } catch (Exception e) { e.printStackTrace(); }
+        return -1;
+    }
+
+    /**
+     * Oculta una columna específica en una hoja de Excel.
+     * @param nombreHoja Nombre de la hoja (ej. "Condensadoras")
+     * @param indiceColumna Índice de la columna a ocultar (0-based)
+     */
+    public static void ocultarColumna(String nombreHoja, int indiceColumna) {
+        try {
+            File file = getExcelFile();
+            FileInputStream fis = new FileInputStream(file);
+            Workbook workbook = new XSSFWorkbook(fis);
+            Sheet sheet = workbook.getSheet(nombreHoja);
+
+            if (sheet != null) {
+
+                sheet.setColumnHidden(indiceColumna, true);
+
+                FileOutputStream fos = new FileOutputStream(file);
+                workbook.write(fos);
+                fos.close();
+            }
+            workbook.close();
+            fis.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

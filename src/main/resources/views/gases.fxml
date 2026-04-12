@@ -16,6 +16,7 @@
         <Button text="Añadir" onAction="#onAddGases" styleClass="action-button"/>
         <Button text="Modificar" onAction="#onEditGases" styleClass="action-button"/>
         <Button text="Eliminar" onAction="#onDeleteGases" styleClass="action-button"/>
+        <Button text="Observaciones" onAction="#abrirObservacionesGas" styleClass="action-button"/>
     </HBox>
 
     <TableView fx:id="tablaGases" styleClass="table-view">
@@ -52,7 +53,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn text="OBSERVACIONES" fx:id="colObservaciones" prefWidth="400"/>
+            <TableColumn text="OBSERVACIONES" fx:id="colObservaciones" prefWidth="400" styleClass="col-observaciones"/>
         </columns>
     </TableView>
 
