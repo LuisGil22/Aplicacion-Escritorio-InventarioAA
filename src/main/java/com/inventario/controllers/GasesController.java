@@ -88,7 +88,7 @@ public class GasesController {
                     text.setTextOrigin(VPos.TOP);}
                 @Override
                 protected void updateItem(String item, boolean empty) {
-                    System.out.println("Actualizando celda observaciones: " + item);
+                    //System.out.println("Actualizando celda observaciones: " + item);
                     super.updateItem(item, empty);
                     if (empty || item == null) {
                         setText(null);

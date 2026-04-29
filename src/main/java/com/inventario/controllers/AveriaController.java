@@ -11,14 +11,13 @@ import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Controlador para la gestión de averías en la hoja AVERIAS del inventario.
@@ -57,6 +56,8 @@ public class AveriaController {
     @FXML private Button btnFiltroLocalizacion;
     @FXML private Button btnFiltroFechaAveria;
     @FXML private Button btnFiltroMail;
+    @FXML private Button btnImprimir;
+    @FXML private Button btnConfigColumnas;
 
     @FXML private Label lblActualizado;
 
@@ -82,6 +83,7 @@ public class AveriaController {
         cargarDatos();
         noOrdenar();
         actualizarFechaEncabezado();
+        ExcelManager.cargarPreferenciasColumnas(tablaAverias, "AVERIAS", "AVERIAS");
 
         /** Configura el estilo y comportamiento de la columna
          *  de observaciones para permitir texto multilínea
@@ -433,5 +435,61 @@ public class AveriaController {
                     tablaAverias.refresh();
                 }
         );
+    }
+
+    @FXML
+    private void onImprimirAveria(){
+        ObservableList<Averia> itemsVisibles = tablaAverias.getItems();
+
+        if (itemsVisibles.isEmpty()) {
+            mainAppController.showAlert("No hay datos visibles para imprimir.");
+            return;
+        }
+
+        // 1. Obtener encabezados basados en las columnas actuales de la tabla
+        List<String> encabezados = new ArrayList<>();
+        for (TableColumn<?, ?> col : tablaAverias.getColumns()) {
+            if (col.isVisible()) {
+                // Extraer nombre limpio (manejando gráficos personalizados si los tienes)
+                String nombre = col.getText() != null ? col.getText() : "Col";
+                if (col.getGraphic() instanceof HBox) {
+                    for (Node node : ((HBox) col.getGraphic()).getChildren()) {
+                        if (node instanceof Label) nombre = ((Label) node).getText();
+                    }
+                }
+                encabezados.add(nombre);
+            }
+        }
+
+        // 2. Convertir objetos Condensadora a List<String> respetando el orden de columnas visibles
+        List<List<String>> datosFiltrados = new ArrayList<>();
+        for (Averia c : itemsVisibles) {
+            List<String> fila = new ArrayList<>();
+            // Mapear manualmente cada columna visible a su dato correspondiente
+            // Ejemplo simplificado (debes ajustarlo a tus getColumnas reales):
+
+            // Si colCondensadora es visible:
+            if (colNumAveria.isVisible()) fila.add(c.getNumAveria());
+            if(colEquipoAveriado.isVisible()) fila.add(c.getEquipoAveriado());
+            if(colCodigo.isVisible()) fila.add(c.getCodigo());
+            if(colEstado.isVisible()) fila.add(c.getEstado());
+            if(colPlanta.isVisible()) fila.add(c.getPlanta());
+            if(colLocalizacion.isVisible()) fila.add(c.getLocalizacion());
+            if(colFechaAveria.isVisible()) fila.add(c.getFechaAveria());
+            if(colMail.isVisible()) fila.add(c.getMail());
+            if(colObservaciones.isVisible()) fila.add(c.getObservaciones());
+            // ... añade aquí todos los campos en el mismo orden que las columnas visibles ...
+
+            datosFiltrados.add(fila);
+        }
+
+        Stage stage = (Stage) tablaAverias.getScene().getWindow();
+        // 3. Llamar al metodo de impresión
+        ExcelManager.imprimirConDialogoNativo(stage, encabezados, datosFiltrados, "INVENTARIO AVERIAS");
+    }
+
+    @FXML
+    private void abrirConfiguracionColumnas(){
+        ExcelManager.abrirConfiguracionColumnas(tablaAverias, "AVERIAS", "AVERIAS", "AVERIAS");
     }
 }

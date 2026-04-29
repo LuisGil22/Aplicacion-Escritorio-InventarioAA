@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-
 <VBox xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.inventario.controllers.CondensadorasController"
-            stylesheets="@../css/parametros.css"
-            styleClass="vbox">
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.inventario.controllers.CondensadorasController"
+      stylesheets="@../css/parametros.css"
+      styleClass="vbox">
 
     <HBox spacing="10" style="-fx-padding: 5 10 5 10;">
         <Label fx:id="lblActualizado" text="Actualizado: "
@@ -25,11 +23,39 @@
             <Button text="Observaciones" onAction="#abrirObservacionesCondensadora" styleClass="action-button"/>
         </HBox>
         <Pane HBox.hgrow="ALWAYS"/>
+
+        <HBox spacing="10" alignment="CENTER_LEFT" >
+            <Button fx:id="btnConfigColumnas" onAction="#abrirConfiguracionColumnas" style="-fx-background-color: transparent;">
+                <graphic>
+                    <ImageView fitHeight="24" fitWidth="24" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                            <Image url="@/imagenes/Settings.png"/> <!-- Icono de configuración -->
+                        </image>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="Ocultar Columnas Visibles"/>
+                </tooltip>
+            </Button>
+            <Button fx:id="btnImprimir" onAction="#onImprimirCondensadoras" style="-fx-background-color: transparent;">
+                <graphic>
+                    <!-- Puedes usar un ImageView con un icono PNG o un SVGPath -->
+                    <ImageView fitHeight="24" fitWidth="24" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                            <Image url="@/imagenes/printer.png"/>
+                        </image>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="Imprimir Listado"/>
+                </tooltip>
+            </Button>
+        </HBox>
     </HBox>
 
     <TableView fx:id="tablaCondensadoras" styleClass="table-view-cond">
         <columns>
-            <TableColumn fx:id="colCondensadoras" prefWidth="170">
+            <TableColumn fx:id="colCondensadoras" id="colCondensadoras" prefWidth="170">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="CONDENSADORA"/>
@@ -37,7 +63,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colNumSecuencia" prefWidth="150">
+            <TableColumn fx:id="colNumSecuencia" id="colNumSecuencia" prefWidth="150">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="Nª SECUENCIA"/>
@@ -45,7 +71,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colEstado" prefWidth="120">
+            <TableColumn fx:id="colEstado" id="colEstado" prefWidth="120">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="ESTADO"/>
@@ -53,7 +79,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colMarca" prefWidth="100">
+            <TableColumn fx:id="colMarca" id="colMarca" prefWidth="100">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="MARCA"/>
@@ -61,7 +87,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colModelo" prefWidth="100">
+            <TableColumn fx:id="colModelo" id="colModelo" prefWidth="100">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="MODELO"/>
@@ -69,7 +95,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colNumSerie" prefWidth="100">
+            <TableColumn fx:id="colNumSerie" id="colNumSerie" prefWidth="100">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="Nº SERIE"/>
@@ -77,7 +103,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colLocCondensadoras" prefWidth="200">
+            <TableColumn fx:id="colLocCondensadoras" id="colLocCondensadoras" prefWidth="200">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="LOC_CONDENSADORAS"/>
@@ -85,7 +111,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colGas" prefWidth="100">
+            <TableColumn fx:id="colGas" id="colGas" prefWidth="100">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="GAS"/>
@@ -93,7 +119,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colFechaInstal" prefWidth="180">
+            <TableColumn fx:id="colFechaInstal" id="colFechaInstal" prefWidth="180">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="FECHA INSTALACION"/>
@@ -101,7 +127,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colFechaBaja" prefWidth="120">
+            <TableColumn fx:id="colFechaBaja" id="colFechaBaja" prefWidth="120">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="FECHA BAJA"/>
@@ -109,7 +135,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn fx:id="colFechaRev" prefWidth="150">
+            <TableColumn fx:id="colFechaRev" id="colFechaRev" prefWidth="150">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
                         <Label text="FECHA REVISION"/>
@@ -117,8 +143,8 @@
                     </HBox>
                 </graphic>
             </TableColumn>
-            <TableColumn text="AVERIA" fx:id="colAveria" prefWidth="100"/>
-            <TableColumn text="OBSERVACIONES" fx:id="colObservaciones" prefWidth="190" styleClass="col-observaciones"/>
+            <TableColumn text="AVERIA" fx:id="colAveria" id="colAveria" prefWidth="100"/>
+            <TableColumn text="OBSERVACIONES" fx:id="colObservaciones" id="colObservaciones" prefWidth="190" styleClass="col-observaciones"/>
         </columns>
     </TableView>
 </VBox>

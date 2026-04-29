@@ -1,23 +1,45 @@
 // com/inventario/utils/ExcelManager.java
 package com.inventario.utils;
 
+import com.lowagie.text.*;
+import com.lowagie.text.Font;
+import com.lowagie.text.pdf.GrayColor;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.scene.control.Alert;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import java.awt.*;
 import java.io.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
+import java.util.prefs.Preferences;
+
+
 
 /**
  * Gestor de operaciones con el archivo Excel "Inventario AA V2.xlsx".
@@ -35,6 +57,8 @@ public class ExcelManager {
     private static final DataFormatter formatter = new DataFormatter(new Locale("es", "ES"));
     private static final Object EXCEL_LOCK = new Object();
     public static final SimpleBooleanProperty revisionActualizada = new SimpleBooleanProperty(false);
+
+    private static final String PREFS_NODE = "com/inventario/app/columnas";
 
     /**
      * Constantes para nombres de columnas en las hojas del Excel.
@@ -68,7 +92,7 @@ public class ExcelManager {
 
             excelFile = new File(dataDir, "Inventario AA V2.xlsx");
 
-            if (!excelFile.exists()) {
+            if (!excelFile.exists() || excelFile.length() == 0) {
 
                 try (InputStream is = ExcelManager.class.getResourceAsStream("/datos/Inventario AA V2.xlsx");
                      FileOutputStream fos = new FileOutputStream(excelFile)) {
@@ -1069,7 +1093,7 @@ public class ExcelManager {
         try{
             List<List<String>> revisiones = leerHoja("REVISIONES");
             for (List<String> rev : revisiones) {
-                if (rev.size() > 2 && equipo.equals(rev.get(1)) && codigo.equals(rev.get(2))) {
+                if (rev.size() > 2 && equipo.equals(rev.get(2)) && codigo.equals(rev.get(3))) {
                     return;
                 }
             }
@@ -1087,7 +1111,7 @@ public class ExcelManager {
             String numRev = String.format("%04d", maxNum + 1);
             DateTimeFormatter f = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             String rango = "desde: " + fechaDesde.format(f) + "\n hasta: " + fechaRevision.format(f);
-            añadirFila("REVISIONES", numRev, equipo, codigo, estado, planta, localizacion, rango, "NO", "","NO ENVIADO","");
+            añadirFila("REVISIONES", numRev,"NO", equipo, codigo, estado, planta, localizacion, rango,"","NO ENVIADO","","");
 
             enviarCorreoAvisoRevision(equipo, codigo, numRev);
 
@@ -1635,4 +1659,438 @@ public class ExcelManager {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Imprime una TableView utilizando el diálogo de impresión nativo del sistema.
+     * Permite elegir impresora física o guardar como PDF.
+     *
+     * @param tabla La TableView a imprimir
+     * @param titulo Título que aparecerá en el encabezado del documento impreso
+     */
+    /**
+     * Imprime una TableView capturando su imagen actual (Snapshot).
+     * Esto garantiza que se imprima exactamente lo que ve el usuario, incluyendo scroll.
+     */
+
+
+    /**
+     * Exporta una hoja de Excel a PDF utilizando OpenPDF.
+     */
+    /**public static void exportarHojaAPdf(String nombreHoja, String tituloInforme) {
+        try {
+            // 1. Leer datos de Excel
+            List<List<String>> datos = leerHoja(nombreHoja);
+            if (datos == null || datos.isEmpty()) {
+                System.err.println("No hay datos para exportar en la hoja: " + nombreHoja);
+                return;
+            }
+
+            // 2. Configurar documento PDF (Horizontal para que quepan más columnas)
+            Document document = new Document(PageSize.A4.rotate());
+            String ruta = System.getProperty("user.home") + "/Desktop/" + tituloInforme.replace(" ", "_") + "_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".pdf";
+
+            PdfWriter.getInstance(document, new FileOutputStream(ruta));
+            document.open();
+
+            // 3. Título y Fecha
+            // Usamos FontFactory para obtener fuentes estándar sin constantes obsoletas
+            Font fontTitulo = new Font(Font.HELVETICA, 16, Font.BOLD);
+            Paragraph parrafoTitulo = new Paragraph(tituloInforme, fontTitulo);
+            parrafoTitulo.setAlignment(Element.ALIGN_CENTER);
+            parrafoTitulo.setSpacingAfter(15);
+            document.add(parrafoTitulo);
+
+            Font fontFecha = new Font(Font.HELVETICA, 10, Font.NORMAL);
+            Paragraph parrafoFecha = new Paragraph("Generado el: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), fontFecha);
+            parrafoFecha.setAlignment(Element.ALIGN_RIGHT);
+            parrafoFecha.setSpacingAfter(10);
+            document.add(parrafoFecha);
+
+            // 4. Crear Tabla
+            int numColumnas = datos.get(0).size();
+            PdfPTable table = new PdfPTable(numColumnas);
+            table.setWidthPercentage(100); // Ocupa todo el ancho
+            table.setSpacingBefore(10f);
+            table.setSpacingAfter(10f);
+
+            // Estilos de celda
+            Font fontHeader = new Font(Font.HELVETICA, 9, Font.BOLD);
+            Font fontData = new Font(Font.HELVETICA, 8, Font.NORMAL);
+
+            // Color gris claro para cabecera (RGB: 220, 220, 220)
+             GrayColor grayColor = new GrayColor(220);
+
+            PdfPCell cell;
+
+            // Encabezados (Primera fila de Excel)
+            for (String header : datos.get(0)) {
+                cell = new PdfPCell(new Phrase(header, fontHeader));
+                cell.setBackgroundColor(grayColor); // Usamos el color creado manualmente
+                cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                cell.setPadding(4);
+                table.addCell(cell);
+            }
+
+            // Datos (Resto de filas)
+            for (int i = 1; i < datos.size(); i++) {
+                List<String> fila = datos.get(i);
+                // Saltar filas vacías si existen
+                if (fila.stream().allMatch(s -> s == null || s.trim().isEmpty())) continue;
+
+                for (String dato : fila) {
+                    cell = new PdfPCell(new Phrase(dato != null ? dato : "", fontData));
+                    cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    cell.setPadding(3);
+                    table.addCell(cell);
+                }
+            }
+
+            document.add(table);
+            document.close();
+
+            System.out.println("PDF generado correctamente en: " + ruta);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Error al generar PDF: " + e.getMessage());
+        }
+    }*/
+
+    /**
+     * Abre un diálogo para configurar qué columnas de una TableView son visibles.
+     * Maneja encabezados personalizados (con botones de filtro) extrayendo el texto del Label interno.
+     */
+    public static void abrirConfiguracionColumnas(TableView<?> tabla, String titulo, String idTabla, String hojaExcel) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.WINDOW_MODAL);
+        dialog.initOwner(tabla.getScene().getWindow());
+        dialog.setTitle("Ocultar Columnas - " + titulo);
+
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(15));
+
+        VBox containerChecks = new VBox(5);
+
+        for (TableColumn<?, ?> col : tabla.getColumns()) {
+            String nombreColumna = "Columna Sin Nombre";
+
+            // 1. Intentar obtener el texto directo
+            if (col.getText() != null && !col.getText().isEmpty()) {
+                nombreColumna = col.getText();
+            }
+            // 2. Si no hay texto directo, buscar el Label dentro del Graphic (encabezado personalizado)
+            else if (col.getGraphic() instanceof HBox) {
+                HBox headerBox = (HBox) col.getGraphic();
+                for (Node node : headerBox.getChildren()) {
+                    if (node instanceof Label) {
+                        nombreColumna = ((Label) node).getText();
+                        break;
+                    }
+                }
+            }
+
+            CheckBox cb = new CheckBox(nombreColumna);
+            cb.setSelected(col.isVisible());
+
+            // Al cambiar el checkbox, mostramos/ocultamos la columna
+            cb.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+                col.setVisible(isSelected);
+                guardarPreferenciasColumnas(tabla, idTabla, hojaExcel);
+            });
+
+            containerChecks.getChildren().add(cb);
+        }
+
+        ScrollPane scrollPane = new ScrollPane(containerChecks);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefHeight(300);
+
+        Button btnCerrar = new Button("Cerrar");
+        btnCerrar.setOnAction(e -> dialog.close());
+
+        HBox botones = new HBox(btnCerrar);
+        botones.setAlignment(Pos.CENTER_RIGHT);
+        botones.setPadding(new Insets(10, 0, 0, 0));
+
+        vbox.getChildren().addAll(scrollPane, botones);
+
+        Scene scene = new Scene(vbox, 450, 450);
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    /**
+     * Guarda la visibilidad de las columnas de una TableView en las preferencias del usuario.
+     */
+    public static void guardarPreferenciasColumnas(TableView<?> tabla, String idTabla, String hojaExcel) {
+        Preferences prefs = Preferences.userRoot().node(PREFS_NODE);
+        StringBuilder sb = new StringBuilder();
+
+        for (TableColumn<?, ?> col : tabla.getColumns()) {
+            String colId = col.getId() != null ? col.getId() : "idx_" + tabla.getColumns().indexOf(col);
+            if (col.isVisible()) {
+
+                if (sb.length() > 0) sb.append(",");
+                sb.append(colId);
+            }
+        }
+
+        prefs.put(idTabla + "_VISIBLE_COLS", sb.toString());
+        actualizarVisibilidadColumnasEnExcel(hojaExcel, tabla);
+    }
+
+    /**
+     * Carga y aplica la visibilidad de las columnas desde las preferencias del usuario.
+     */
+    public static void cargarPreferenciasColumnas(TableView<?> tabla, String idTabla, String hojaExcel) {
+        Preferences prefs = Preferences.userRoot().node(PREFS_NODE);
+        String savedCols = prefs.get(idTabla + "_VISIBLE_COLS", "");
+
+        if (savedCols.isEmpty()) return; // Si no hay preferencias guardadas, dejar por defecto
+
+        List<String> visibleColIds = new ArrayList<>();
+
+        if (!savedCols.isEmpty()){
+            visibleColIds = Arrays.asList(savedCols.split(","));
+        }else{
+            for (TableColumn<?, ?> col : tabla.getColumns()) {
+                String colId = col.getId() != null ? col.getId() : "idx_" + tabla.getColumns().indexOf(col);
+            }
+        }
+
+        for (TableColumn<?, ?> col : tabla.getColumns()) {
+            String colId = col.getId() != null ? col.getId() : "idx_" + tabla.getColumns().indexOf(col);
+
+            // Si el nombre de la columna está en la lista guardada, se muestra. Si no, se oculta.
+            boolean shouldBeVisible = visibleColIds.contains(colId);
+            col.setVisible(shouldBeVisible);
+        }
+        actualizarVisibilidadColumnasEnExcel(hojaExcel, tabla);
+    }
+
+    /**
+     * Metodo auxiliar que abre el Excel y oculta/muestra columnas según el estado de la TableView.
+     */
+    private static void actualizarVisibilidadColumnasEnExcel(String nombreHoja, TableView<?> tabla) {
+        try {
+            File file = getExcelFile();
+            FileInputStream fis = new FileInputStream(file);
+            Workbook workbook = new XSSFWorkbook(fis);
+            Sheet sheet = workbook.getSheet(nombreHoja);
+
+            if (sheet != null) {
+                int colIndex = 0;
+                for (TableColumn<?, ?> col : tabla.getColumns()) {
+                    // setColumnHidden usa el índice de columna (0-based)
+                    // true = OCULTA, false = VISIBLE
+                    sheet.setColumnHidden(colIndex, !col.isVisible());
+                    colIndex++;
+                }
+
+                FileOutputStream fos = new FileOutputStream(file);
+                workbook.write(fos);
+                fos.close();
+            }
+            workbook.close();
+            fis.close();
+
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Error al sincronizar columnas con Excel: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Abre el diálogo de impresión nativo del sistema con vista previa.
+     * Permite elegir impresora física o PDF, y ajusta la escala automáticamente.
+     */
+    public static void imprimirConDialogoNativo(Stage stage, List<String> encabezados, List<List<String>> datosFiltrados, String tituloPorDefecto) {
+
+        if (datosFiltrados == null || datosFiltrados.isEmpty()) {
+            System.err.println("No hay datos visibles para imprimir.");
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Guardar Informe PDF");
+
+
+        // 1. Crear archivo temporal en el escritorio
+        String fechaSegura = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+        String nombreArchivo = tituloPorDefecto.replace(" ", "_") + "_" + fechaSegura + ".pdf";
+        fileChooser.setInitialFileName(nombreArchivo);
+
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Archivos PDF (*.pdf)", "*.pdf");
+        fileChooser.getExtensionFilters().add(extFilter);
+
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "/Desktop"));
+
+        File fileToSave = fileChooser.showSaveDialog(stage);
+
+        if (fileToSave != null) {
+            try {
+                // 2. Configurar documento PDF (Horizontal para tablas anchas)
+                Document document = new Document(PageSize.A4.rotate());
+                PdfWriter.getInstance(document, new FileOutputStream(fileToSave));
+                document.open();
+
+                // 3. Título
+                Font fontTitulo = new Font(Font.HELVETICA, 16, Font.BOLD);
+                Paragraph parrafoTitulo = new Paragraph(tituloPorDefecto.toUpperCase(), fontTitulo);
+                parrafoTitulo.setAlignment(Element.ALIGN_CENTER);
+                parrafoTitulo.setSpacingAfter(15);
+                document.add(parrafoTitulo);
+
+                // 4. Fecha y Nota
+                Font fontInfo = new Font(Font.HELVETICA, 9, Font.NORMAL);
+                Paragraph info = new Paragraph("Generado el: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " | Vista Filtrada", fontInfo);
+                info.setAlignment(Element.ALIGN_RIGHT);
+                info.setSpacingAfter(10);
+                document.add(info);
+
+                // 5. Crear Tabla
+                PdfPTable table = new PdfPTable(encabezados.size());
+                table.setWidthPercentage(100);
+                table.setSpacingBefore(10f);
+                table.setSpacingAfter(10f);
+
+                // Estilos
+                Font fontHeader = new Font(Font.HELVETICA, 9, Font.BOLD);
+                Font fontData = new Font(Font.HELVETICA, 8, Font.NORMAL);
+                GrayColor grayColor = new GrayColor(220);
+
+                PdfPCell cell;
+
+                // Encabezados
+                for (String header : encabezados) {
+                    cell = new PdfPCell(new Phrase(header, fontHeader));
+                    cell.setBackgroundColor(grayColor);
+                    cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    cell.setPadding(4);
+                    table.addCell(cell);
+                }
+
+                // Datos Filtrados
+                for (List<String> fila : datosFiltrados) {
+                    for (String dato : fila) {
+                        cell = new PdfPCell(new Phrase(dato != null ? dato : "", fontData));
+                        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        cell.setPadding(3);
+                        table.addCell(cell);
+                    }
+                }
+
+                document.add(table);
+                document.close();
+
+                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                    Desktop.getDesktop().open(fileToSave);
+                } else {
+                    System.out.println("ℹ️ PDF generado. Ábralo manualmente desde: " + fileToSave.getAbsolutePath());
+                }
+
+            } catch(Exception e){
+                e.printStackTrace();
+                System.err.println("Error al generar/imprimir vista actual: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Guarda el ORDEN y la VISIBILIDAD de las columnas y sincroniza con Excel.
+     */
+    /**public static void guardarPreferenciasColumnas(TableView<?> tabla, String idTabla, String hojaExcel) {
+        Preferences prefs = Preferences.userRoot().node(PREFS_NODE);
+
+        // 1. Guardar ORDEN
+        StringBuilder orderSb = new StringBuilder();
+        for (TableColumn<?, ?> col : tabla.getColumns()) {
+            String colId = col.getId() != null ? col.getId() : "idx_" + tabla.getColumns().indexOf(col);
+            if (orderSb.length() > 0) orderSb.append(",");
+            orderSb.append(colId);
+        }
+        prefs.put(idTabla + "_COLUMN_ORDER", orderSb.toString());
+
+        // 2. Guardar VISIBILIDAD
+        StringBuilder visibleSb = new StringBuilder();
+        for (TableColumn<?, ?> col : tabla.getColumns()) {
+            String colId = col.getId() != null ? col.getId() : "idx_" + tabla.getColumns().indexOf(col);
+            if (col.isVisible()) {
+                if (visibleSb.length() > 0) visibleSb.append(",");
+                visibleSb.append(colId);
+            }
+        }
+        prefs.put(idTabla + "_VISIBLE_COLS", visibleSb.toString());
+
+        // 3. Sincronizar con Excel (Ocultar columnas físicamente)
+        actualizarVisibilidadColumnasEnExcel(hojaExcel, tabla);
+
+        System.out.println("Preferencias de orden y visibilidad guardadas para: " + idTabla);
+    }*/
+
+    /**
+     * Carga el ORDEN y la VISIBILIDAD de las columnas y sincroniza con Excel.
+     */
+    /**public static void cargarPreferenciasColumnas(TableView<?> tabla, String idTabla, String hojaExcel) {
+        Preferences prefs = Preferences.userRoot().node(PREFS_NODE);
+
+        String savedOrder = prefs.get(idTabla + "_COLUMN_ORDER", "");
+        String savedVisible = prefs.get(idTabla + "_VISIBLE_COLS", "");
+
+        // 1. Aplicar ORDEN
+        if (!savedOrder.isEmpty()) {
+            List<String> orderIds = new ArrayList<>(List.of(savedOrder.split(",")));
+
+            // Usamos un cast seguro para evitar errores de genéricos con TableView<?>
+            @SuppressWarnings("unchecked")
+            ObservableList<TableColumn<?, ?>> currentColumns = (ObservableList<TableColumn<?, ?>>) (ObservableList<?>) tabla.getColumns();
+
+            List<TableColumn<?, ?>> reorderedColumns = new ArrayList<>();
+
+            // Paso A: Añadir columnas en el orden guardado
+            for (String id : orderIds) {
+                for (int i = 0; i < currentColumns.size(); i++) {
+                    TableColumn<?, ?> col = currentColumns.get(i);
+                    String colId = col.getId() != null ? col.getId() : "idx_" + i;
+                    if (colId.equals(id)) {
+                        reorderedColumns.add(col);
+                        break;
+                    }
+                }
+            }
+
+            // Paso B: Añadir columnas nuevas no guardadas
+            for (int i = 0; i < currentColumns.size(); i++) {
+                TableColumn<?, ?> col = currentColumns.get(i);
+                boolean yaAñadida = false;
+                for (TableColumn<?, ?> addedCol : reorderedColumns) {
+                    if (addedCol == col) { yaAñadida = true; break; }
+                }
+                if (!yaAñadida) reorderedColumns.add(col);
+            }
+
+            // Aplicar nuevo orden
+            currentColumns.setAll(reorderedColumns);
+        }
+
+        // 2. Aplicar VISIBILIDAD
+        List<String> visibleIds = savedVisible.isEmpty() ? new ArrayList<>() : new ArrayList<>(List.of(savedVisible.split(",")));
+
+        for (int i = 0; i < tabla.getColumns().size(); i++) {
+            TableColumn<?, ?> col = tabla.getColumns().get(i);
+            String colId = col.getId() != null ? col.getId() : "idx_" + i;
+
+            // Si no hay preferencias, todas visibles. Si las hay, solo las listadas.
+            boolean isVisible = savedVisible.isEmpty() || visibleIds.contains(colId);
+            col.setVisible(isVisible);
+        }
+
+        // 3. Sincronizar con Excel
+        actualizarVisibilidadColumnasEnExcel(hojaExcel, tabla);
+
+        System.out.println("Preferencias de orden y visibilidad cargadas para: " + idTabla);
+    }*/
 }
+

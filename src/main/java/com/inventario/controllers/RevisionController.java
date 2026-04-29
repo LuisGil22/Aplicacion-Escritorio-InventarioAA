@@ -10,12 +10,16 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.VPos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -56,6 +60,8 @@ public class RevisionController {
     @FXML private Button  btnFiltroLocalizacion;
     @FXML private Button btnFiltroFechaRevision;
     @FXML private Button btnFiltroRevision;
+    @FXML private Button btnImprimir;
+    @FXML private Button btnConfigColumnas;
 
     @FXML private Label lblActualizado;
 
@@ -88,6 +94,7 @@ public class RevisionController {
                 tablaRevisiones.refresh();
             }
         });
+        ExcelManager.cargarPreferenciasColumnas(tablaRevisiones, "REVISIONES", "REVISIONES");
 
         /** Configura el estilo y comportamiento de la columna
          *  de observaciones para permitir texto multilínea
@@ -198,13 +205,13 @@ public class RevisionController {
             String numRevision = String.format("%04d",
                     Integer.parseInt(filaRev.get(0).trim())
             );
-            String equipo = filaRev.get(1).trim();
-            String codigo = filaRev.get(2).trim();
-            String estado = filaRev.get(3).trim();
-            String planta = filaRev.get(4).trim();
-            String localizacion = filaRev.get(5).trim();
-            String fechaRevision = filaRev.get(6).trim();
-            String revision = filaRev.get(7).trim();
+            String revision = filaRev.get(1).trim();
+            String equipo = filaRev.get(2).trim();
+            String codigo = filaRev.get(3).trim();
+            String estado = filaRev.get(4).trim();
+            String planta = filaRev.get(5).trim();
+            String localizacion = filaRev.get(6).trim();
+            String fechaRevision = filaRev.get(7).trim();
             String observaciones = filaRev.get(8).trim();
             String enviarMail = filaRev.size() > 9 ? filaRev.get(9).trim() : "NO ENVIADO";
 
@@ -230,8 +237,8 @@ public class RevisionController {
             for (int i = 1; i < datos.size(); i++) {
                 List<String> fila = datos.get(i);
                 if (fila.size() > 0 && revision.getNumRevision().equals(fila.get(0).trim())) {
-                    while (fila.size() <= 7) fila.add("");
-                    fila.set(7, "SI");
+                    while (fila.size() <= 1) fila.add("");
+                    fila.set(1, "SI");
                     ExcelManager.modificarFila("REVISIONES", i, fila.toArray(new String[0]));
 
                     ExcelManager.enviarCorreoConfirmacionRevision(revision.getEquipo(), revision.getCodigo());
@@ -491,6 +498,8 @@ public class RevisionController {
         colFechaRevision.setSortable(false);
         colRevision.setSortable(false);
         colObservaciones.setSortable(false);
+        colEnviarMail.setSortable(false);
+        colDiasRestantes.setSortable(false);
         colAccion.setSortable(false);
     }
 
@@ -525,5 +534,64 @@ public class RevisionController {
                     tablaRevisiones.refresh();
                 }
         );
+    }
+
+    @FXML
+    private void onImprimirRevision(){
+        ObservableList<Revision> itemsVisibles = tablaRevisiones.getItems();
+
+        if (itemsVisibles.isEmpty()) {
+            mainAppController.showAlert("No hay datos visibles para imprimir.");
+            return;
+        }
+
+        // 1. Obtener encabezados basados en las columnas actuales de la tabla
+        List<String> encabezados = new ArrayList<>();
+        for (TableColumn<?, ?> col : tablaRevisiones.getColumns()) {
+            if (col.isVisible()) {
+                // Extraer nombre limpio (manejando gráficos personalizados si los tienes)
+                String nombre = col.getText() != null ? col.getText() : "Col";
+                if (col.getGraphic() instanceof HBox) {
+                    for (Node node : ((HBox) col.getGraphic()).getChildren()) {
+                        if (node instanceof Label) nombre = ((Label) node).getText();
+                    }
+                }
+                encabezados.add(nombre);
+            }
+        }
+
+        // 2. Convertir objetos Condensadora a List<String> respetando el orden de columnas visibles
+        List<List<String>> datosFiltrados = new ArrayList<>();
+        for (Revision c : itemsVisibles) {
+            List<String> fila = new ArrayList<>();
+            // Mapear manualmente cada columna visible a su dato correspondiente
+            // Ejemplo simplificado (debes ajustarlo a tus getColumnas reales):
+
+            // Si colCondensadora es visible:
+            if (colNumRevision.isVisible()) fila.add(c.getNumRevision());
+            if(colEquipo.isVisible()) fila.add(c.getEquipo());
+            if(colCodigo.isVisible()) fila.add(c.getCodigo());
+            if(colEstado.isVisible()) fila.add(c.getEstado());
+            if(colPlanta.isVisible()) fila.add(c.getPlanta());
+            if(colLocalizacion.isVisible()) fila.add(c.getLocalizacion());
+            if(colFechaRevision.isVisible()) fila.add(c.getFechaRevision());
+            if(colRevision.isVisible()) fila.add(c.getRevision());
+            if(colObservaciones.isVisible()) fila.add(c.getObservaciones());
+            if(colEnviarMail.isVisible()) fila.add(c.getEnviarMail());
+            if(colDiasRestantes.isVisible()) fila.add(c.getDiasRestantes());
+            if(colAccion.isVisible()) fila.add(c.getRevision());
+            // ... añade aquí todos los campos en el mismo orden que las columnas visibles ...
+
+            datosFiltrados.add(fila);
+        }
+
+        Stage stage = (Stage) tablaRevisiones.getScene().getWindow();
+        // 3. Llamar al metodo de impresión
+        ExcelManager.imprimirConDialogoNativo(stage, encabezados, datosFiltrados, "INVENTARIO REVISIONES");
+    }
+
+    @FXML
+    private void abrirConfiguracionColumnas(){
+        ExcelManager.abrirConfiguracionColumnas(tablaRevisiones, "REVISIONES", "REVISIONES", "REVISIONES");
     }
 }
