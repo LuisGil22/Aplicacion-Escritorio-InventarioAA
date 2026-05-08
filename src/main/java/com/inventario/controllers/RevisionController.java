@@ -81,6 +81,7 @@ public class RevisionController {
     /**
      * Inicializa el controlador al cargar la vista FXML.
      * Carga las revisiones existentes y programa la verificación automática.
+     * Configura los filtros de cada columna y el estilo de la columna de observaciones para texto multilínea.
      */
     public void initialize(){
         configurarTabla();
@@ -459,18 +460,9 @@ public class RevisionController {
         confirm.setContentText("Esta acción no se puede deshacer.\nNúmero de revisión: " + selected.getNumRevision());
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-
-                    tablaRevisiones.getItems().remove(selected);
-                    ExcelManager.eliminarFila("REVISIONES", selected.getNumRevision());
-
-                    // Eliminar de la lista en memoria
-                    //revisiones.remove(selected);
-
-                    // Refrescar tabla
-                    //tablaRevisiones.refresh();
-
-                    mainAppController.showAlert("Revisión eliminada correctamente.");
-
+                tablaRevisiones.getItems().remove(selected);
+                ExcelManager.eliminarFila("REVISIONES", selected.getNumRevision());
+                mainAppController.showAlert("Revisión eliminada correctamente.");
             }
         });
     }
@@ -536,6 +528,10 @@ public class RevisionController {
         );
     }
 
+    /** Metodo para imprimir las revisiones visibles en la tabla, respetando los filtros aplicados y el orden de las columnas.
+     * Obtiene los datos visibles, genera encabezados dinámicos basados en las columnas actuales,
+     * y llama a ExcelManager.imprimirConDialogoNativo para mostrar el diálogo de impresión.
+     */
     @FXML
     private void onImprimirRevision(){
         ObservableList<Revision> itemsVisibles = tablaRevisiones.getItems();
@@ -545,7 +541,7 @@ public class RevisionController {
             return;
         }
 
-        // 1. Obtener encabezados basados en las columnas actuales de la tabla
+        // Obtener encabezados basados en las columnas actuales de la tabla
         List<String> encabezados = new ArrayList<>();
         for (TableColumn<?, ?> col : tablaRevisiones.getColumns()) {
             if (col.isVisible()) {
@@ -560,14 +556,10 @@ public class RevisionController {
             }
         }
 
-        // 2. Convertir objetos Condensadora a List<String> respetando el orden de columnas visibles
+        // Convertir objetos Condensadora a List<String> respetando el orden de columnas visibles
         List<List<String>> datosFiltrados = new ArrayList<>();
         for (Revision c : itemsVisibles) {
             List<String> fila = new ArrayList<>();
-            // Mapear manualmente cada columna visible a su dato correspondiente
-            // Ejemplo simplificado (debes ajustarlo a tus getColumnas reales):
-
-            // Si colCondensadora es visible:
             if (colNumRevision.isVisible()) fila.add(c.getNumRevision());
             if(colEquipo.isVisible()) fila.add(c.getEquipo());
             if(colCodigo.isVisible()) fila.add(c.getCodigo());
@@ -580,16 +572,18 @@ public class RevisionController {
             if(colEnviarMail.isVisible()) fila.add(c.getEnviarMail());
             if(colDiasRestantes.isVisible()) fila.add(c.getDiasRestantes());
             if(colAccion.isVisible()) fila.add(c.getRevision());
-            // ... añade aquí todos los campos en el mismo orden que las columnas visibles ...
 
             datosFiltrados.add(fila);
         }
 
         Stage stage = (Stage) tablaRevisiones.getScene().getWindow();
-        // 3. Llamar al metodo de impresión
         ExcelManager.imprimirConDialogoNativo(stage, encabezados, datosFiltrados, "INVENTARIO REVISIONES");
     }
 
+    /**
+     * Metodo para abrir la configuración de columnas, permitiendo al usuario mostrar u ocultar columnas según sus preferencias.
+     * Se llama a ExcelManager.abrirConfiguracionColumnas con los parámetros adecuados para la hoja REVISIONES.
+     */
     @FXML
     private void abrirConfiguracionColumnas(){
         ExcelManager.abrirConfiguracionColumnas(tablaRevisiones, "REVISIONES", "REVISIONES", "REVISIONES");

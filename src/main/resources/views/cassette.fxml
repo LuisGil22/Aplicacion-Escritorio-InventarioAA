@@ -38,7 +38,6 @@
             </Button>
             <Button fx:id="btnImprimir" onAction="#onImprimirCassette" style="-fx-background-color: transparent;">
                 <graphic>
-                    <!-- Puedes usar un ImageView con un icono PNG o un SVGPath -->
                     <ImageView fitHeight="24" fitWidth="24" pickOnBounds="true" preserveRatio="true">
                         <image>
                             <Image url="@/imagenes/printer.png"/>

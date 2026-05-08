@@ -62,7 +62,8 @@ public class MainAppController {
     /** Estado interno */
     private boolean isSidebarVisible = true;
     private ImageView fondoImageView;
-
+    public static volatile boolean sistemaInicializando = true;
+    public static volatile boolean enviandoCorreo = false;
     /**
      * Metodo para inicializar el controlador al cargar la vista FXML.
      * Configura:
@@ -501,6 +502,7 @@ public class MainAppController {
     private void verificarRevisionesPendientesAlIniciar() {
         new Thread(() -> {
             try {
+                Thread.sleep(1000);
                 // --- Condensadoras ---
                 List<List<String>> condensadoras = ExcelManager.leerHoja("Condensadoras");
                 for (int i = 1; i < condensadoras.size(); i++) {
@@ -553,6 +555,8 @@ public class MainAppController {
 
             } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
+                sistemaInicializando = false;
             }
         }).start();
     }
@@ -564,11 +568,7 @@ public class MainAppController {
      * @param observacionActual texto actual de las observaciones que se mostrará en el área de texto
      * @param onGuardar función callback que se ejecutará al hacer clic en "Guardar", recibiendo el nuevo texto de observaciones
      */
-    public void abrirDialogoObservaciones(
-            String titulo,
-            String observacionActual,
-            java.util.function.Consumer<String> onGuardar
-    ) {
+    public void abrirDialogoObservaciones(String titulo, String observacionActual, java.util.function.Consumer<String> onGuardar) {
         Stage dialog = new Stage();
         dialog.initModality(Modality.WINDOW_MODAL);
         dialog.initOwner(stackPaneContent.getScene().getWindow());

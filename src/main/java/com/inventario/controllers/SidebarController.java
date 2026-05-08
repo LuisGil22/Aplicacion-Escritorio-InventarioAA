@@ -68,12 +68,17 @@ public class SidebarController {
      *   <li>Desmarca el botón previamente seleccionado</li>
      *   <li>Marca visualmente el botón actual como seleccionado</li>
      *   <li>Carga la vista correspondiente en el contenedor principal</li>
+     *   <li>Si el sistema está inicializando o enviando correo, muestra una alerta y no realiza cambios</li>
      * </ol>
      *
      * @param event evento de acción generado por el clic
      */
     @FXML
     public void ClickMenu(ActionEvent event){
+        if(MainAppController.sistemaInicializando || MainAppController.enviandoCorreo){
+            mainAppController.showAlert("Sistema en proceso de inicializacion o enviando correo. Por favor espere ...");
+            return;
+        }
         Button boton = (Button) event.getSource();
         String menu = boton.getText();
         if(botonSeleccionado != null){

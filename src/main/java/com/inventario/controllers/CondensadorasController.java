@@ -167,12 +167,10 @@ public class CondensadorasController {
 
             if (fila.isEmpty()) continue;
 
-
-            if (fila.size() < 13) {
-                while (fila.size() < 13) {
-                    fila.add("");
-                }
+            while (fila.size() < 13) {
+                fila.add("");
             }
+
 
             String condensadora = fila.get(0).trim();
             String numSecuenciaStr = fila.get(1).trim();
@@ -388,11 +386,8 @@ public class CondensadorasController {
             return;
         }
 
-        // Cargar opciones desde PARAM_DIAS_REVISION
         List<String> opciones = ExcelManager.getOpcionesDiasRevision();
 
-
-        // Crear ComboBox en un diálogo
         ComboBox<String> combo = new ComboBox<>(FXCollections.observableArrayList(opciones));
         combo.setPromptText("Selecciona días");
 
@@ -442,12 +437,12 @@ public class CondensadorasController {
 
                                     ExcelManager.modificarFila("Condensadoras", i, fila.toArray(new String[0]));
                                     ExcelManager.ocultarColumna("Condensadoras", 13);
+                                    ExcelManager.actualizarFechaEnHojaRevisiones("CONDENSADORA", selected.getCondensadora(), fr);
                                     encontrado = true;
                                     contadorFilasSeleccionadas++;
                                     break;
                                 }
                             }
-
 
                             if (encontrado && !LocalDate.now().isBefore(fd)) {
                                 ExcelManager.crearEntradaRevision(
@@ -526,6 +521,11 @@ public class CondensadorasController {
      *               si no es null para modificar condensadora seleccionada.
      */
     private void onAddForm(Condensadora editar){
+        /**if (MainAppController.enviandoCorreo) {
+            mainAppController.showAlert("Por favor, espera a que termine el envío del correo actual antes de guardar cambios.");
+            return;
+        }*/
+
         Stage stage = new Stage();
         stage.setTitle(editar == null ? "Añadir Nueva Condensadora" : "Modificar Condensadora");
         stage.initModality(Modality.WINDOW_MODAL);
@@ -648,7 +648,6 @@ public class CondensadorasController {
             String condensadora = textCondensadora.getText().trim().toUpperCase();
             if(condensadora.isEmpty()){
                 avisoRellenar.setVisible(true);
-                //mainAppController.showAlert("El campo Condensadora es obligatorio.");
                 return;
             }
 
@@ -664,7 +663,6 @@ public class CondensadorasController {
             /** Formatear fecha o texto.*/
             String fechaInst = dateFechaInst.getValue() != null? dateFechaInst.getValue().format(formatter) : "";
             String fechaBaja = dateFechaBaja.getValue() != null? dateFechaBaja.getValue().format(formatter) : "";
-            //String fechaRev = dateFechaRev.getValue() != null? dateFechaRev.getValue().format(formatter) : "";
             String estado = comboEstado.getValue() != null? comboEstado.getValue() : "";
 
             int diasSeleccionados = 365;
@@ -754,6 +752,12 @@ public class CondensadorasController {
                             ExcelManager.modificarFila("Condensadoras", i, filaNueva.toArray(new String[0]));
                             ExcelManager.actualizarCeldaObservacionConEstilo("Condensadoras", i, 12, textObservacion.getText().trim());
                             ExcelManager.ocultarColumna("Condensadoras", 13);
+                            try {
+                                LocalDate nuevaFecha = LocalDate.parse(frStrFinal, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                                ExcelManager.actualizarFechaEnHojaRevisiones("CONDENSADORA", condensadora, nuevaFecha);
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
                             break;
                         }
                     }
@@ -882,21 +886,10 @@ public class CondensadorasController {
     }
 
     /**
-     * Metodo para establecer la fecha en un DatePicker a partir de un String con formato dd/MM/yyyy.
-     *
-     * @param picker DatePicker a configurar
-     * @param fechaStr fecha en formato String (dd/MM/yyyy)
-     */
-    /**private void setDatePicker(DatePicker picker, String fechaStr) {
-        if (fechaStr == null || fechaStr.trim().isEmpty()) return;
-        try {
-            LocalDate d = LocalDate.parse(fechaStr, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            picker.setValue(d);
-        } catch (Exception ignored) {}
-    }*/
-
-    /**
      * Establece la fecha en un DatePicker (el converter ya debe estar configurado)
+     *
+     * @param picker el DatePicker a configurar
+     * @param fechaStr la fecha en formato dd/MM/yyyy o vacío/null para limpiar el DatePicker
      */
     private void parseDatePicker(DatePicker picker, String fechaStr) {
         if (fechaStr == null || fechaStr.trim().isEmpty()) {
@@ -914,6 +907,8 @@ public class CondensadorasController {
     /**
      * Configura el converter de un DatePicker para formato dd/MM/yyyy
      * DEBE llamarse inmediatamente después de crear el DatePicker
+     *
+     * @param picker el DatePicker a configurar
      */
     private void configurarConverterDatePicker(DatePicker picker) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -990,9 +985,15 @@ public class CondensadorasController {
      */
     @FXML
     public void onSustituirCond(){
+
+
         Condensadora selected = tablaCondensadoras.getSelectionModel().getSelectedItem();
         if(selected == null){
             mainAppController.showAlert("Selecciona una condensadora para poder sustituirla");
+            return;
+        }
+        if (MainAppController.enviandoCorreo) {
+            mainAppController.showAlert("El sistema está enviando un correo o inicializando. Por favor, espera unos segundos antes de sustituir equipos.");
             return;
         }
 
@@ -1028,6 +1029,7 @@ public class CondensadorasController {
                             break;
                         }
                     }
+                    ExcelManager.eliminarRevisionPendiente("CONDENSADORA", selected.getCondensadora());
                     int nuevoDiasRevision = diasRevisionOriginal;
                     /** Crear nueva Condensadora */
                     String fechaActual = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
@@ -1055,11 +1057,12 @@ public class CondensadorasController {
                     for(int i = 1; i < hojaCondOriginal.size(); i++){
                         List<String> filaCond = hojaCondOriginal.get(i);
                         if(filaCond.size() > 0 && filaCond.get(0).trim().equals(selected.getCondensadora()) && String.valueOf(secuenciaPorDefecto).equals(filaCond.get(1).trim()) ){
-                            while(filaCond.size() <=9){
+                            while(filaCond.size() <=10){
                                 filaCond.add("");
                             }
                             filaCond.set(2, "BAJA");
                             filaCond.set(9, fechaActual);
+                            filaCond.set(10,"");
                             ExcelManager.modificarFila("Condensadoras", i, filaCond.toArray(new String[0]));
                             ExcelManager.ocultarColumna("Condensadoras", 13);
                             break;
@@ -1179,6 +1182,12 @@ public class CondensadorasController {
                 }
         );
     }
+
+    /**
+     * Metodo para imprimir los datos visibles de la tabla en formato Excel.
+     * Obtiene dinámicamente los encabezados y datos según las columnas visibles.
+     * Utiliza el ExcelManager para generar el archivo y mostrar el diálogo de impresión.
+     */
     @FXML
     private void onImprimirCondensadoras(){
         ObservableList<Condensadora> itemsVisibles = tablaCondensadoras.getItems();
@@ -1188,7 +1197,7 @@ public class CondensadorasController {
             return;
         }
 
-        // 1. Obtener encabezados basados en las columnas actuales de la tabla
+        // Obtener encabezados basados en las columnas actuales de la tabla
         List<String> encabezados = new ArrayList<>();
 
         for (TableColumn<?, ?> col : tablaCondensadoras.getColumns()) {
@@ -1203,15 +1212,13 @@ public class CondensadorasController {
             }
         }
 
-        // 2. Convertir objetos Condensadora a List<String> respetando el orden de columnas visibles
+        // Convertir objetos Condensadora a List<String> respetando el orden de columnas visibles
         List<List<String>> datosFiltrados = new ArrayList<>();
         for (Condensadora c : itemsVisibles) {
             List<String> fila = new ArrayList<>();
 
             // Mapear manualmente cada columna visible a su dato correspondiente
-            // Ejemplo simplificado (debes ajustarlo a tus getColumnas reales):
 
-            // Si colCondensadora es visible:
             if (colCondensadoras.isVisible()) fila.add(c.getCondensadora());
             if (colNumSecuencia.isVisible()) fila.add(String.valueOf(c.getNumSecuencia()));
             if(colEstado.isVisible()) fila.add(c.getEstado());
@@ -1225,31 +1232,20 @@ public class CondensadorasController {
             if(colFechaRev.isVisible()) fila.add(c.getFechaRevision());
             if(colAveria.isVisible()) fila.add(c.getAveria());
             if(colObservaciones.isVisible()) fila.add(c.getObservaciones());
-            // ... añade aquí todos los campos en el mismo orden que las columnas visibles ...
+
 
             datosFiltrados.add(fila);
         }
 
         Stage stage = (Stage) tablaCondensadoras.getScene().getWindow();
-        // 3. Llamar al metodo de impresión
+
         ExcelManager.imprimirConDialogoNativo(stage, encabezados, datosFiltrados, "INVENTARIO CONDENSADORAS");
     }
 
-    /** Metodo auxiliar para obtener nombre limpio
-     *
-     * @param col
-     * @return
+    /**
+     * Metodo para abrir la configuración de columnas, permitiendo al usuario mostrar u ocultar columnas según sus preferencias.
+     * Utiliza el ExcelManager para gestionar la configuración y aplicar los cambios a la tabla.
      */
-    /**private String obtenerNombreColumna(TableColumn<?, ?> col) {
-        if (col.getText() != null && !col.getText().isEmpty()) return col.getText();
-        if (col.getGraphic() instanceof HBox) {
-            for (Node node : ((HBox) col.getGraphic()).getChildren()) {
-                if (node instanceof Label) return ((Label) node).getText();
-            }
-        }
-        return "Col";
-    }*/
-
     @FXML
     private void abrirConfiguracionColumnas(){
         ExcelManager.abrirConfiguracionColumnas(tablaCondensadoras, "Condensadoras", "CONDENSADORAS", "Condensadoras");

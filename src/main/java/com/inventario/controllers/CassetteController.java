@@ -548,6 +548,7 @@ public class CassetteController {
 
                                     ExcelManager.modificarFila("Cassette", i, fila.toArray(new String[0]));
                                     ExcelManager.ocultarColumna("Cassette", 18);
+                                    ExcelManager.actualizarFechaEnHojaRevisiones("CASSETTE", selected.getNumCassette(), fr);
                                     encontrado=true;
                                     contadorFilasSeleccionadas++;
                                     break;
@@ -596,6 +597,11 @@ public class CassetteController {
      *               si no es null se abre el formulario para modificar el Cassette seleccionado.
      */
     private void formularioCas(Cassette editar){
+        /**if (MainAppController.enviandoCorreo) {
+            mainAppController.showAlert("Por favor, espera a que termine el envío del correo actual antes de guardar cambios.");
+            return;
+        }*/
+
         Stage stage = new Stage();
         stage.setTitle(editar == null ? "Añadir Cassette" : "Modificar Cassette");
         stage.initModality(Modality.WINDOW_MODAL);
@@ -863,8 +869,14 @@ public class CassetteController {
                             //indexExcel = i;
                             while (fila.size() <= 18) fila.add("");
                             fila.set(14, frStr);
-                            fila.set(18, String.valueOf(diasSeleccionados));
+                            //fila.set(18, String.valueOf(diasSeleccionados));
                             ExcelManager.modificarFila("Cassette", i, filaNueva.toArray(new String[0]));
+                            try {
+                                LocalDate nuevaFecha = LocalDate.parse(frStrFinal, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                                ExcelManager.actualizarFechaEnHojaRevisiones("CASSETTE", numCassette, nuevaFecha);
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
                             ExcelManager.actualizarCeldaObservacionConEstilo("Cassette", i, 17, textoObservaciones.getText().trim());
                             ExcelManager.ocultarColumna("Cassette", 18);
                             guardado = true;
@@ -878,18 +890,33 @@ public class CassetteController {
                         }
 
                 }
-                LocalDate fd = fr.minusDays(30);
+
+                LocalDate frFinalDate = LocalDate.parse(frStrFinal, format);
+                LocalDate fd = frFinalDate.minusDays(30);
                 if (!LocalDate.now().isBefore(fd)) {
                     String localizacion = textoLocalizacionCond.getText() != null ? textoLocalizacionCond.getText() : "";
-                    ExcelManager.crearEntradaRevision(
-                            "CASSETTE",
-                            numCassette,
-                            estado,
-                            comboPlanta.getValue() != null ? comboPlanta.getValue() : "",
-                            localizacion,
-                            fr,
-                            fd
-                    );
+                    boolean yaExiste = false;
+                    List<List<String>> revisionesExistentes = ExcelManager.leerHoja("REVISIONES");
+                    for (List<String> rev : revisionesExistentes) {
+                        if (rev.size() > 4 && "CASSETTE".equals(rev.get(3).trim()) && numCassette.equals(rev.get(4).trim())) {
+                            yaExiste = true;
+                            break;
+                        }
+                    }
+                    if(!yaExiste) {
+                        ExcelManager.crearEntradaRevision(
+                                "CASSETTE",
+                                numCassette,
+                                estado,
+                                comboPlanta.getValue() != null ? comboPlanta.getValue() : "",
+                                localizacion,
+                                frFinalDate,
+                                fd
+                        );
+                        //System.out.println("Entrada de revisión creada para Cassette: " + numCassette);
+                    }else {
+                        System.out.println("La revisión para Cassette: " + numCassette + " ya existía.");
+                    }
                 }
 
 
@@ -967,7 +994,7 @@ public class CassetteController {
                 }
                 stage.close();
                 Platform.runLater(() -> {
-                    cargarDatosCas(); // Recarga desde el Excel que acabas de modificar
+                    cargarDatosCas();
                     tablaCassette.refresh();
                 });
 
@@ -1040,6 +1067,11 @@ public class CassetteController {
      */
     @FXML
     public void onSustituirCas(){
+        /**if (MainAppController.enviandoCorreo) {
+            mainAppController.showAlert("Por favor, espera a que termine el envío del correo actual antes de guardar cambios.");
+            return;
+        }*/
+
         Cassette selected = tablaCassette.getSelectionModel().getSelectedItem();
         if(selected == null){
             mainAppController.showAlert("Selecciona un Cassette para poder sustituirlo");
@@ -1077,6 +1109,8 @@ public class CassetteController {
                         break;
                     }
                 }
+                ExcelManager.eliminarRevisionPendiente("CASSETTE", selected.getNumCassette());
+
                 int nuevoDiasRevision = diasRevisionOriginal;
                 /** Crear nuevo Cassette */
                 String fechaActual = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
@@ -1115,6 +1149,7 @@ public class CassetteController {
                         }
                         filaCas.set(2, "BAJA");
                         filaCas.set(13, fechaActual);
+                        filaCas.set(14,"");
                         ExcelManager.modificarFila("Cassette", i, filaCas.toArray(new String[0]));
                         ExcelManager.ocultarColumna("Cassette", 18);
                         break;
@@ -1163,17 +1198,6 @@ public class CassetteController {
      * @param picker DatePicker a configurar
      * @param fechaStr fecha en formato String (dd/MM/yyyy)
      */
-    /**private void parseDatePicker(DatePicker picker, String fechaStr) {
-        if (fechaStr == null || fechaStr.trim().isEmpty()) return;
-        try {
-            LocalDate date = LocalDate.parse(fechaStr, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            picker.setValue(date);
-        } catch (Exception ignored) {}
-    }*/
-
-    /**
-     * Establece la fecha en un DatePicker (el converter ya debe estar configurado)
-     */
     private void parseDatePicker(DatePicker picker, String fechaStr) {
         if (fechaStr == null || fechaStr.trim().isEmpty()) {
             picker.setValue(null);
@@ -1188,6 +1212,12 @@ public class CassetteController {
         }
     }
 
+    /**
+     * Metodo para configurar un DatePicker con un StringConverter que maneja el formato dd/MM/yyyy.
+     * Permite ingresar fechas manualmente en el formato correcto y muestra las fechas en ese formato.
+     *
+     * @param picker DatePicker a configurar
+     */
     private void configurarConverterDatePicker(DatePicker picker) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         picker.setConverter(new StringConverter<LocalDate>() {
@@ -1344,6 +1374,11 @@ public class CassetteController {
         );
     }
 
+    /**
+     * Metodo para imprimir los datos visibles de la tabla en formato Excel.
+     * Obtiene dinámicamente los encabezados y datos según las columnas visibles.
+     * Utiliza el ExcelManager para generar el archivo y mostrar el diálogo de impresión.
+     */
     @FXML
     private void onImprimirCassette(){
         ObservableList<Cassette> itemsVisibles = tablaCassette.getItems();
@@ -1353,7 +1388,7 @@ public class CassetteController {
             return;
         }
 
-        // 1. Obtener encabezados basados en las columnas actuales de la tabla
+        // Obtener encabezados basados en las columnas actuales de la tabla
         List<String> encabezados = new ArrayList<>();
         for (TableColumn<?, ?> col : tablaCassette.getColumns()) {
             if (col.isVisible()) {
@@ -1368,14 +1403,12 @@ public class CassetteController {
             }
         }
 
-        // 2. Convertir objetos Condensadora a List<String> respetando el orden de columnas visibles
+        // Convertir objetos Condensadora a List<String> respetando el orden de columnas visibles
         List<List<String>> datosFiltrados = new ArrayList<>();
         for (Cassette c : itemsVisibles) {
             List<String> fila = new ArrayList<>();
             // Mapear manualmente cada columna visible a su dato correspondiente
-            // Ejemplo simplificado (debes ajustarlo a tus getColumnas reales):
 
-            // Si colCondensadora es visible:
             if (colNumCassette.isVisible()) fila.add(c.getNumCassette());
             if (colNumSecuencia.isVisible()) fila.add(String.valueOf(c.getNumSecuencia()));
             if(colEstado.isVisible()) fila.add(c.getEstado());
@@ -1394,16 +1427,20 @@ public class CassetteController {
             if(colAveria.isVisible()) fila.add(c.getAveria());
             if(colFoto.isVisible()) fila.add(c.getFoto());
             if(colObservaciones.isVisible()) fila.add(c.getObservaciones());
-            // ... añade aquí todos los campos en el mismo orden que las columnas visibles ...
+
 
             datosFiltrados.add(fila);
         }
 
         Stage stage = (Stage) tablaCassette.getScene().getWindow();
-        // 3. Llamar al metodo de impresión
+
         ExcelManager.imprimirConDialogoNativo(stage, encabezados, datosFiltrados, "INVENTARIO CASSETTE");
     }
 
+    /**
+     * Metodo para abrir la configuración de columnas, permitiendo al usuario mostrar u ocultar columnas según sus preferencias.
+     * Utiliza el ExcelManager para gestionar la configuración y aplicar los cambios a la tabla.
+     */
     @FXML
     private void abrirConfiguracionColumnas(){
         ExcelManager.abrirConfiguracionColumnas(tablaCassette,"Cassette", "CASSETTE", "Cassette");

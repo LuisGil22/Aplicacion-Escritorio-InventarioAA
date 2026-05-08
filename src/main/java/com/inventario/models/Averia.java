@@ -23,6 +23,7 @@ public class Averia {
 
     /** Campos de la entidad */
     private String numAveria;
+    private String accionReparar;
     private String equipoAveriado;
     private String codigo;
     private String estado;
@@ -36,6 +37,7 @@ public class Averia {
      * Constructor completo para crear una nueva avería.
      *
      * @param numAveria       Número único de avería con formato de 4 dígitos (ej. "0001")
+     * @param accionReparar   accion en la que se indica con SI o NO si esta reparada
      * @param equipoAveriado  Tipo de equipo averiado ("CASSETTE" o "CONDENSADORA")
      * @param codigo          Código del equipo afectado
      * @param estado          Estado del equipo afectado
@@ -45,8 +47,9 @@ public class Averia {
      * @param mail            Correos electrónicos de notificación (separados por \n)
      * @param observaciones   Observaciones adicionales (puede ser null o vacío)
      */
-    public Averia(String numAveria, String equipoAveriado, String codigo,String estado, String planta, String localizacion, String fechaAveria, String mail, String observaciones) {
+    public Averia(String numAveria,String accionReparar, String equipoAveriado, String codigo,String estado, String planta, String localizacion, String fechaAveria, String mail, String observaciones) {
         this.numAveria = numAveria;
+        this.accionReparar = accionReparar != null ? accionReparar : "NO";
         this.equipoAveriado = equipoAveriado;
         this.codigo = codigo;
         this.estado = estado;
@@ -65,6 +68,10 @@ public class Averia {
     public void setNumAveria(String numAveria) {
         this.numAveria = numAveria;
     }
+
+    public String getAccionReparar() { return accionReparar; }
+
+    public void setAccionReparar(String accionReparar) { this.accionReparar = accionReparar; }
 
     public String getEquipoAveriado() {
         return equipoAveriado;

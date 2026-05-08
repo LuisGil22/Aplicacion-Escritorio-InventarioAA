@@ -7,6 +7,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -17,7 +18,10 @@ import javafx.stage.Stage;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Controlador para la gestión de averías en la hoja AVERIAS del inventario.
@@ -39,6 +43,7 @@ public class AveriaController {
     /**  Campos FXML  */
     @FXML private TableView<Averia> tablaAverias;
     @FXML private TableColumn<Averia,String> colNumAveria;
+    @FXML private TableColumn<Averia,String> colAccionReparar;
     @FXML private TableColumn<Averia,String> colEquipoAveriado;
     @FXML private TableColumn<Averia,String> colCodigo;
     @FXML private TableColumn<Averia,String> colEstado;
@@ -75,7 +80,7 @@ public class AveriaController {
     }
 
     /**
-     * Módulo que inicializa el controlador al cargar la vista FXML.
+     * Metodo que inicializa el controlador al cargar la vista FXML.
      * Configura la tabla, carga los datos y aplica ajustes de UI.
      */
     public void initialize(){
@@ -116,10 +121,57 @@ public class AveriaController {
     }
 
     /**
-     * Módulo que configura las columnas de la tabla para vincularlas con las propiedades del modelo Averia.
+     * Metodo que configura las columnas de la tabla para vincularlas con las propiedades del modelo Averia.
      */
     private void configurarTabla(){
         colNumAveria.setCellValueFactory(new PropertyValueFactory<>("numAveria"));
+        colAccionReparar.setCellValueFactory(new PropertyValueFactory<>("accionReparar"));
+        colAccionReparar.setCellFactory(column -> new TableCell<Averia, String>() {
+            private final CheckBox checkNo = new CheckBox("NO");
+            private final CheckBox checkSi = new CheckBox("SI");
+            private final HBox hbox = new HBox(checkNo, checkSi);
+            {
+                hbox.setAlignment(Pos.CENTER);
+                hbox.setSpacing(3);
+
+                checkNo.setStyle("-fx-font-size: 15px;");
+                checkSi.setStyle("-fx-font-size: 15px;");
+
+                checkSi.setOnAction(e -> {
+                    Averia averia = getTableRow().getItem();
+                    if (averia == null) return;
+
+                    if (!"SI".equals(averia.getAccionReparar())) {
+                        procesarReparacion(averia);
+                    }
+                });
+
+                checkNo.setOnAction(e -> {
+                    Averia averia = getTableRow().getItem();
+                    if (averia == null) return;
+                });
+            }
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                }else{
+                    if ("SI".equals(item)) {
+                        checkSi.setSelected(true);
+                        checkNo.setSelected(false);
+                        checkSi.setDisable(true);
+                        checkNo.setDisable(true);
+                    }else{
+                        checkSi.setSelected(false);
+                        checkNo.setSelected(true);
+                        checkSi.setDisable(false);
+                        checkNo.setDisable(false);
+                    }
+                    setGraphic(hbox);
+                }
+            }
+        });
         colEquipoAveriado.setCellValueFactory(new PropertyValueFactory<>("equipoAveriado"));
         colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
@@ -131,7 +183,7 @@ public class AveriaController {
     }
 
     /**
-     * Módulo para cargar los datos de la hoja AVERIAS del archivo Excel y mostrarlos en la tabla.
+     * Metodo para cargar los datos de la hoja AVERIAS del archivo Excel y mostrarlos en la tabla.
      */
     public void cargarDatos(){
         allDatos = FXCollections.observableArrayList();
@@ -144,26 +196,29 @@ public class AveriaController {
             if (fila.isEmpty()) continue;
 
             /** Condicion que asegura que la fila tenga al menos 9 columnas */
-            if (fila.size() < 9) {
-                while (fila.size() < 9) {
+            if (fila.size() < 10) {
+                while (fila.size() < 10) {
                     fila.add("");
                 }
             }
             String numAveria = fila.get(0).trim();
-            String equipoAveriado = fila.get(1).trim();
-            String codigo = fila.get(2).trim();
-            String estado = fila.get(3).trim();
-            String planta = fila.get(4).trim();
-            String localizacion = fila.get(5).trim();
-            String fechaAveria = fila.get(6).trim();
-            String mail = fila.get(7).trim();
-            String observaciones = fila.get(8).trim();
+            String accionReparar = fila.get(1).trim();
+            if(accionReparar.isEmpty()) accionReparar = "NO";
+            String equipoAveriado = fila.get(2).trim();
+            String codigo = fila.get(3).trim();
+            String estado = fila.get(4).trim();
+            String planta = fila.get(5).trim();
+            String localizacion = fila.get(6).trim();
+            String fechaAveria = fila.get(7).trim();
+            String mail = fila.get(8).trim();
+            String observaciones = fila.get(9).trim();
 
             /** Condicion para saltar filas vacías (solo encabezado) */
             if(numAveria.isEmpty() && equipoAveriado.isEmpty()) continue;
 
             allDatos.add(new Averia(
                     numAveria,
+                    accionReparar,
                     equipoAveriado,
                     codigo,
                     estado,
@@ -284,84 +339,8 @@ public class AveriaController {
         });
     }
 
-    /** Modulos para accionar los botones */
-
     /**
-     * Módulo para manejar el evento de modificar una avería (marcar como REPARADA).
-     * <p>
-     * Actualiza el estado en AVERIAS y automaticamente en el equipo origen (Cassette/Condensadora).
-     * </p>
-     */
-    @FXML public void onEditAveria() {
-        Averia sel = tablaAverias.getSelectionModel().getSelectedItem();
-        if (sel == null || !"AVERIADO".equals(sel.getEstado())) {
-            mainAppController.showAlert("Selecciona una avería.");
-            return;
-        }
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Reparar avería");
-        confirm.setHeaderText(null);
-        confirm.setContentText("¿Marcar esta avería como REPARADA?");
-        confirm.showAndWait().ifPresent(rep ->{
-            if(rep == ButtonType.OK){
-                /** Actualiza el estado en memória */
-                sel.setEstado("REPARADO");
-                int index = allDatos.indexOf(sel);
-                if(index != -1){
-                    allDatos.set(index,sel);
-                }
-
-                /** Guardar en la hoja Averias del Excel */
-                List<String> actualizado = Arrays.asList(
-                        sel.getNumAveria(),
-                        sel.getEquipoAveriado(),
-                        sel.getCodigo(),
-                        sel.getEstado(),
-                        sel.getPlanta(),
-                        sel.getFechaAveria(),
-                        sel.getLocalizacion(),
-                        sel.getMail(),
-                        sel.getObservaciones()
-                );
-                ExcelManager.modificarFila("AVERIAS",index + 1, actualizado.toArray(new String[0]));
-
-                /** Actualiza el equipo Origen automaticamente */
-                String equipo = sel.getEquipoAveriado();
-                String codigo = sel.getCodigo();
-                String hojaOrigen = "CASSETTE".equals(equipo) ? "Cassette" : "Condensadoras";
-                int colEstado = 2;
-                int colAveria = "CASSETTE".equals(equipo) ? 15 : 11;
-
-                List<List<String>> datosOrigen = ExcelManager.leerHoja(hojaOrigen);
-                for (int i = 1; i < datosOrigen.size(); i++){
-                    List<String> fila = datosOrigen.get(i);
-                    if (fila.size() > 0 && fila.get(0).trim().equals(codigo)){
-                        /** Actualiza el estado a ACTIVA */
-                        while (fila.size() <= colEstado) fila.add("");
-                        fila.set(colEstado, "ACTIVA");
-
-                        /** Limpia campo Averia */
-                        while (fila.size() <= colAveria) fila.add("");
-                        fila.set(colAveria, "");
-
-                        ExcelManager.modificarFila(hojaOrigen, i, fila.toArray(new String[0]));
-                        break;
-                    }
-                }
-
-                /** Carga los datos y refresca la tabla */
-                cargarDatos();
-                Platform.runLater(() -> {
-                    tablaAverias.refresh();
-                });
-            }
-        });
-
-
-    }
-
-    /**
-     * Módulo para manejar el evento de eliminar una avería (NO recomendado, solo para casos extremos).
+     * Metodo para manejar el evento de eliminar una avería (NO recomendado, solo para casos extremos).
      */
     @FXML public void onDeleteAveria() {
         Averia sel = tablaAverias.getSelectionModel().getSelectedItem();
@@ -393,6 +372,7 @@ public class AveriaController {
      */
     private void noOrdenar() {
         colNumAveria.setSortable(false);
+        colAccionReparar.setSortable(false);
         colEquipoAveriado.setSortable(false);
         colCodigo.setSortable(false);
         colEstado.setSortable(false);
@@ -437,6 +417,9 @@ public class AveriaController {
         );
     }
 
+    /** Metodo para imprimir los datos visibles en la tabla de averías
+     *  respetando el orden y visibilidad de las columnas
+     */
     @FXML
     private void onImprimirAveria(){
         ObservableList<Averia> itemsVisibles = tablaAverias.getItems();
@@ -446,7 +429,7 @@ public class AveriaController {
             return;
         }
 
-        // 1. Obtener encabezados basados en las columnas actuales de la tabla
+        // Obtener encabezados basados en las columnas actuales de la tabla
         List<String> encabezados = new ArrayList<>();
         for (TableColumn<?, ?> col : tablaAverias.getColumns()) {
             if (col.isVisible()) {
@@ -461,15 +444,14 @@ public class AveriaController {
             }
         }
 
-        // 2. Convertir objetos Condensadora a List<String> respetando el orden de columnas visibles
+        // Convertir objetos Condensadora a List<String> respetando el orden de columnas visibles
         List<List<String>> datosFiltrados = new ArrayList<>();
         for (Averia c : itemsVisibles) {
             List<String> fila = new ArrayList<>();
             // Mapear manualmente cada columna visible a su dato correspondiente
-            // Ejemplo simplificado (debes ajustarlo a tus getColumnas reales):
 
-            // Si colCondensadora es visible:
             if (colNumAveria.isVisible()) fila.add(c.getNumAveria());
+            if (colAccionReparar.isVisible()) fila.add(c.getAccionReparar());
             if(colEquipoAveriado.isVisible()) fila.add(c.getEquipoAveriado());
             if(colCodigo.isVisible()) fila.add(c.getCodigo());
             if(colEstado.isVisible()) fila.add(c.getEstado());
@@ -478,18 +460,92 @@ public class AveriaController {
             if(colFechaAveria.isVisible()) fila.add(c.getFechaAveria());
             if(colMail.isVisible()) fila.add(c.getMail());
             if(colObservaciones.isVisible()) fila.add(c.getObservaciones());
-            // ... añade aquí todos los campos en el mismo orden que las columnas visibles ...
+
 
             datosFiltrados.add(fila);
         }
 
         Stage stage = (Stage) tablaAverias.getScene().getWindow();
-        // 3. Llamar al metodo de impresión
+
         ExcelManager.imprimirConDialogoNativo(stage, encabezados, datosFiltrados, "INVENTARIO AVERIAS");
     }
 
+    /** Metodo para abrir la configuración de columnas,
+     * permitiendo al usuario mostrar u ocultar columnas según sus preferencias.
+     */
     @FXML
     private void abrirConfiguracionColumnas(){
         ExcelManager.abrirConfiguracionColumnas(tablaAverias, "AVERIAS", "AVERIAS", "AVERIAS");
+    }
+
+    /**
+     * Metodo que ejecuta la lógica de reparación cuando se selecciona SI.
+     *
+     * @param averia la avería que se va a marcar como reparada.
+     */
+    private void procesarReparacion(Averia averia) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirmar Reparación");
+        confirm.setHeaderText(null);
+        confirm.setContentText("¿Deseas marcar el checkBox 'SI'? \nEsto cambiará el estado a 'REPARADO' y actualizará el equipo origen.");
+
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try{
+                    averia.setAccionReparar("SI");
+                    averia.setEstado("REPARADO");
+
+                    List<List<String>> datosAverias = ExcelManager.leerHoja("AVERIAS");
+                    int indexFila = -1;
+                    for(int i=1; i<datosAverias.size(); i++){
+                        if(datosAverias.get(i).get(0).trim().equals(averia.getNumAveria())){
+                            indexFila = i;
+                            break;
+                        }
+                    }
+
+                    if(indexFila != -1){
+                        List<String> fila = datosAverias.get(indexFila);
+                        while(fila.size() < 10) fila.add("");
+
+                        fila.set(1, "SI");
+                        fila.set(4, "REPARADO");
+
+                        ExcelManager.modificarFila("AVERIAS", indexFila, fila.toArray(new String[0]));
+                        ExcelManager.modificarFilaAveria("AVERIAS", indexFila, averia.getNumAveria());
+
+
+                    }
+                    String equipo = averia.getEquipoAveriado();
+                    String codigo = averia.getCodigo();
+                    String hojaOrigen = "CASSETTE".equals(equipo) ? "Cassette" : "Condensadoras";
+
+                    int colEstadoOrigen = 2;
+                    int colAveriaOrigen = "CASSETTE".equals(equipo) ? 15 : 11;
+
+                    List<List<String>> datosOrigen = ExcelManager.leerHoja(hojaOrigen);
+                    for (int i = 1; i < datosOrigen.size(); i++){
+                        List<String> filaOrigen = datosOrigen.get(i);
+                        if (filaOrigen.size() > 0 && codigo.equals(filaOrigen.get(0).trim())){
+                            while (filaOrigen.size() <= colEstadoOrigen) filaOrigen.add("");
+                            filaOrigen.set(colEstadoOrigen, "ACTIVA");
+
+                            while (filaOrigen.size() <= colAveriaOrigen) filaOrigen.add("");
+                            filaOrigen.set(colAveriaOrigen, "");
+
+                            ExcelManager.modificarFila(hojaOrigen, i, filaOrigen.toArray(new String[0]));
+                            break;
+                        }
+                    }
+                    Platform.runLater(() -> {
+                        cargarDatos();
+                        tablaAverias.refresh();
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    mainAppController.showAlert("Error al reparar la avería.");
+                }
+            }
+        });
     }
 }

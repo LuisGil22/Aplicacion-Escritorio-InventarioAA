@@ -16,7 +16,6 @@
                style="-fx-font-size: 16px;" HBox.hgrow="NEVER" />
         <Pane HBox.hgrow="ALWAYS"/>
         <HBox spacing="10" alignment="CENTER">
-            <Button text="Modificar" onAction="#onEditAveria" styleClass="action-button"/>
             <Button text="Eliminar" onAction="#onDeleteAveria" styleClass="action-button"/>
             <Button text="Observaciones" onAction="#abrirObservacionesAverias" styleClass="action-button"/>
         </HBox>
@@ -36,7 +35,6 @@
             </Button>
             <Button fx:id="btnImprimir" onAction="#onImprimirAveria" style="-fx-background-color: transparent;">
                 <graphic>
-                    <!-- Puedes usar un ImageView con un icono PNG o un SVGPath -->
                     <ImageView fitHeight="24" fitWidth="24" pickOnBounds="true" preserveRatio="true">
                         <image>
                             <Image url="@/imagenes/printer.png"/>
@@ -60,6 +58,7 @@
                     </HBox>
                 </graphic>
             </TableColumn>
+            <TableColumn fx:id="colAccionReparar" id="colAccionReparar" prefWidth="180" text="ACCION_DE_REPARADA"/>
             <TableColumn fx:id="colEquipoAveriado" id="colEquipoAveriado" prefWidth="180">
                 <graphic>
                     <HBox spacing="5" alignment="CENTER">
