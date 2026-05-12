@@ -101,7 +101,7 @@ public class DiaRevisionController {
                 }
 
                 // Añadir a la hoja PARAM_DIAS_REVISION
-                ExcelManager.añadirFilaOrdenada("PARAM_DIAS_REVISION", String.valueOf(dias));
+                ExcelManager.añadirDiaRevisionOrdenado( String.valueOf(dias));
 
                 // Recargar la tabla
                 cargarDatosDiaRevision();

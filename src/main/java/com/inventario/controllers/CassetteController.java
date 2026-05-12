@@ -212,8 +212,8 @@ public class CassetteController {
 
             if (fila.isEmpty()) continue;
 
-            if (fila.size() < 18) {
-                while (fila.size() < 18) {
+            if (fila.size() < 19) {
+                while (fila.size() < 19) {
                     fila.add("");
                 }
             }
@@ -236,6 +236,12 @@ public class CassetteController {
             String averia = fila.get(15).trim();
             String foto = fila.get(16).trim();
             String observaciones = fila.get(17).trim();
+            int diasRevision = 365;
+            if(!fila.get(18).trim().isEmpty()){
+                try {
+                    diasRevision = Integer.parseInt(fila.get(18).trim());
+                } catch (NumberFormatException ignored) {}
+            }
 
             if (numCassette.isEmpty() && estado.isEmpty()) continue;
 
@@ -256,7 +262,7 @@ public class CassetteController {
                 allDatos.add(new Cassette(
                         numCassette,numSecuencia,estado,planta,nombre,
                         potenciaCalor,potenciaFrio,marcaModelo,numSerieCas,condensadora,
-                        localizacionExcel,gasExcel,fechaInstalacion,fechaBaja,fechaRevision,averia,foto,observaciones
+                        localizacionExcel,gasExcel,fechaInstalacion,fechaBaja,fechaRevision,averia,foto,observaciones,diasRevision
                 ));
 
             } catch (Exception e) {
@@ -665,7 +671,9 @@ public class CassetteController {
         ComboBox<String>comboDiasRev = new ComboBox<>(FXCollections.observableArrayList(ExcelManager.getOpcionesDiasRevision()));
 
         comboDiasRev.setPromptText("Selecciona días");
-        if (!comboDiasRev.getItems().isEmpty()) {
+        if(comboDiasRev.getItems().contains("365")) {
+            comboDiasRev.setValue("365");
+        }else if (!comboDiasRev.getItems().isEmpty()) {
             comboDiasRev.setValue(comboDiasRev.getItems().get(0));
         }
 
@@ -705,6 +713,14 @@ public class CassetteController {
             textoAveria.setText(editar.getAveria());
             textoFoto.setText(editar.getFoto());
             textoObservaciones.setText(editar.getObservaciones());
+            String diasGuardados = String.valueOf(editar.getDiasRevision());
+            if (comboDiasRev.getItems().contains(diasGuardados)) {
+                comboDiasRev.setValue(diasGuardados);
+            } else {
+                comboDiasRev.getItems().add(diasGuardados);
+                comboDiasRev.setValue(diasGuardados);
+            }
+
         }
 
         /** Creacion de filas y columnas para la tabla Cassette.*/
@@ -800,6 +816,47 @@ public class CassetteController {
                     numSecuencia = editar.getNumSecuencia();
                 }
 
+                if (editar != null && "AVERIADO".equals(estado)){
+                    try{
+                        List<List<String>> datos = ExcelManager.leerHoja("Cassette");
+                        for (int i = 1; i < datos.size(); i++){
+                            List<String> fila = datos.get(i);
+                            if (fila.size() > 1 && fila.get(0).trim().equals(editar.getNumCassette()) && fila.get(1).trim().equals(String.valueOf(editar.getNumSecuencia()))) {
+                                while (fila.size() <= 2) fila.add("");
+                                fila.set(2, "AVERIADO");
+                                ExcelManager.modificarFila("Cassette", i, fila.toArray(new String[0]));
+                                break;
+                            }
+                        }
+                        if("ACTIVA".equals(editar.getEstado())){
+                            List<List<String>> averias = ExcelManager.leerHoja("AVERIAS");
+                            int maxNum = 0;
+                            for (int k = 1; k < averias.size(); k++) {
+                                if (!averias.get(k).isEmpty()) {
+                                    String numStr = averias.get(k).get(0).trim();
+                                    try {
+                                        int n = Integer.parseInt(numStr);
+                                        if (n > maxNum) maxNum = n;
+                                    } catch (NumberFormatException ignored) {}
+                                }
+                            }
+                            String numAveria = String.format("%04d", maxNum + 1);
+                            ExcelManager.registrarAveriaAutomaticamente("CASSETTE",numCassette,comboPlanta.getValue() != null ? comboPlanta.getValue() : "", textoLocalizacionCond.getText().trim(), textoObservaciones.getText().trim(),"Cassette",numAveria);
+                        }
+                        stage.close();
+                        Platform.runLater(() -> {
+                            cargarDatosCas();
+                            tablaCassette.refresh();
+                        });
+                        return;
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        mainAppController.showAlert("Error al actualizar estado a AVERIADO: " + ex.getMessage());
+                        return;
+                    }
+                }
+
+
                 LocalDate fi = LocalDate.parse(fechaInst, format);
                 LocalDate fr = ExcelManager.calcularProximaFechaRevision(fi, diasSeleccionados);
                 String frStr = fr.format(format);
@@ -869,7 +926,7 @@ public class CassetteController {
                             //indexExcel = i;
                             while (fila.size() <= 18) fila.add("");
                             fila.set(14, frStr);
-                            //fila.set(18, String.valueOf(diasSeleccionados));
+                            fila.set(18, String.valueOf(diasSeleccionados));
                             ExcelManager.modificarFila("Cassette", i, filaNueva.toArray(new String[0]));
                             try {
                                 LocalDate nuevaFecha = LocalDate.parse(frStrFinal, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
@@ -983,7 +1040,8 @@ public class CassetteController {
                     fechaRev,
                     numAveria,
                     textoFoto.getText().trim(),
-                    textoObservaciones.getText().trim()
+                    textoObservaciones.getText().trim(),
+                    diasSeleccionados
                 );
                 if(esNuevo){
                 }else{

@@ -537,6 +537,9 @@ public class AveriaController {
                             break;
                         }
                     }
+
+                    ExcelManager.enviarCorreoConfirmacionReparacionAveria(equipo,codigo,averia.getNumAveria());
+
                     Platform.runLater(() -> {
                         cargarDatos();
                         tablaAverias.refresh();

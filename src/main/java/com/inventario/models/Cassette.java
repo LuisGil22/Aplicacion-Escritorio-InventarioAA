@@ -45,6 +45,7 @@ public class Cassette {
     private String averia;
     private String foto;
     private String observaciones;
+    private int diasRevision;
 
     /**
      * Constructor por defecto (requerido por JavaFX y frameworks de serialización).
@@ -73,7 +74,7 @@ public class Cassette {
      * @param foto                     Referencia a foto
      * @param observaciones            Observaciones adicionales
      */
-    public Cassette(String numCassette, Integer numSecuencia, String estado, String planta, String nombre, Double potenciaCalor, Double potenciaFrio, String marcaModelo, String numSerieCas, String condensadora, String localizacionCondensadora, String gas, String fechaInstalacion,String fechaBaja, String fechaRevision, String averia, String foto, String observaciones) {
+    public Cassette(String numCassette, Integer numSecuencia, String estado, String planta, String nombre, Double potenciaCalor, Double potenciaFrio, String marcaModelo, String numSerieCas, String condensadora, String localizacionCondensadora, String gas, String fechaInstalacion,String fechaBaja, String fechaRevision, String averia, String foto, String observaciones,int diasRevision) {
         this.numCassette = numCassette;
         this.numSecuencia = numSecuencia;
         this.estado = estado;
@@ -92,6 +93,7 @@ public class Cassette {
         this.averia = averia;
         this.foto = foto;
         this.observaciones = observaciones;
+        this.diasRevision= diasRevision;
     }
 
 
@@ -243,6 +245,14 @@ public class Cassette {
 
     public void setObservaciones(String observaciones) {
         this.observaciones = observaciones;
+    }
+
+    public int getDiasRevision() {
+        return diasRevision;
+    }
+
+    public void setDiasRevision(int diasRevision) {
+        this.diasRevision = diasRevision;
     }
 
     /** Equals y hashCode basados en numCassette y numSecuencia, que juntos identifican un cassette único */

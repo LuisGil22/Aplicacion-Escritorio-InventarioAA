@@ -37,6 +37,7 @@ public class Condensadora {
     private String fechaRevision;
     private String averia;
     private String observaciones;
+    private int diasRevision;
 
     /**
      * Constructor por defecto (requerido por JavaFX y frameworks de serialización).
@@ -60,7 +61,7 @@ public class Condensadora {
      * @param averia            Número de avería (puede estar vacío)
      * @param observaciones     Observaciones adicionales
      */
-    public Condensadora(String condensadora, Integer numSecuencia,String estado, String marca, String modelo, Long numSerieCond, String loc_condensadora, String gas, String fechaInstalacion,String fechaBaja, String fechaRevision, String averia, String observaciones) {
+    public Condensadora(String condensadora, Integer numSecuencia,String estado, String marca, String modelo, Long numSerieCond, String loc_condensadora, String gas, String fechaInstalacion,String fechaBaja, String fechaRevision, String averia, String observaciones,int diasRevision) {
         this.condensadora = condensadora;
         this.numSecuencia = numSecuencia;
         this.estado = estado;
@@ -74,6 +75,7 @@ public class Condensadora {
         this.fechaRevision = fechaRevision;
         this.averia = averia;
         this.observaciones = observaciones;
+        this.diasRevision = diasRevision;
     }
 
     /** Getters y setters */
@@ -184,6 +186,14 @@ public class Condensadora {
 
     public void setFechaBaja(String fechaBaja) {
         this.fechaBaja = fechaBaja;
+    }
+
+    public int getDiasRevision() {
+        return diasRevision;
+    }
+
+    public void setDiasRevision(int diasRevision) {
+        this.diasRevision = diasRevision;
     }
 
     /** Equals y hashCode basados en condensadora y numSecuencia, juntos identifican una condensadora única */

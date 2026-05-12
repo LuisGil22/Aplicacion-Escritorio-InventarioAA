@@ -167,7 +167,7 @@ public class CondensadorasController {
 
             if (fila.isEmpty()) continue;
 
-            while (fila.size() < 13) {
+            while (fila.size() < 14) {
                 fila.add("");
             }
 
@@ -185,7 +185,12 @@ public class CondensadorasController {
             String fechaRev = fila.get(10).trim();
             String averia = fila.get(11).trim();
             String observaciones = fila.get(12).trim();
-
+            int diasRevision = 365;
+            if(!fila.get(13).trim().isEmpty()){
+                try {
+                    diasRevision = Integer.parseInt(fila.get(13).trim());
+                } catch (NumberFormatException ignored) {}
+            }
 
             if (condensadora.isEmpty() && estado.isEmpty()) {
                 continue;
@@ -208,7 +213,8 @@ public class CondensadorasController {
                         fechaBaja,
                         fechaRev,
                         averia,
-                        observaciones
+                        observaciones,
+                        diasRevision
                 ));
             }catch (Exception e){
 
@@ -570,7 +576,9 @@ public class CondensadorasController {
         ComboBox<String>comboDiasRev = new ComboBox<>(FXCollections.observableArrayList(ExcelManager.getOpcionesDiasRevision()));
 
         comboDiasRev.setPromptText("Selecciona días");
-        if (!comboDiasRev.getItems().isEmpty()) {
+        if (!comboDiasRev.getItems().contains("365")) {
+            comboDiasRev.setValue("365");
+        }else if(!comboDiasRev.getItems().isEmpty()) {
             comboDiasRev.setValue(comboDiasRev.getItems().get(0));
         }
 
@@ -601,6 +609,13 @@ public class CondensadorasController {
             parseDatePicker(dateFechaRev, editar.getFechaRevision());
             textAveria.setText(editar.getAveria());
             textObservacion.setText(editar.getObservaciones());
+            String diasGuardados = String.valueOf(editar.getDiasRevision());
+            if (comboDiasRev.getItems().contains(diasGuardados)) {
+                comboDiasRev.setValue(diasGuardados);
+            } else {
+                comboDiasRev.getItems().add(diasGuardados);
+                comboDiasRev.setValue(diasGuardados);
+            }
         }
 
         /** Creacion del formulario.*/
@@ -693,6 +708,46 @@ public class CondensadorasController {
                     numSecuencia = editar.getNumSecuencia();
                 }
 
+                if (editar != null && "AVERIADO".equals(estado)){
+                    try{
+                        List<List<String>> datos = ExcelManager.leerHoja("Condensadoras");
+                        for (int i = 1; i < datos.size(); i++){
+                            List<String> fila = datos.get(i);
+                            if (fila.size() > 1 && fila.get(0).trim().equals(editar.getCondensadora()) && fila.get(1).trim().equals(String.valueOf(editar.getNumSecuencia()))) {
+                                while (fila.size() <= 2) fila.add("");
+                                fila.set(2, "AVERIADO");
+                                ExcelManager.modificarFila("Condensadoras", i, fila.toArray(new String[0]));
+                                break;
+                            }
+                        }
+                        if("ACTIVA".equals(editar.getEstado())){
+                            List<List<String>> averias = ExcelManager.leerHoja("AVERIAS");
+                            int maxNum = 0;
+                            for (int k = 1; k < averias.size(); k++) {
+                                if (!averias.get(k).isEmpty()) {
+                                    String numStr = averias.get(k).get(0).trim();
+                                    try {
+                                        int n = Integer.parseInt(numStr);
+                                        if (n > maxNum) maxNum = n;
+                                    } catch (NumberFormatException ignored) {}
+                                }
+                            }
+                            String numAveria = String.format("%04d", maxNum + 1);
+                            ExcelManager.registrarAveriaAutomaticamente("CONDENSADORA",condensadora,"", comLocCondensadora.getValue() != null ? comLocCondensadora.getValue() : "", textObservacion.getText().trim(),"Condensadoras",numAveria);
+                        }
+                        stage.close();
+                        Platform.runLater(() -> {
+                            cargarDatos();
+                            tablaCondensadoras.refresh();
+                        });
+                        return;
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        mainAppController.showAlert("Error al actualizar estado a AVERIADO: " + ex.getMessage());
+                        return;
+                    }
+                }
+
                 LocalDate fi = LocalDate.parse(fechaInst, formatter);
                 LocalDate fr = ExcelManager.calcularProximaFechaRevision(fi, diasSeleccionados);
                 String frStr = fr.format(formatter);
@@ -705,12 +760,13 @@ public class CondensadorasController {
                         if (!frManual.equals(editar.getFechaRevision())) {
                             frStrFinal = frManual;
                         }
-                    }else{
+                    } else {
                         if (!frManual.equals(frStr)) {
                             frStrFinal = frManual;
                         }
                     }
                 }
+
                 String numSerieExcel = numSerie != null ? String.valueOf(numSerie) : "";
 
                 List<String>filaNueva = Arrays.asList(
@@ -850,7 +906,8 @@ public class CondensadorasController {
                         fechaBaja,
                         frStr,
                         numAveria,
-                        textObservacion.getText().trim()
+                        textObservacion.getText().trim(),
+                        diasSeleccionados
                 );
                 if (esNuevo) {
                     //allDatos.add(actualizada);

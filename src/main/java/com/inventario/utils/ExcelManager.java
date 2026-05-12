@@ -743,9 +743,13 @@ public class ExcelManager {
      * @param motivo explicacion del motivo causante de la averia
      */
     public static  void enviarCorreoAveria(String equipo, String codigo, String motivo){
+        Platform.runLater(() -> {
+            MainAppController.enviandoCorreo = true;
+            showAlert("Iniciando envío de correo de AVERÍA...");
+        });
         new Thread(() -> {
             try{
-                MainAppController.enviandoCorreo=true;
+
                 showAlert("Iniciando envío de correo de AVERÍA...");
 
                 String asunto, cuerpo;
@@ -785,7 +789,7 @@ public class ExcelManager {
                 Session session = Session.getInstance(props, new Authenticator() {
                     @Override
                     protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(mailOrigenUsuario, mailOrigenPassword.replace(" ", ""));
+                        return new PasswordAuthentication(mailOrigenUsuario, mailOrigenPassword);
                     }
                 });
                 Message message = new MimeMessage(session);
@@ -822,8 +826,111 @@ public class ExcelManager {
                     error.showAndWait();
                 });
             }finally {
-                MainAppController.enviandoCorreo=false;
-                showAlert("Proceso de correo de AVERÍA finalizado.");
+                Platform.runLater(() -> {
+                    MainAppController.enviandoCorreo = false;
+                    showAlert("Proceso de correo de AVERÍA finalizado.");
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * Envía un correo de confirmación cuando una avería se marca como REPARADA.
+     *
+     * @param equipo tipo de equipo ("CASSETTE" o "CONDENSADORA")
+     * @param codigo identificador del equipo
+     * @param numAveria número de avería reparada
+     */
+    public static void enviarCorreoConfirmacionReparacionAveria(String equipo, String codigo, String numAveria) {
+        Platform.runLater(() -> {
+            MainAppController.enviandoCorreo = true;
+            showAlert("Iniciando envío de correo de AVERÍA...");
+        });
+        new Thread(() -> {
+            // Activar bandera de envío para bloquear UI
+            try {
+                String asunto = "Avería REPARADA - " + equipo + " " + codigo;
+                String cuerpo = "La avería nº " + numAveria + " del equipo " + equipo + " " + codigo +
+                        " ha sido marcada como REPARADA y el equipo ha sido restaurado a estado ACTIVO.\n\n" +
+                        "Fecha de reparación: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+                // Leer destinatarios desde PARAM_CORREOS_ELECTRONICOS
+                List<List<String>> correos = leerHoja("PARAM_CORREOS_ELECTRONICOS");
+                StringBuilder destinos = new StringBuilder();
+                for (int i = 1; i < correos.size(); i++) {
+                    if (!correos.get(i).isEmpty() && !correos.get(i).get(0).trim().isEmpty()) {
+                        if (destinos.length() > 0) destinos.append(", ");
+                        destinos.append(correos.get(i).get(0).trim());
+                    }
+                }
+
+                if (destinos.length() == 0) {
+                    Platform.runLater(() -> {
+                        Alert alert = new Alert(Alert.AlertType.WARNING);
+                        alert.setTitle("Sin destinatarios");
+                        alert.setHeaderText(null);
+                        alert.setContentText("No hay correos configurados en PARAM_CORREOS_ELECTRONICOS");
+                        alert.showAndWait();
+                    });
+                    return;
+                }
+
+                // Configuración SMTP
+                Properties props = new Properties();
+                props.put("mail.smtp.host", "192.168.26.117");
+                props.put("mail.smtp.port", "25");
+                props.put("mail.smtp.auth", "true");
+                props.put("mail.smtp.starttls.enable", "false");
+
+                String mailOrigenUsuario = "no-reply@euromadi.es";
+                String mailOrigenPassword = "n0n0n0";
+
+                Session session = Session.getInstance(props, new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(mailOrigenUsuario, mailOrigenPassword);
+                    }
+                });
+
+                Message message = new MimeMessage(session);
+                message.setFrom(new InternetAddress(mailOrigenUsuario));
+                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(destinos.toString()));
+                message.setSubject(asunto);
+                message.setText(cuerpo);
+
+                Transport.send(message);
+
+                // Mostrar alerta de éxito en hilo principal
+                Platform.runLater(() -> {
+                    Alert exito = new Alert(Alert.AlertType.INFORMATION);
+                    exito.setTitle("Correo enviado");
+                    exito.setHeaderText(null);
+                    exito.setContentText(
+                            "Correo de confirmación de reparación enviado correctamente desde:\n" +
+                                    mailOrigenUsuario + "\n" +
+                                    "A:\n" +
+                                    destinos
+                    );
+                    exito.showAndWait();
+                });
+
+            } catch (Exception e) {
+                //e.printStackTrace();
+                String mensajeError = e.getMessage() != null ? e.getMessage() : "Error desconocido al enviar el correo.";
+
+                Platform.runLater(() -> {
+                    Alert error = new Alert(Alert.AlertType.ERROR);
+                    error.setTitle("Error al enviar correo");
+                    error.setHeaderText("No se pudo enviar la confirmación de reparación");
+                    error.setContentText("Detalles:\n" + mensajeError);
+                    error.showAndWait();
+                });
+            } finally {
+                // Siempre desactivar la bandera al terminar
+                Platform.runLater(() -> {
+                    MainAppController.enviandoCorreo = false;
+                    showAlert("Proceso de correo de AVERÍA finalizado.");
+                });
             }
         }).start();
     }
@@ -1530,6 +1637,91 @@ public class ExcelManager {
         }
         if (opciones.isEmpty()) opciones.add("365");
         return opciones;
+    }
+
+    /**
+     * Añade un nuevo número de días de revisión a la hoja PARAM_DIAS_REVISION
+     * manteniendo el orden numérico descendente (de mayor a menor: 365, 180, 100, 90...).
+     *
+     * @param nuevoDias el valor numérico a añadir (ej. "100")
+     */
+    public static void añadirDiaRevisionOrdenado(String nuevoDias) {
+        synchronized (EXCEL_LOCK) {
+            File file = getExcelFile();
+            try (FileInputStream fis = new FileInputStream(file)) {
+                Workbook workbook = new XSSFWorkbook(fis);
+                Sheet sheet = workbook.getSheet("PARAM_DIAS_REVISION");
+
+                if (sheet == null) {
+                    workbook.close(); fis.close();
+                    return;
+                }
+
+                List<Integer> diasList = new ArrayList<>();
+
+                // Leer valores existentes
+                for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                    Row row = sheet.getRow(i);
+                    if (row != null && row.getCell(0) != null) {
+                        String val = getCellValueAsString(row.getCell(0)).trim();
+                        if (!val.isEmpty()) {
+                            try {
+                                diasList.add(Integer.parseInt(val));
+                            } catch (NumberFormatException ignored) {}
+                        }
+                    }
+                }
+
+                // Añadir el nuevo valor si no existe ya
+                try {
+                    int nuevoVal = Integer.parseInt(nuevoDias);
+                    if (!diasList.contains(nuevoVal)) {
+                        diasList.add(nuevoVal);
+                    }
+                } catch (NumberFormatException e) {
+                    System.err.println("El valor '" + nuevoDias + "' no es un número válido.");
+                    workbook.close(); fis.close();
+                    return;
+                }
+
+                // Ordenar de MAYOR a MENOR (Descendente)
+                Collections.sort(diasList, Collections.reverseOrder());
+
+                // Borrar filas antiguas (manteniendo la cabecera en fila 0)
+                for (int i = sheet.getLastRowNum(); i > 0; i--) {
+                    Row row = sheet.getRow(i);
+                    if (row != null) {
+                        sheet.removeRow(row);
+                    }
+                }
+
+                // Escribir los valores ordenados
+                CellStyle estiloCelda = workbook.createCellStyle();
+                estiloCelda.setAlignment(HorizontalAlignment.CENTER);
+                estiloCelda.setVerticalAlignment(VerticalAlignment.CENTER);
+                estiloCelda.setBorderBottom(BorderStyle.THIN);
+                estiloCelda.setBorderTop(BorderStyle.THIN);
+                estiloCelda.setBorderRight(BorderStyle.THIN);
+                estiloCelda.setBorderLeft(BorderStyle.THIN);
+
+                for (int i = 0; i < diasList.size(); i++) {
+                    Row newRow = sheet.createRow(i + 1); // Empezar en fila 1 (debajo de cabecera)
+                    Cell cell = newRow.createCell(0);
+                    cell.setCellValue(diasList.get(i));
+                    cell.setCellStyle(estiloCelda);
+                }
+
+                // Guardar cambios
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    workbook.write(fos);
+                }
+                workbook.close();
+                fis.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
