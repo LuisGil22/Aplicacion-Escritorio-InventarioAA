@@ -749,9 +749,6 @@ public class ExcelManager {
         });
         new Thread(() -> {
             try{
-
-                showAlert("Iniciando envío de correo de AVERÍA...");
-
                 String asunto, cuerpo;
                 if ("CONDENSADORA".equals(equipo)) {
                     asunto = "AVERIA CONDENSADORA " + codigo;
@@ -770,11 +767,14 @@ public class ExcelManager {
                     }
                 }
                 if(destinatarios.length() == 0){
-                    Alert alert = new Alert(Alert.AlertType.WARNING);
-                    alert.setTitle("Advertencia");
-                    alert.setHeaderText(null);
-                    alert.setContentText("No existen destinatarios");
-                    alert.showAndWait();
+                    Platform.runLater(() -> {
+                        Alert alert = new Alert(Alert.AlertType.WARNING);
+                        alert.setTitle("Advertencia");
+                        alert.setHeaderText(null);
+                        alert.setContentText("No existen destinatarios");
+                        alert.showAndWait();
+                    });
+                    return;
                 }
 
                 Properties props = new Properties();
